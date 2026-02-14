@@ -54,3 +54,5 @@ A funcionalidade de PDF utiliza isolamento CSS:
 ## 4. Segurança
 *   **Row Level Security (RLS)**: Toda tabela possui políticas estritas garantindo que usuários só acessem seus próprios dados.
 *   **RPCs Seguras**: Funções de banco de dados (`SECURITY DEFINER`) são usadas para permitir que Admins gerenciem dados de usuários sem violar as regras padrão de RLS.
+    *   `save_diagnostic_by_admin`: Permite que Admins/Secretários salvem diagnósticos em nome de outros usuários.
+    *   `save_checklist_data`: Atualiza o JSONB de checklist.

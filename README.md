@@ -98,6 +98,8 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 - **Feat**: Checklist 2.0 com sub-itens, inputs condicionais e estados visuais (Pendente/Em Progresso/Concluído).
 - **Feat**: Modo "Somente Leitura" no checklist para usuários comuns.
 - **Fix**: Correção de impressão (páginas em branco e vazamento de conteúdo admin).
+- **Fix**: Contexto de salvamento de diagnóstico por Admins (RPC `save_diagnostic_by_admin`).
+- **Feat**: Remoção simplificada de Cartões de Crédito dos relatórios.
 - **Feat**: Implementação completa do módulo **Ficha Individual** (User Intake) com persistência no banco.
 - **Refactor**: Nova estrutura de Dashboard com bloqueio progressivo de módulos.
 - **Infra**: Migração completa de LocalStorage para Supabase com RLS.

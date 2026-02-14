@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, Circle, ChevronDown, ChevronUp, AlertCircle, Clock, AlertTriangle } from 'lucide-react';
-import { ChecklistData } from '../types';
+import { X, CheckCircle2, Circle, ChevronDown, ChevronUp, AlertCircle, Clock, AlertTriangle, Target } from 'lucide-react';
+import { ChecklistData, FinancialData } from '../types';
 
 interface ChecklistModalProps {
     isOpen: boolean;
@@ -9,6 +9,7 @@ interface ChecklistModalProps {
     initialData?: ChecklistData;
     onSave?: (progress: number[], data: ChecklistData) => Promise<void>;
     readOnly?: boolean;
+    financialData?: FinancialData;
 }
 
 interface SubItemConfig {
@@ -38,7 +39,8 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
     initialProgress = [],
     initialData = {},
     onSave,
-    readOnly = true
+    readOnly = true,
+    financialData
 }) => {
     // Flattened progress for the main steps (backward compatibility + visual progress)
     const [completedSteps, setCompletedSteps] = useState<number[]>(initialProgress);
@@ -474,6 +476,51 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
                                                                     onChange={(e) => handleInputChange(step.id, sub.id, e.target.value)}
                                                                     disabled={readOnly}
                                                                 />
+                                                            </div>
+                                                        )}
+
+                                                        {step.id === 6 && sub.id === 3 && isSubChecked && financialData && (
+                                                            <div className="ml-7 space-y-3 animate-in slide-in-from-top-2">
+                                                                <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 space-y-3">
+                                                                    <div className="flex items-center gap-2 text-sky-400 pb-2 border-b border-slate-700/50">
+                                                                        <Target size={14} />
+                                                                        <span className="text-[10px] font-bold uppercase tracking-wide">Definir Limites Mensais</span>
+                                                                    </div>
+                                                                    <div className="grid grid-cols-1 gap-3">
+                                                                        {financialData.estimatedExpenses.filter(e => Number(e.value) > 0).map(expense => {
+                                                                            let limits: Record<string, string> = {};
+                                                                            try {
+                                                                                limits = subValue ? JSON.parse(subValue) : {};
+                                                                            } catch (e) {
+                                                                                limits = {};
+                                                                            }
+                                                                            const currentLimit = limits[expense.name] || '';
+
+                                                                            return (
+                                                                                <div key={expense.id} className="flex flex-col gap-1.5">
+                                                                                    <div className="flex justify-between items-center text-[10px]">
+                                                                                        <span className="text-slate-300 font-medium">{expense.name}</span>
+                                                                                        <span className="text-slate-500">Atual: {Number(expense.value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                                                                                    </div>
+                                                                                    <input
+                                                                                        type="text"
+                                                                                        placeholder="R$ 0,00"
+                                                                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white focus:border-sky-500 outline-none transition-colors placeholder:text-slate-600"
+                                                                                        value={currentLimit}
+                                                                                        onChange={(e) => {
+                                                                                            const newLimits = { ...limits, [expense.name]: e.target.value };
+                                                                                            handleInputChange(step.id, sub.id, JSON.stringify(newLimits));
+                                                                                        }}
+                                                                                        disabled={readOnly}
+                                                                                    />
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                        {financialData.estimatedExpenses.filter(e => Number(e.value) > 0).length === 0 && (
+                                                                            <p className="text-[10px] text-slate-500 italic text-center py-2">Nenhum gasto variável encontrado no diagnóstico.</p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
                                                             </div>
                                                         )}
                                                     </div>

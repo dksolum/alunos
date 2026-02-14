@@ -1,5 +1,5 @@
 import React from 'react';
-import { User as UserType, Anamnesis, ChecklistData } from '../types';
+import { User as UserType, Anamnesis, ChecklistData, FinancialData } from '../types';
 import { UserIntakeModal } from './UserIntakeModal';
 import { ChecklistModal } from './ChecklistModal';
 import { authService } from '../services/authService';
@@ -38,6 +38,7 @@ interface DashboardProps {
     onEditProfile: () => void;
     currentUser: UserType; // The logged-in user (admin or self)
     onChecklistUpdate: (progress: number[], data: ChecklistData) => void;
+    financialData: FinancialData;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -54,7 +55,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     onLogout,
     onEditProfile,
     currentUser,
-    onChecklistUpdate
+    onChecklistUpdate,
+    financialData
 }) => {
     const isAnamnesisDone = !!anamnesisData;
     const [showIntakeModal, setShowIntakeModal] = React.useState(false);
@@ -391,6 +393,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         initialProgress={user.checklistProgress || []}
                         initialData={user.checklistData || {}}
                         readOnly={currentUser.role === 'USER'}
+                        financialData={financialData}
                         onSave={async (newProgress, newData) => {
                             if (currentUser.role === 'USER') return; // Double check security
                             await authService.updateChecklistProgress(user.id, newProgress);

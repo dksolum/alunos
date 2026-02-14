@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, UserRole, UserStatus } from '../types';
+import { User, UserRole, UserStatus, ChecklistData, FinancialData } from '../types';
 import { authService } from '../services/authService';
 import { UserIntakeModal } from './UserIntakeModal';
 import { X, Search, Trash2, Eye, Shield, User as UserIcon, Lock, Briefcase, Plus, Check, Clock, AlertCircle, MessageCircle, Edit2, LogOut, CheckCircle2, FileText, ShieldCheck, ListChecks } from 'lucide-react';
@@ -33,6 +33,22 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
 
     const [showChecklistModal, setShowChecklistModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [selectedUserFinancialData, setSelectedUserFinancialData] = useState<FinancialData | undefined>(undefined);
+
+    const handleOpenChecklist = async (user: User) => {
+        setSelectedUser(user);
+
+        // Fetch financial data for the user to populate the checklist inputs
+        try {
+            const data = await authService.getDiagnosticByAdmin(user.id);
+            setSelectedUserFinancialData(data || undefined);
+        } catch (error) {
+            console.error("Error fetching financial data for checklist:", error);
+            setSelectedUserFinancialData(undefined);
+        }
+
+        setShowChecklistModal(true);
+    };
 
     useEffect(() => {
         loadUsers();
@@ -292,7 +308,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                                                         <ShieldCheck size={16} />
                                                     </button>
                                                     <button
-                                                        onClick={() => { setSelectedUser(user); setShowChecklistModal(true); }}
+                                                        onClick={() => handleOpenChecklist(user)} // Use new handler
                                                         className="p-2 rounded-lg bg-slate-800 text-slate-600 hover:bg-slate-700 hover:text-white transition-colors ml-2"
                                                         title="Editar Checklist"
                                                     >
@@ -389,6 +405,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                     initialProgress={selectedUser.checklistProgress || []}
                     initialData={selectedUser.checklistData || {}}
                     readOnly={false}
+                    financialData={selectedUserFinancialData}
                     onSave={async (newProgress, newData) => { // Updated signature
                         if (selectedUser) {
                             await authService.updateChecklistProgress(selectedUser.id, newProgress);

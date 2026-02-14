@@ -611,6 +611,18 @@ export const authService = {
         }
     },
 
+    saveDiagnosticByAdmin: async (userId: string, data: FinancialData) => {
+        const { error } = await supabase.rpc('save_diagnostic_by_admin', {
+            target_user_id: userId,
+            new_data: data
+        });
+
+        if (error) {
+            console.error('Erro ao salvar diagnóstico por admin:', error);
+            throw error;
+        }
+    },
+
     // --- User Intake Form (Ficha Individual) ---
     getUserIntake: async (userId: string) => {
         const { data, error } = await supabase.rpc('get_user_intake', { target_user_id: userId });

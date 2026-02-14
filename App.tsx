@@ -227,6 +227,7 @@ const App: React.FC = () => {
     const targetUser = await authService.getUserById(userId);
     if (targetUser) {
       setViewingUser(targetUser);
+      setEditingUserId(targetUser.id);
     }
 
     // 2. Load diagnostic data (ADMIN BYPASS)
@@ -678,6 +679,7 @@ const App: React.FC = () => {
               <button
                 onClick={() => {
                   setViewingUser(null);
+                  if (currentUser) setEditingUserId(currentUser.id);
                   setShowAdminDashboard(true);
                   setViewMode('admin');
                 }}
@@ -772,6 +774,7 @@ const App: React.FC = () => {
           onStartCostOfLiving={() => setViewMode('costOfLiving')}
           isCostOfLivingDone={costOfLivingData.length > 0}
           onLogout={handleLogout}
+          financialData={data}
         />
         {showEditProfile && (viewingUser || currentUser) && (
           <ProfileConfirmationModal
@@ -1402,10 +1405,15 @@ const App: React.FC = () => {
             if (updatedUser) setCurrentUser(updatedUser);
 
             if (editingUserId) {
-              await authService.saveDiagnostic(editingUserId, data);
+              // Se estamos visualizando outro usuário (Admin), usamos RPC de admin
+              if (viewingUser) {
+                await authService.saveDiagnosticByAdmin(editingUserId, data);
+              } else {
+                await authService.saveDiagnostic(editingUserId, data);
+              }
+              setShowProfileConfirmation(false);
+              setShowReport(true);
             }
-            setShowProfileConfirmation(false);
-            setShowReport(true);
           }}
           onCancel={() => setShowProfileConfirmation(false)}
         />
@@ -1425,11 +1433,15 @@ const App: React.FC = () => {
           changes={diffs}
           onConfirm={async () => {
             if (editingUserId) {
-              await authService.saveDiagnostic(editingUserId, data);
+              if (viewingUser) {
+                await authService.saveDiagnosticByAdmin(editingUserId, data);
+              } else {
+                await authService.saveDiagnostic(editingUserId, data);
+              }
               setOriginalData(data); // Atualiza original
+              setShowDataChanges(false);
+              setShowReport(true);
             }
-            setShowDataChanges(false);
-            setShowReport(true);
           }}
           onCancel={() => setShowDataChanges(false)}
         />

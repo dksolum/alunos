@@ -83,10 +83,10 @@ export const Report: React.FC<ReportProps> = ({ data, user, onBack, onEdit, onSa
   const totalIncome = sum(data.income);
   const totalEstimated = sum(data.estimatedExpenses);
   const totalFixed = sum(data.fixedExpenses);
-  const totalCC = data.creditCard.cards.reduce((a, b) => a + b.oneTime, 0) + data.creditCard.installments.reduce((a, b) => a + b.value, 0);
+
   const totalDebts = sum(data.debts);
 
-  const totalExpenses = totalEstimated + totalFixed + totalCC + totalDebts;
+  const totalExpenses = totalEstimated + totalFixed + totalDebts;
   const balance = totalIncome - totalExpenses;
   const commitmentPercent = totalIncome > 0 ? (totalExpenses / totalIncome) * 100 : 0;
 
@@ -112,15 +112,7 @@ export const Report: React.FC<ReportProps> = ({ data, user, onBack, onEdit, onSa
   const categories = [
     { name: 'Fixas', value: totalFixed, items: data.fixedExpenses, icon: <Home size={10} /> },
     { name: 'Variáveis', value: totalEstimated, items: data.estimatedExpenses, icon: <ShoppingCart size={10} /> },
-    {
-      name: 'Cartões', value: totalCC, items: [
-        ...data.creditCard.cards.filter(c => c.oneTime > 0).map(c => ({ id: c.id, name: `À vista: ${c.name}`, value: c.oneTime })),
-        ...data.creditCard.installments.map(i => {
-          const card = data.creditCard.cards.find(c => c.id === i.cardId);
-          return { id: i.id, name: `${i.name} (${card?.name || 'Cartão'})`, value: i.value };
-        })
-      ], icon: <CreditCard size={10} />
-    },
+
     { name: 'Dívidas', value: totalDebts, items: data.debts, icon: <Activity size={10} /> },
   ].filter(d => d.value > 0);
 
@@ -137,10 +129,7 @@ export const Report: React.FC<ReportProps> = ({ data, user, onBack, onEdit, onSa
       income: d.income.map(i => ({ n: i.name, v: i.value })),
       estimated: d.estimatedExpenses.map(i => ({ n: i.name, v: i.value })),
       fixed: d.fixedExpenses.map(i => ({ n: i.name, v: i.value })),
-      cc: {
-        cards: d.creditCard.cards.map(c => ({ n: c.name, v: c.oneTime })),
-        inst: d.creditCard.installments.map(i => ({ n: i.name, v: i.value, t: i.totalInstallments, r: i.remainingInstallments }))
-      },
+
       debts: d.debts.map(i => ({ n: i.name, v: i.value }))
     };
     return JSON.stringify(relevantData);
@@ -583,80 +572,7 @@ export const Report: React.FC<ReportProps> = ({ data, user, onBack, onEdit, onSa
               hourlyWage={hourlyWage}
             />
 
-            {/* Cartões Detalhados */}
-            <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 print-border break-inside-avoid">
-              <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500 no-print"><CreditCard size={20} /></div>
-                  <h3 className="text-xl font-black text-amber-500 uppercase tracking-tight">Cartões de Crédito</h3>
-                </div>
-                <div className="flex flex-col items-end">
-                  <span className="text-lg font-black text-white">Total: R$ {totalCC.toLocaleString('pt-BR')}</span>
-                  <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
-                    <Clock size={12} /> {calculateTime(totalCC)}
-                  </span>
-                </div>
-              </div>
 
-              <div className="space-y-8">
-                {/* Compras à vista */}
-                {data.creditCard.cards.some(c => c.oneTime > 0) && (
-                  <div className="space-y-4">
-                    <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Compras à Vista (Fatura Atual)</h4>
-                    <div className="space-y-2">
-                      {data.creditCard.cards.filter(c => c.oneTime > 0).map((card, idx) => (
-                        <div key={idx} className="flex justify-between items-center p-3 bg-slate-950/30 rounded-xl border border-slate-800/50 print-border">
-                          <span className="text-sm font-bold text-slate-300">{card.name || 'Cartão sem nome'}</span>
-                          <div className="flex flex-col items-end">
-                            <span className="text-sm font-black text-white">R$ {card.oneTime.toLocaleString('pt-BR')}</span>
-                            <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                              <Clock size={10} /> {calculateTime(card.oneTime)}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Parcelamentos */}
-                {data.creditCard.installments.filter(i => i.value > 0).length > 0 && (
-                  <div className="space-y-4">
-                    <h4 className="text-xs font-black text-slate-500 uppercase tracking-widest pl-1">Parcelamentos Ativos</h4>
-                    <div className="space-y-3">
-                      {data.creditCard.installments
-                        .filter(i => i.value > 0)
-                        .map((inst, idx) => {
-                          const cardName = data.creditCard.cards.find(c => c.id === inst.cardId)?.name || 'Cartão';
-                          return (
-                            <div key={idx} className="p-4 bg-slate-950/30 rounded-2xl border border-slate-800/50 flex flex-col gap-2 print-border">
-                              <div className="flex justify-between items-start">
-                                <div className="flex flex-col">
-                                  <span className="text-sm font-bold text-slate-200">{inst.name || 'Sem descrição'}</span>
-                                  <span className="text-[10px] text-slate-500 font-bold uppercase">{cardName}</span>
-                                </div>
-                                <div className="flex flex-col items-end">
-                                  <span className="text-sm font-black text-white">R$ {inst.value.toLocaleString('pt-BR')}/mês</span>
-                                  <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                                    <Clock size={10} /> {calculateTime(inst.value)}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="h-px bg-slate-800/50 w-full"></div>
-                              <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
-                                <span>Parcela {inst.totalInstallments - inst.remainingInstallments + 1} de {inst.totalInstallments}</span>
-                                <span className="flex items-center gap-1 text-amber-500"><CalendarDays size={10} /> Até {getEndDate(inst.remainingInstallments)}</span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </div>
-                )}
-
-                {totalCC === 0 && <p className="text-sm text-slate-500 italic">Nenhum gasto com cartão registrado.</p>}
-              </div>
-            </div>
 
             {/* Dívidas Detalhadas */}
             <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 print-border break-inside-avoid">
