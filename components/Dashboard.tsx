@@ -182,6 +182,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </h2>
                         <p className="text-slate-400 font-medium max-w-2xl">
                             Complete os módulos abaixo para desbloquear uma visão completa do seu financeiro.
+                            Abaixo, você tem acesso a Área de Membros Exclusiva com os materiais e conteúdos que complementam a consultoria, acesse quando quiser com login e senha recebidos via e-mail pela Hotmart.
                         </p>
                     </div>
 
