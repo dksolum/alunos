@@ -19,3 +19,5 @@ Este documento visa transparência sobre a fragilidade do software em seu estág
 
 ## 4. IA (Mock Engine)
 *   **Feedback Genérico**: Como removemos a dependência do Google Gemini para evitar custos e complexidade no MVP, as análises são baseadas em templates pré-definidos (Positivo/Negativo/Neutro). Embora funcionais, elas são menos específicas do que uma análise de LLM real.
+
+teste
