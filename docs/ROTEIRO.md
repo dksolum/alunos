@@ -38,6 +38,7 @@ A migração para um backend real foi realizada para permitir sincronização e 
 - [x] **Custo de Vida Ideal**: Wizard/Grid para 15 categorias de despesas.
 - [x] **Ficha Individual (User Intake)**: Modal exclusivo para Admins.
 - [x] **Relatórios Profissionais**: Layout de impressão limpo e cabeçalhos personalizados.
+- [x] **Checklist Destruidor de Sanhaço**: Guia de guerra passo-a-passo com barra de progresso.
 
 ## 🚧 Fase 5: Expansão (Próximos Passos)
 - [ ] **Integrações Futuras**:

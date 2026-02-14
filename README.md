@@ -32,6 +32,11 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
 - **Gestão de Status**: Controle visual de funil (Novo > Consultoria > Mentoria > Acompanhamento).
 - **Ações Rápidas**: Editar perfil, alterar status, visualizar dashboard do cliente.
 
+### 5. Checklist Destruidor de Sanhaço
+- **Guia de Guerra**: Lista de verificação passo-a-passo para sair do caos financeiro.
+- **Controle Administrativo**: Admins podem liberar ou bloquear o acesso ao checklist para cada usuário.
+- **Progresso Visual**: Barra de progresso e salvamento automático das etapas concluídas.
+
 ## Deploy
 
 Para instruções de como subir este projeto para produção na Vercel, consulte o guia [DEPLOY.md](./DEPLOY.md).
@@ -79,6 +84,7 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 
 - **Fix**: Correção de impressão (páginas em branco e vazamento de conteúdo admin).
 - **Feat**: Implementação completa do módulo **Ficha Individual** (User Intake) com persistência no banco.
+- **Feat**: Implementação do **Checklist Destruidor de Sanhaço** com controle de acesso e progresso.
 - **Refactor**: Nova estrutura de Dashboard com bloqueio progressivo de módulos.
 - **Feat**: Mapeamento de Dívidas e Custo de Vida (Grid System) integrados ao Diagnóstico.
 - **Infra**: Migração completa de LocalStorage para Supabase com RLS.

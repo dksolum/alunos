@@ -14,7 +14,7 @@ O sistema utiliza o cliente oficial do Supabase para todas as operações de dad
 
 *   **Autenticação**: Supabase Auth (Email/Senha).
 *   **Banco de Dados (PostgreSQL)**:
-    *   `profiles`: Dados do usuário, role e status.
+    *   `profiles`: Dados do usuário, role, status e controle de checklist (`checklist_available`, `checklist_progress`).
     *   `diagnostics`: Dados do diagnóstico financeiro (JSONB).
     *   `user_intakes`: Ficha de Anamnese e dados iniciais (acesso restrito Admin/Secretary).
     *   `debt_mappings`: Dívidas detalhadas.
@@ -27,6 +27,7 @@ O sistema implementa três níveis de permissão com regras de RLS (Row Level Se
     *   Acesso total ao Dashboard Administrativo.
     *   Pode criar/editar/excluir outros Admins, Secretários e Usuários.
     *   **Impersonation**: Pode visualizar o Dashboard de qualquer usuário como se fosse ele ("Modo de Visualização").
+    *   **Gestão de Checklist**: Pode liberar/bloquear o "Checklist Destruidor de Sanhaço" para usuários.
     *   Acesso a dados sensíveis (`user_intakes`) via RPCs (`SECURITY DEFINER`).
 2.  **SECRETARY**:
     *   Acesso restrito ao Dashboard.

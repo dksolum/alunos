@@ -49,13 +49,15 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
     if (!isOpen) return null;
 
     const steps = [
-        { id: 1, title: "Cheguei no Fundo do Poço", description: "Aceitação da realidade financeira atual. Sem julgamentos, apenas fatos." },
-        { id: 2, title: "Estancamento de Sangria", description: "Corte imediato de gastos supérfluos e renegociação de dívidas críticas." },
-        { id: 3, title: "Levantamento de Renda Extra", description: "Identificação de oportunidades para gerar caixa rápido (venda de itens, bicos)." },
-        { id: 4, title: "Priorização de Dívidas", description: "Classificação das dívidas por juros e consequências (bens essenciais vs. cartões)." },
-        { id: 5, title: "Plano de Ataque", description: "Definição de metas mensais de pagamento e cronograma de quitação." },
-        { id: 6, title: "Blindagem Emocional", description: "Técnicas para manter o foco e não cair em armadilhas de consumo." },
-        { id: 7, title: "Novo Começo", description: "Reconstrução da reserva de emergência e início dos investimentos." }
+        { id: 1, title: "Grupo no WhatsApp", description: "Acompanhamento individual, tirar dúvidas e envio de informações relevantes para o seu financeiro." },
+        { id: 2, title: "Envio do acesso ao sistema Solum", description: "Gerenciamento de todas as informações financeiras registradas." },
+        { id: 3, title: "Preenchimento do diagnóstico inicial", description: "Base para estruturação do plano de ataque." },
+        { id: 4, title: "Sangria de Dívidas", description: "Estancar o sangramento para retornar o combate." },
+        { id: 5, title: "Plano de Ataque", description: "Definir gastos necessários e prioridades." },
+        { id: 6, title: "Ação no Objetivo", description: "Seguir o planejamento sem baixas e sem desistências." },
+        { id: 7, title: "Blindagem", description: "Estrutura simples para manter a ordem e o progresso." },
+        { id: 8, title: "Suprimentos", description: "Construção das reservas para eventualidades." },
+        { id: 9, title: "Dúvidas", description: "Tirar dúvidas e esclarecer o caminho." }
     ];
 
     const progress = Math.round((completedSteps.length / steps.length) * 100);
@@ -85,7 +87,7 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
                 {/* Content */}
                 <div className="p-6 overflow-y-auto space-y-4 custom-scrollbar">
                     <p className="text-sm text-slate-400 mb-6 bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
-                        <strong className="text-rose-400 uppercase text-xs block mb-1">Atenção Soldado!</strong>
+                        <strong className="text-rose-400 uppercase text-xs block mb-1">Atenção!</strong>
                         Este checklist não é um passeio no parque. É um plano de guerra. {readOnly ? "Acompanhe seu progresso conforme a consultoria avança." : "Marque cada etapa conforme você conquista o território."}
                     </p>
 
