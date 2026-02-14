@@ -32,6 +32,10 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
 - **Gestão de Status**: Controle visual de funil (Novo > Consultoria > Mentoria > Acompanhamento).
 - **Ações Rápidas**: Editar perfil, alterar status, visualizar dashboard do cliente.
 
+## Deploy
+
+Para instruções de como subir este projeto para produção na Vercel, consulte o guia [DEPLOY.md](./DEPLOY.md).
+
 ## 🛠️ Tecnologias Utilizadas
 
 - **Frontend**: React 19 (Vite) + TypeScript.
