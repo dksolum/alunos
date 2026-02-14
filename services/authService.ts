@@ -91,7 +91,8 @@ export const authService = {
             status: profile.status,
             createdAt: profile.created_at,
             checklistAvailable: profile.checklist_available,
-            checklistProgress: profile.checklist_progress || []
+            checklistProgress: profile.checklist_progress || [],
+            checklistData: profile.checklist_data || {}
             // password é omitido
         };
     },
@@ -115,7 +116,8 @@ export const authService = {
             createdAt: profile.created_at,
             lastContactedBy: profile.last_contacted_by,
             checklistAvailable: profile.checklist_available,
-            checklistProgress: profile.checklist_progress || []
+            checklistProgress: profile.checklist_progress || [],
+            checklistData: profile.checklist_data || {}
         };
     },
 
@@ -139,6 +141,18 @@ export const authService = {
 
         if (error) {
             console.error('Erro ao atualizar progresso do checklist:', error);
+            throw error;
+        }
+    },
+
+    updateChecklistData: async (userId: string, data: any) => {
+        const { error } = await supabase
+            .from('profiles')
+            .update({ checklist_data: data })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Erro ao atualizar dados do checklist:', error);
             throw error;
         }
     },
@@ -291,7 +305,8 @@ export const authService = {
             createdAt: p.created_at,
             lastContactedBy: p.last_contacted_by,
             checklistAvailable: p.checklist_available,
-            checklistProgress: p.checklist_progress || []
+            checklistProgress: p.checklist_progress || [],
+            checklistData: p.checklist_data || {}
         }));
     },
 

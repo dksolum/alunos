@@ -32,10 +32,21 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
 - **Gestão de Status**: Controle visual de funil (Novo > Consultoria > Mentoria > Acompanhamento).
 - **Ações Rápidas**: Editar perfil, alterar status, visualizar dashboard do cliente.
 
-### 5. Checklist Destruidor de Sanhaço
-- **Guia de Guerra**: Lista de verificação passo-a-passo para sair do caos financeiro.
-- **Controle Administrativo**: Admins podem liberar ou bloquear o acesso ao checklist para cada usuário.
-- **Progresso Visual**: Barra de progresso e salvamento automático das etapas concluídas.
+### 5. Checklist Destruidor de Sanhaço (v2.0)
+- **Guia de Guerra**: Lista de verificação estratégica para organização financeira.
+- **Sub-itens e Inputs**: Etapas complexas agora possuem sub-tarefas e campos de texto para observações.
+- **Estados Visuais**:
+  - **Pendente (Cinza)**: Não iniciado.
+  - **Em Progresso (Amarelo)**: Sub-itens marcados ou texto preenchido.
+  - **Concluído (Verde)**: Etapa finalizada.
+- **Controle de Acesso Hierárquico**:
+  - **Admins/Secretários**: Podem editar qualquer checklist (dados salvos automaticamente ao fechar).
+  - **Usuários**: Modo "Somente Leitura" (podem expandir para ver detalhes, mas não mudar status).
+
+### 6. Painel Administrativo Otimizado
+- **Hierarquia Visual**: Lista de usuários ordenada por cargo (Admin > Secretário > Usuário) e data de criação.
+- **Busca e Filtros**: Localização rápida de alunos.
+- **CRM Integrado**: Mudança de status (Novo, Consultoria, Mentoria) reflete visualmente no funil.
 
 ## Deploy
 
@@ -82,10 +93,12 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 
 ## 📝 Histórico de Atualizações Recentes
 
+- **Fix**: Persistência de dados do checklist corrigida (Admin agora vê e salva dados de texto corretamente).
+- **Feat**: Hierarquia de usuários no Dashboard Admin (Admin > Secretário > Usuário).
+- **Feat**: Checklist 2.0 com sub-itens, inputs condicionais e estados visuais (Pendente/Em Progresso/Concluído).
+- **Feat**: Modo "Somente Leitura" no checklist para usuários comuns.
 - **Fix**: Correção de impressão (páginas em branco e vazamento de conteúdo admin).
 - **Feat**: Implementação completa do módulo **Ficha Individual** (User Intake) com persistência no banco.
-- **Feat**: Implementação do **Checklist Destruidor de Sanhaço** com controle de acesso e progresso.
 - **Refactor**: Nova estrutura de Dashboard com bloqueio progressivo de módulos.
-- **Feat**: Mapeamento de Dívidas e Custo de Vida (Grid System) integrados ao Diagnóstico.
 - **Infra**: Migração completa de LocalStorage para Supabase com RLS.
 

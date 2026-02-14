@@ -694,6 +694,13 @@ const App: React.FC = () => {
           anamnesisData={anamnesisData}
           hasDiagnosticData={isDiagnosticComplete}
           onEditProfile={() => setShowEditProfile(true)}
+          onChecklistUpdate={(newProgress, newData) => {
+            if (viewingUser) {
+              setViewingUser({ ...viewingUser, checklistProgress: newProgress, checklistData: newData });
+            } else if (currentUser) {
+              setCurrentUser({ ...currentUser, checklistProgress: newProgress, checklistData: newData });
+            }
+          }}
 
           onStartAnamnesis={() => setViewMode('anamnesis')}
           onStartDiagnosis={() => {

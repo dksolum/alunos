@@ -14,7 +14,7 @@ O sistema utiliza o cliente oficial do Supabase para todas as operações de dad
 
 *   **Autenticação**: Supabase Auth (Email/Senha).
 *   **Banco de Dados (PostgreSQL)**:
-    *   `profiles`: Dados do usuário, role, status e controle de checklist (`checklist_available`, `checklist_progress`).
+    *   `profiles`: Dados do usuário, role, status e controle de checklist (`checklist_data` JSONB para persistência de sub-itens e textos).
     *   `diagnostics`: Dados do diagnóstico financeiro (JSONB).
     *   `user_intakes`: Ficha de Anamnese e dados iniciais (acesso restrito Admin/Secretary).
     *   `debt_mappings`: Dívidas detalhadas.
@@ -25,16 +25,16 @@ O sistema implementa três níveis de permissão com regras de RLS (Row Level Se
 
 1.  **ADMIN**:
     *   Acesso total ao Dashboard Administrativo.
-    *   Pode criar/editar/excluir outros Admins, Secretários e Usuários.
-    *   **Impersonation**: Pode visualizar o Dashboard de qualquer usuário como se fosse ele ("Modo de Visualização").
-    *   **Gestão de Checklist**: Pode liberar/bloquear o "Checklist Destruidor de Sanhaço" para usuários.
-    *   Acesso a dados sensíveis (`user_intakes`) via RPCs (`SECURITY DEFINER`).
+    *   **Hierarquia de Visualização**: Admins no topo, seguidos por Secretários e Usuários.
+    *   **Gestão de Checklist**: Pode visualizar e *editar* o checklist de qualquer usuário (incluindo observações de texto).
+    *   **Impersonation**: Pode visualizar o Dashboard de qualquer usuário como se fosse ele.
 2.  **SECRETARY**:
-    *   Acesso restrito ao Dashboard.
-    *   Visualiza lista de usuários e pode criar novos usuários.
+    *   Acesso restrito ao Dashboard (Listagem de Usuários e Intake).
     *   Pode preencher a Ficha Individual (`user_intakes`).
+    *   Pode editar Checklists.
 3.  **USER**:
     *   Acesso exclusivo ao próprio Dashboard e Diagnóstico.
+    *   **Checklist Modo Leitura**: Pode visualizar o checklist e expandir itens para ver detalhes, mas *não pode alterar o status*.
     *   Bloqueio progressivo de módulos baseado no status (Novo > Consultoria > Mentoria).
 
 ## 3. Fluxo de Dados e Isolamento

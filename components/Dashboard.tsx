@@ -1,7 +1,8 @@
 import React from 'react';
-import { User as UserType, Anamnesis } from '../types';
+import { User as UserType, Anamnesis, ChecklistData } from '../types';
 import { UserIntakeModal } from './UserIntakeModal';
 import { ChecklistModal } from './ChecklistModal';
+import { authService } from '../services/authService';
 import {
     User,
     LayoutDashboard,
@@ -36,6 +37,7 @@ interface DashboardProps {
     onLogout: () => void;
     onEditProfile: () => void;
     currentUser: UserType; // The logged-in user (admin or self)
+    onChecklistUpdate: (progress: number[], data: ChecklistData) => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -51,7 +53,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     isCostOfLivingDone,
     onLogout,
     onEditProfile,
-    currentUser
+    currentUser,
+    onChecklistUpdate
 }) => {
     const isAnamnesisDone = !!anamnesisData;
     const [showIntakeModal, setShowIntakeModal] = React.useState(false);
@@ -386,7 +389,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         isOpen={showChecklistModal}
                         onClose={() => setShowChecklistModal(false)}
                         initialProgress={user.checklistProgress || []}
-                        readOnly={true}
+                        initialData={user.checklistData || {}}
+                        readOnly={currentUser.role === 'USER'}
+                        onSave={async (newProgress, newData) => {
+                            if (currentUser.role === 'USER') return; // Double check security
+                            await authService.updateChecklistProgress(user.id, newProgress);
+                            await authService.updateChecklistData(user.id, newData);
+                            onChecklistUpdate(newProgress, newData);
+                        }}
                     />
 
                     {/* Seção 2: Mentoria */}

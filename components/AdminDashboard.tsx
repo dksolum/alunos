@@ -41,7 +41,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
     const loadUsers = async () => {
         try {
             const userList = await authService.listUsers();
-            setUsers(userList || []);
+
+            // Definição da hierarquia de cargos
+            const roleHierarchy: Record<string, number> = {
+                'ADMIN': 0,
+                'SECRETARY': 1,
+                'USER': 2
+            };
+
+            const sortedList = (userList || []).sort((a, b) => {
+                // 1. Order by Role
+                const roleA = roleHierarchy[a.role] ?? 99;
+                const roleB = roleHierarchy[b.role] ?? 99;
+
+                if (roleA !== roleB) {
+                    return roleA - roleB;
+                }
+
+                // 2. If same role, order by creation date (older first -> "ordem de criação")
+                return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            });
+
+            setUsers(sortedList);
         } catch (error) {
             console.error('Error loading users:', error);
             alert('Erro ao carregar lista de usuários. Tente recarregar a página.');
@@ -366,14 +387,28 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                         setSelectedUser(null);
                     }}
                     initialProgress={selectedUser.checklistProgress || []}
+                    initialData={selectedUser.checklistData || {}}
                     readOnly={false}
-                    onSave={async (newProgress) => {
+                    onSave={async (newProgress, newData) => { // Updated signature
                         if (selectedUser) {
                             await authService.updateChecklistProgress(selectedUser.id, newProgress);
-                            // Atualizar estado local para refletir na UI sem recarregar tudo
-                            const updatedUsers = users.map(u => u.id === selectedUser.id ? { ...u, checklistProgress: newProgress } : u);
-                            setUsers(updatedUsers);
-                            setSelectedUser({ ...selectedUser, checklistProgress: newProgress });
+                            await authService.updateChecklistData(selectedUser.id, newData);
+
+                            // Atualizar estado local
+                            // Atualizar estado local
+                            setUsers(prevUsers => prevUsers.map(u =>
+                                u.id === selectedUser.id ? {
+                                    ...u,
+                                    checklistProgress: newProgress,
+                                    checklistData: newData
+                                } : u
+                            ));
+
+                            setSelectedUser(prev => prev ? {
+                                ...prev,
+                                checklistProgress: newProgress,
+                                checklistData: newData
+                            } : null);
                         }
                     }}
                 />

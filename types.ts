@@ -162,6 +162,18 @@ export interface User {
   createdAt: string;
   checklistAvailable?: boolean;
   checklistProgress?: number[];
+  checklistData?: ChecklistData;
+}
+
+export interface ChecklistData {
+  [stepId: number]: {
+    subItems?: {
+      [subItemId: number]: {
+        checked: boolean;
+        value?: string; // Para respostas de texto
+      };
+    };
+  };
 }
 
 export interface DiagnosticRecord {
