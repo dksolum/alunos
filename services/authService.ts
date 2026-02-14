@@ -1,0 +1,623 @@
+import { createClient } from '@supabase/supabase-js';
+import { supabase, supabaseUrl, supabaseAnonKey } from './supabaseClient';
+import { User, UserRole, FinancialData, UserStatus, Anamnesis, DebtMapItem, CostOfLivingItem } from '../types';
+
+export const authService = {
+    // Inicialização (pode carregar sessão)
+    // Inicialização (pode carregar sessão)
+    initialize: async () => {
+        const { data } = await supabase.auth.getSession();
+        if (data.session?.user) {
+            return await authService.getCurrentUser();
+        }
+        return null;
+    },
+
+    login: async (email: string, password: string): Promise<{ success: boolean; user?: User; message?: string }> => {
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+        });
+
+        if (error) {
+            return { success: false, message: error.message };
+        }
+
+        if (data.user) {
+            const user = await authService.getCurrentUser();
+            if (user) return { success: true, user };
+        }
+
+        return { success: false, message: 'Erro ao obter dados do usuário.' };
+    },
+
+    register: async (userData: Omit<User, 'id' | 'createdAt' | 'status'>): Promise<{ success: boolean; user?: User; message?: string }> => {
+        // 1. Criar usuário no Auth
+        const { data, error } = await supabase.auth.signUp({
+            email: userData.email,
+            password: userData.password || 'mudar123', // Senha temporária ou fornecida
+            options: {
+                data: {
+                    name: userData.name,
+                    whatsapp: userData.whatsapp,
+                    role: userData.role || 'USER'
+                }
+            }
+        });
+
+        if (error) return { success: false, message: error.message };
+
+        if (data.user) {
+            // O trigger no banco vai criar o profile automaticamente
+            // Vamos esperar um pouco ou retornar o objeto construído
+            const newUser: User = {
+                id: data.user.id,
+                name: userData.name,
+                email: userData.email,
+                whatsapp: userData.whatsapp,
+                role: userData.role,
+                status: 'NEW',
+                createdAt: new Date().toISOString()
+            };
+            return { success: true, user: newUser };
+        }
+
+        return { success: false, message: 'Erro ao criar conta.' };
+    },
+
+    logout: async () => {
+        await supabase.auth.signOut();
+    },
+
+    getCurrentUser: async (): Promise<User | null> => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+
+        // Buscar dados do profile
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+        if (error || !profile) return null;
+
+        return {
+            id: profile.id,
+            name: profile.name || 'Usuário',
+            email: user.email!,
+            whatsapp: profile.whatsapp,
+            role: profile.role,
+            status: profile.status,
+            createdAt: profile.created_at,
+            checklistAvailable: profile.checklist_available,
+            checklistProgress: profile.checklist_progress || []
+            // password é omitido
+        };
+    },
+
+    getUserById: async (userId: string): Promise<User | null> => {
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        if (error || !profile) return null;
+
+        return {
+            id: profile.id,
+            name: profile.name || 'Usuário',
+            email: profile.email || '',
+            whatsapp: profile.whatsapp,
+            role: profile.role,
+            status: profile.status,
+            createdAt: profile.created_at,
+            lastContactedBy: profile.last_contacted_by,
+            checklistAvailable: profile.checklist_available,
+            checklistProgress: profile.checklist_progress || []
+        };
+    },
+
+    toggleUserChecklist: async (userId: string, status: boolean) => {
+        const { error } = await supabase
+            .from('profiles')
+            .update({ checklist_available: status })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Erro ao atualizar checklist:', error);
+            throw error;
+        }
+    },
+
+    updateChecklistProgress: async (userId: string, progress: number[]) => {
+        const { error } = await supabase
+            .from('profiles')
+            .update({ checklist_progress: progress })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Erro ao atualizar progresso do checklist:', error);
+            throw error;
+        }
+    },
+
+    // Gerenciamento de Diagnósticos
+    saveDiagnostic: async (userId: string, data: FinancialData) => {
+        // Verifica se já existe
+        const { data: existing } = await supabase
+            .from('diagnostics')
+            .select('user_id')
+            .eq('user_id', userId)
+            .single();
+
+        if (existing) {
+            await supabase
+                .from('diagnostics')
+                .update({
+                    data: data,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('user_id', userId);
+        } else {
+            await supabase
+                .from('diagnostics')
+                .insert({
+                    user_id: userId,
+                    data: data
+                });
+        }
+    },
+
+    getDiagnosticByUser: async (userId: string): Promise<FinancialData | null> => {
+        const { data, error } = await supabase
+            .from('diagnostics')
+            .select('data, updated_at')
+            .eq('user_id', userId)
+            .single();
+
+        if (error || !data) return null;
+
+        const financialData = data.data as FinancialData;
+        financialData.lastUpdated = data.updated_at;
+
+        return financialData;
+    },
+
+    updateCurrentProfile: async (updates: { name?: string; whatsapp?: string; password?: string; email?: string }) => {
+        const { password, email, ...meta } = updates;
+        const authUpdates: any = {};
+
+        if (password) authUpdates.password = password;
+        if (email) authUpdates.email = email;
+
+        // 1. Update Auth (Password/Email)
+        if (Object.keys(authUpdates).length > 0) {
+            const { error } = await supabase.auth.updateUser(authUpdates);
+            if (error) throw error;
+        }
+
+        // 2. Update Profile (Name/Whatsapp)
+        if (Object.keys(meta).length > 0) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { error } = await supabase
+                    .from('profiles')
+                    .update(meta)
+                    .eq('id', user.id);
+                if (error) throw error;
+            }
+        }
+    },
+
+    // Anamnese
+    saveAnamnesis: async (userId: string, data: Omit<Anamnesis, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
+        const { error } = await supabase
+            .from('anamnese')
+            .insert({
+                user_id: userId,
+                reason: data.reason,
+                objectives: data.objectives,
+                spends_all: data.spendsAll,
+                emergency_fund: data.emergencyFund,
+                investments: data.investments,
+                invests_monthly: data.investsMonthly,
+                retirement_plan: data.retirementPlan,
+                independent_decisions: data.independentDecisions,
+                financial_score: data.financialScore
+            });
+
+        if (error) throw new Error(error.message);
+    },
+
+    getAnamnesis: async (userId: string): Promise<any | null> => {
+        const { data, error } = await supabase
+            .from('anamnese')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (error || !data) return null;
+
+        return {
+            id: data.id,
+            userId: data.user_id,
+            reason: data.reason,
+            objectives: data.objectives,
+            spendsAll: data.spends_all,
+            emergencyFund: data.emergency_fund,
+            investments: data.investments,
+            investsMonthly: data.invests_monthly,
+            retirementPlan: data.retirement_plan,
+            independentDecisions: data.independent_decisions,
+            financialScore: data.financial_score,
+            createdAt: data.created_at,
+            updatedAt: data.updated_at
+        };
+    },
+
+    // Gerenciamento de Usuários (Admin/Secretário)
+    listUsers: async (): Promise<User[]> => {
+        // Precisamos dos emails que estão no auth.users, mas tabela profiles não tem email por padrão se não duplicarmos.
+        // O Supabase não deixa dar join em auth.users facilmente. 
+        // Solução comum: salvar email no public.profiles ou usar Edge Function.
+        // Como o authService original retornava tudo e no register eu passo email, vou assumir que vamos migrar para salvar email no profile também?
+        // Ah, eu não adicionei email no profile no SQL setup. 
+        // Vou buscar profiles e para MVP assumir que o "email" está acessivel via auth.getUser() apenas para o logado,
+        // MAS para listar TODOS os usuários, o Admin precisa ver os emails.
+        // Vou fazer um fetch em profiles e tentar pegar o email se possível, mas sem email no profile fica difícil.
+        // AJUSTE: Vou alterar a tabela profiles para ter email também. É redundante mas facilita query.
+
+        const { data: profiles, error } = await supabase
+            .from('profiles')
+            .select('*');
+
+        if (error) return [];
+
+        // HACK: Como não temos o email no profile e não podemos listar auth.users no client-side sem admin key (que não temos segura aqui),
+        // Vamos retornar os profiles. O campo email vai ficar vazio ou "hidden" por enquanto se não estiver no profile.
+        // Melhor: Adicionar coluna email no profiles.
+
+        return (profiles || []).map(p => ({
+            id: p.id,
+            name: p.name,
+            email: p.email || '', // Placeholder se não tiver coluna
+            whatsapp: p.whatsapp,
+            role: p.role,
+            status: p.status,
+            createdAt: p.created_at,
+            lastContactedBy: p.last_contacted_by,
+            checklistAvailable: p.checklist_available,
+            checklistProgress: p.checklist_progress || []
+        }));
+    },
+
+    deleteUser: async (userId: string) => {
+        // Uso de RPC para deletar do auth.users (que faz cascade no profiles)
+        const { error } = await supabase.rpc('delete_user_by_admin', { target_user_id: userId });
+        if (error) {
+            console.error('Erro ao deletar usuário:', error);
+            throw new Error(error.message);
+        }
+    },
+
+    updateUserRole: async (userId: string, newRole: UserRole) => {
+        await supabase.from('profiles').update({ role: newRole }).eq('id', userId);
+    },
+
+    updateUserStatus: async (userId: string, newStatus: UserStatus, responsibleName: string) => {
+        const { error } = await supabase.from('profiles').update({
+            status: newStatus,
+            last_contacted_by: responsibleName
+        }).eq('id', userId);
+
+        if (error) {
+            console.error('Erro ao atualizar status:', error);
+            throw error;
+        }
+    },
+
+    confirmFirstAccess: async (userId: string) => {
+        // Atualiza apenas o status para ACTIVE, sem mexer em last_contacted_by (evita erro de RLS se houver restrição)
+        const { error } = await supabase.from('profiles').update({
+            status: 'ACTIVE'
+        }).eq('id', userId);
+
+        if (error) {
+            console.error('Erro ao confirmar primeiro acesso:', error);
+            throw error;
+        }
+    },
+
+    updateUserData: async (userId: string, updates: Partial<User>) => {
+        const { email, ...profileUpdates } = updates;
+
+        // 1. Se houver mudança de email, chamar RPC
+        if (email) {
+            const { error: emailError } = await supabase.rpc('update_user_email_by_admin', {
+                target_user_id: userId,
+                new_email: email
+            });
+            if (emailError) return { success: false, message: emailError.message };
+        }
+
+        // 2. Atualizar outros dados do perfil
+        if (Object.keys(profileUpdates).length > 0) {
+            const { error } = await supabase
+                .from('profiles')
+                .update(profileUpdates)
+                .eq('id', userId);
+
+            if (error) return { success: false, message: error.message };
+        }
+
+        return { success: true };
+    },
+
+    // Gerenciamento de Custo de Vida
+    getCostOfLiving: async (userId: string): Promise<CostOfLivingItem[]> => {
+        const { data, error } = await supabase
+            .from('cost_of_living')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error('Erro ao buscar custo de vida:', error);
+            return [];
+        }
+        return data || [];
+    },
+
+    saveCostOfLiving: async (userId: string, item: { id?: string; category: string; description: string; value: number }) => {
+        if (item.id) {
+            const { error } = await supabase
+                .from('cost_of_living')
+                .update({
+                    category: item.category,
+                    description: item.description,
+                    value: item.value
+                })
+                .eq('id', item.id);
+
+            if (error) {
+                console.error('Erro ao atualizar item de custo de vida:', error);
+                throw error;
+            }
+        } else {
+            const { error } = await supabase
+                .from('cost_of_living')
+                .insert({
+                    user_id: userId,
+                    category: item.category,
+                    description: item.description,
+                    value: item.value
+                });
+
+            if (error) {
+                console.error('Erro ao salvar item de custo de vida:', error);
+                throw error;
+            }
+        }
+        return true;
+    },
+
+
+
+    deleteCostOfLivingItem: async (id: string) => {
+        const { error } = await supabase
+            .from('cost_of_living')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('Erro ao deletar item de custo de vida:', error);
+            throw error;
+        }
+        return true;
+    },
+
+    // Gerenciamento de Mapeamento de Dívidas
+    getDebtMapping: async (userId: string): Promise<DebtMapItem[]> => {
+        const { data, error } = await supabase
+            .from('debt_mappings')
+            .select('items')
+            .eq('user_id', userId)
+            .single();
+
+        if (error || !data) return [];
+        return data.items || [];
+    },
+
+    saveDebtMapping: async (userId: string, items: DebtMapItem[]) => {
+        const { error } = await supabase
+            .from('debt_mappings')
+            .upsert({
+                user_id: userId,
+                items,
+                updated_at: new Date().toISOString()
+            });
+
+        if (error) {
+            console.error('Erro ao salvar mapeamento de dívidas:', error);
+            throw error;
+        }
+    },
+
+    createUserByAdmin: async (userData: Omit<User, 'id' | 'createdAt' | 'status'> & { status?: UserStatus }) => {
+        // Create a temporary client that DOES NOT persist the session
+        // This prevents the Admin from being logged out when creating a new user
+        const tempClient = createClient(supabaseUrl, supabaseAnonKey, {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+                detectSessionInUrl: false
+            }
+        });
+
+        const { data, error } = await tempClient.auth.signUp({
+            email: userData.email,
+            password: userData.password || 'mudar123',
+            options: {
+                data: {
+                    name: userData.name,
+                    whatsapp: userData.whatsapp,
+                    role: userData.role || 'USER'
+                }
+            }
+        });
+
+        if (error) return { success: false, message: error.message };
+
+        if (data.user) {
+            // Se o admin passou um status específico (ex: ACTIVE), atualizamos agora
+            if (userData.status && userData.status !== 'NEW') {
+                // Usamos o client principal (Admin) para atualizar o profile criado via trigger
+                // Mas o trigger roda assincrono? Sim.
+                // Mas aqui já temos O ID.
+                // Como somos Admin chamando, podemos atualizar o profile.
+                await supabase.from('profiles').update({ status: userData.status }).eq('id', data.user.id);
+            }
+
+            const newUser: User = {
+                id: data.user.id,
+                name: userData.name,
+                email: userData.email,
+                whatsapp: userData.whatsapp,
+                role: userData.role as UserRole,
+                status: userData.status || 'NEW',
+                createdAt: new Date().toISOString()
+            };
+            return { success: true, user: newUser };
+        }
+
+        return { success: false, message: 'Erro ao criar conta.' };
+    },
+
+    // Métodos ADMIN para bypass RLS
+    getDiagnosticByAdmin: async (userId: string): Promise<FinancialData | null> => {
+        const { data, error } = await supabase.rpc('get_diagnostic_by_admin', { target_user_id: userId });
+        if (error || !data) return null;
+
+        const financialData = data.data as FinancialData;
+        financialData.lastUpdated = data.updated_at;
+        return financialData;
+    },
+
+    getAnamnesisByAdmin: async (userId: string): Promise<Anamnesis | null> => {
+        const { data, error } = await supabase.rpc('get_anamnesis_by_admin', { target_user_id: userId });
+        if (error || !data) return null;
+
+        // Mapear retorno do RPC (que é snake_case do banco) para camelCase do App
+        return {
+            id: data.id,
+            userId: data.user_id,
+            reason: data.reason,
+            objectives: data.objectives,
+            spendsAll: data.spends_all,
+            emergencyFund: data.emergency_fund,
+            investments: data.investments,
+            investsMonthly: data.invests_monthly,
+            retirementPlan: data.retirement_plan,
+            independentDecisions: data.independent_decisions,
+            financialScore: data.financial_score,
+            createdAt: data.created_at,
+            updatedAt: data.updated_at
+        };
+    },
+
+    getDebtMappingByAdmin: async (userId: string): Promise<DebtMapItem[]> => {
+        const { data, error } = await supabase.rpc('get_debt_mapping_by_admin', { target_user_id: userId });
+        if (error || !data || !data.items) return [];
+        return data.items;
+    },
+
+    getCostOfLivingByAdmin: async (userId: string): Promise<CostOfLivingItem[]> => {
+        const { data, error } = await supabase.rpc('get_cost_of_living_by_admin', { target_user_id: userId });
+        if (error || !data) return [];
+
+        // RPC retorna array de objetos, precisa mapear se campos diferirem (aqui parece igual)
+        return data as CostOfLivingItem[];
+    },
+
+    saveDebtMappingByAdmin: async (userId: string, items: DebtMapItem[]) => {
+        const { error } = await supabase.rpc('save_debt_mapping_by_admin', {
+            target_user_id: userId,
+            new_items: items
+        });
+        if (error) {
+            console.error('Erro ao salvar dívidas por admin:', error);
+            throw error;
+        }
+    },
+
+    saveCostOfLivingByAdmin: async (userId: string, item: { id?: string; category: string; description: string; value: number }) => {
+        const { error } = await supabase.rpc('save_cost_of_living_by_admin', {
+            target_user_id: userId,
+            item_id: item.id || null, // Passar explicitamente null se undefined
+            category: item.category,
+            description: item.description,
+            value: item.value
+        });
+        if (error) {
+            console.error('Erro ao salvar custo de vida por admin:', error);
+            throw error;
+        }
+    },
+
+    deleteCostOfLivingByAdmin: async (itemId: string) => {
+        const { error } = await supabase.rpc('delete_cost_of_living_by_admin', { target_item_id: itemId });
+        if (error) {
+            console.error('Erro ao deletar custo de vida por admin:', error);
+            throw error;
+        }
+    },
+
+    saveAnamnesisByAdmin: async (userId: string, data: Omit<Anamnesis, 'id' | 'userId' | 'createdAt' | 'updatedAt'>) => {
+        const { error } = await supabase.rpc('save_anamnesis_by_admin', {
+            target_user_id: userId,
+            reason: data.reason,
+            objectives: data.objectives,
+            spends_all: data.spendsAll,
+            emergency_fund: data.emergencyFund,
+            investments: data.investments,
+            invests_monthly: data.investsMonthly,
+            retirement_plan: data.retirementPlan,
+            independent_decisions: data.independentDecisions,
+            financial_score: data.financialScore
+        });
+
+        if (error) {
+            console.error('Erro ao salvar anamnese por admin:', error);
+            throw error;
+        }
+    },
+
+    // --- User Intake Form (Ficha Individual) ---
+    getUserIntake: async (userId: string) => {
+        const { data, error } = await supabase.rpc('get_user_intake', { target_user_id: userId });
+        if (error) {
+            console.error('Error fetching user intake:', error);
+            return null;
+        }
+        return data as any;
+    },
+
+    saveUserIntake: async (userId: string, intakeData: { main_problem: string; resolution_attempts: string; details?: any }) => {
+        const { data, error } = await supabase.rpc('save_user_intake', {
+            target_user_id: userId,
+            p_main_problem: intakeData.main_problem,
+            p_resolution_attempts: intakeData.resolution_attempts,
+            p_details: intakeData.details || {}
+        });
+
+        if (error) {
+            console.error('Error saving user intake:', error);
+            return { success: false, message: error.message };
+        }
+        return { success: true, data };
+    }
+};

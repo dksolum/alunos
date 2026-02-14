@@ -1,0 +1,81 @@
+# SOLUM - Diagnóstico Financeiro Inteligente
+
+Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciamento de usuários e relatórios detalhados.
+
+## 🚀 Funcionalidades Principais
+
+### 1. Novo Fluxo Centrado no Dashboard
+- **Painel Central**: Hub principal que gerencia o acesso aos módulos com base no progresso do usuário.
+- **Módulos**:
+  - **1. Anamnese**: Formulário comportamental detalhado (Prioridade #1).
+  - **2. Mapeamento de Dívidas**: Cadastro detalhado de dívidas com cálculo automático de juros e prazos.
+  - **3. Custo de Vida**: Mapeamento de despesas em 15 categorias com interface de Grid e Wizard.
+  - **4. Diagnóstico Financeiro**: Assistente (Wizard) que consolida todos os dados para gerar o relatório final.
+
+### 2. Relatórios Avançados e Impressão
+- **Visão Geral**: Dashboard com gráficos de comprometimento de renda e saldo disponível.
+- **Relatório Detalhado**: Lista filtrada de entradas e saídas.
+- **Impressão Profissional / PDF**:
+  - Layout otimizado para impressão (`@media print`) em todos os módulos.
+  - Cabeçalhos personalizados com nome e contato do usuário.
+  - Isolamento de conteúdo (remove menus e fundos escuros).
+
+### 3. Sistema de Usuários e Perfis (Supabase Auth)
+- **Autenticação Segura**: Integração completa com Supabase Auth e RLS (Row Level Security).
+- **Perfis de Usuário**:
+  - **USER**: Acesso apenas aos próprios dados.
+  - **ADMIN**: Acesso total, gerenciamento de usuários e "Modo de Visualização" (Impersonation) para ver o dashboard como o cliente.
+  - **SECRETARY**: Acesso administrativo restrito para criar usuários e preencher fichas.
+
+### 4. Painel Administrativo & CRM
+- **Ficha Individual (User Intake)**: Modal exclusivo para Admins/Secretários registrarem "Problema Principal" e histórico do cliente.
+- **Gestão de Status**: Controle visual de funil (Novo > Consultoria > Mentoria > Acompanhamento).
+- **Ações Rápidas**: Editar perfil, alterar status, visualizar dashboard do cliente.
+
+## 🛠️ Tecnologias Utilizadas
+
+- **Frontend**: React 19 (Vite) + TypeScript.
+- **Estilização**: Tailwind CSS + Shadcn concepts.
+- **Backend**: Supabase (PostgreSQL, Auth, Edge Functions, RLS).
+- **Visualização**: Recharts (Gráficos) + Lucide React (Ícones).
+- **Build Tool**: Vite.
+
+## 🔧 Configuração e Instalação
+
+### Pré-requisitos
+- Node.js instalado.
+- Conta no Supabase.
+
+### Instalação
+
+1. Clone o repositório:
+   ```bash
+   git clone <repositorio>
+   ```
+
+2. Instale as dependências:
+   ```bash
+   npm install
+   ```
+
+3. Configure as variáveis de ambiente:
+   Crie um arquivo `.env.local` na raiz do projeto com:
+
+   ```env
+   VITE_SUPABASE_URL=sua_url_supabase
+   VITE_SUPABASE_ANON_KEY=sua_chave_anonima_supabase
+   ```
+
+4. Execute o projeto:
+   ```bash
+   npm run dev
+   ```
+
+## 📝 Histórico de Atualizações Recentes
+
+- **Fix**: Correção de impressão (páginas em branco e vazamento de conteúdo admin).
+- **Feat**: Implementação completa do módulo **Ficha Individual** (User Intake) com persistência no banco.
+- **Refactor**: Nova estrutura de Dashboard com bloqueio progressivo de módulos.
+- **Feat**: Mapeamento de Dívidas e Custo de Vida (Grid System) integrados ao Diagnóstico.
+- **Infra**: Migração completa de LocalStorage para Supabase com RLS.
+
