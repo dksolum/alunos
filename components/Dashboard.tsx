@@ -181,8 +181,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             Sua Jornada Financeira
                         </h2>
                         <p className="text-slate-400 font-medium max-w-2xl">
-                            Complete os módulos abaixo para desbloquear uma visão completa da sua vida financeira.
-                            Após entendermos seu perfil e estruturar o seu financeiro.
+                            Complete os módulos abaixo para desbloquear uma visão completa do seu financeiro.
                         </p>
                     </div>
 
