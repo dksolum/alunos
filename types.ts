@@ -160,7 +160,7 @@ export interface User {
   status: UserStatus;
   lastContactedBy?: string; // Nome do Admin/Secretário que alterou o status pela última vez
   createdAt: string;
-  checklistAvailable?: boolean;
+  checklistPhase?: 'LOCKED' | 'PHASE_1' | 'PHASE_2';
   checklistProgress?: number[];
   checklistData?: ChecklistData;
 }

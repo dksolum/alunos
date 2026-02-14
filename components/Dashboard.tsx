@@ -355,7 +355,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </div>
 
                         {/* Checklist Destruidor de Sanhaço (Condicional) */}
-                        {user.checklistAvailable && (
+                        {(user.checklistPhase === 'PHASE_1' || user.checklistPhase === 'PHASE_2') && (
                             <div className="mt-6 group relative overflow-hidden rounded-[2rem] border p-8 transition-all duration-300 bg-slate-900 border-rose-500/30 shadow-2xl shadow-rose-500/5 hover:border-rose-500/50">
                                 <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                                     <ListChecks size={120} />
@@ -369,7 +369,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                         <div>
                                             <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2">Checklist Destruidor de Sanhaço</h3>
                                             <p className="text-sm text-slate-400 font-medium leading-relaxed">
-                                                Guia de sobrevivência passo-a-passo para sair do caos financeiro. Siga à risca.
+                                                {user.checklistPhase === 'PHASE_2'
+                                                    ? "Fase de Retorno: renegociação, cortes e ajustes finos."
+                                                    : "Guia de sobrevivência passo-a-passo para sair do caos financeiro."}
                                             </p>
                                         </div>
                                     </div>
@@ -377,9 +379,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                     <div className="pt-4 border-t border-slate-800/50">
                                         <button
                                             onClick={() => setShowChecklistModal(true)}
-                                            className="w-full py-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold uppercase tracking-wide text-xs transition-all shadow-lg shadow-rose-900/20 hover:shadow-rose-500/20 hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                                            className={`w-full py-4 rounded-xl font-bold uppercase tracking-wide text-xs transition-all shadow-lg flex items-center justify-center gap-2 hover:-translate-y-0.5 ${user.checklistPhase === 'PHASE_2'
+                                                    ? 'bg-amber-500 hover:bg-amber-400 text-slate-900 shadow-amber-900/20 hover:shadow-amber-500/20'
+                                                    : 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/20 hover:shadow-rose-500/20'
+                                                }`}
                                         >
-                                            Acessar Guia de Guerra <ChevronRight size={14} />
+                                            {user.checklistPhase === 'PHASE_2' ? "Acessar Fase de Retorno" : "Acessar Guia de Guerra"} <ChevronRight size={14} />
                                         </button>
                                     </div>
                                 </div>
@@ -394,6 +399,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         initialData={user.checklistData || {}}
                         readOnly={currentUser.role === 'USER'}
                         financialData={financialData}
+                        phase={user.checklistPhase || 'LOCKED'}
                         onSave={async (newProgress, newData) => {
                             if (currentUser.role === 'USER') return; // Double check security
                             await authService.updateChecklistProgress(user.id, newProgress);

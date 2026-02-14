@@ -90,7 +90,7 @@ export const authService = {
             role: profile.role,
             status: profile.status,
             createdAt: profile.created_at,
-            checklistAvailable: profile.checklist_available,
+            checklistPhase: profile.checklist_phase as 'LOCKED' | 'PHASE_1' | 'PHASE_2',
             checklistProgress: profile.checklist_progress || [],
             checklistData: profile.checklist_data || {}
             // password é omitido
@@ -115,20 +115,20 @@ export const authService = {
             status: profile.status,
             createdAt: profile.created_at,
             lastContactedBy: profile.last_contacted_by,
-            checklistAvailable: profile.checklist_available,
+            checklistPhase: profile.checklist_phase as 'LOCKED' | 'PHASE_1' | 'PHASE_2',
             checklistProgress: profile.checklist_progress || [],
             checklistData: profile.checklist_data || {}
         };
     },
 
-    toggleUserChecklist: async (userId: string, status: boolean) => {
+    updateUserChecklistPhase: async (userId: string, phase: 'LOCKED' | 'PHASE_1' | 'PHASE_2') => {
         const { error } = await supabase
             .from('profiles')
-            .update({ checklist_available: status })
+            .update({ checklist_phase: phase })
             .eq('id', userId);
 
         if (error) {
-            console.error('Erro ao atualizar checklist:', error);
+            console.error('Erro ao atualizar fase do checklist:', error);
             throw error;
         }
     },
@@ -304,7 +304,7 @@ export const authService = {
             status: p.status,
             createdAt: p.created_at,
             lastContactedBy: p.last_contacted_by,
-            checklistAvailable: p.checklist_available,
+            checklistPhase: p.checklist_phase as 'LOCKED' | 'PHASE_1' | 'PHASE_2',
             checklistProgress: p.checklist_progress || [],
             checklistData: p.checklist_data || {}
         }));

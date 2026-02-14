@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { User, UserRole, UserStatus, ChecklistData, FinancialData } from '../types';
 import { authService } from '../services/authService';
 import { UserIntakeModal } from './UserIntakeModal';
-import { X, Search, Trash2, Eye, Shield, User as UserIcon, Lock, Briefcase, Plus, Check, Clock, AlertCircle, MessageCircle, Edit2, LogOut, CheckCircle2, FileText, ShieldCheck, ListChecks } from 'lucide-react';
+import { X, Search, Trash2, Eye, Shield, User as UserIcon, Lock, Briefcase, Plus, Check, Clock, AlertCircle, MessageCircle, Edit2, LogOut, CheckCircle2, FileText, ShieldCheck, ListChecks, Target } from 'lucide-react';
 import { ChecklistModal } from './ChecklistModal';
 
 interface AdminDashboardProps {
@@ -33,6 +33,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
 
     const [showChecklistModal, setShowChecklistModal] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [showPhaseModal, setShowPhaseModal] = useState(false);
+    const [selectedPhaseUser, setSelectedPhaseUser] = useState<User | null>(null);
     const [selectedUserFinancialData, setSelectedUserFinancialData] = useState<FinancialData | undefined>(undefined);
 
     const handleOpenChecklist = async (user: User) => {
@@ -291,19 +293,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                                                 </td>
                                                 <td className="p-4 text-center">
                                                     <button
-                                                        onClick={async () => {
-                                                            try {
-                                                                await authService.toggleUserChecklist(user.id, !user.checklistAvailable);
-                                                                loadUsers();
-                                                            } catch (error) {
-                                                                alert('Erro ao alterar status do checklist');
-                                                            }
+                                                        onClick={() => {
+                                                            setSelectedPhaseUser(user);
+                                                            setShowPhaseModal(true);
                                                         }}
-                                                        className={`p-2 rounded-lg transition-colors ${user.checklistAvailable
+                                                        className={`p-2 rounded-lg transition-colors ${user.checklistPhase && user.checklistPhase !== 'LOCKED'
                                                             ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
                                                             : 'bg-slate-800 text-slate-600 hover:bg-slate-700 hover:text-slate-400'
                                                             }`}
-                                                        title={user.checklistAvailable ? "Checklist Liberado" : "Checklist Bloqueado"}
+                                                        title={`Fase Atual: ${user.checklistPhase === 'PHASE_1' ? 'Fase 1' : (user.checklistPhase === 'PHASE_2' ? 'Fase 2' : 'Bloqueado')}`}
                                                     >
                                                         <ShieldCheck size={16} />
                                                     </button>
@@ -406,6 +404,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                     initialData={selectedUser.checklistData || {}}
                     readOnly={false}
                     financialData={selectedUserFinancialData}
+                    phase={selectedUser.checklistPhase || 'LOCKED'}
                     onSave={async (newProgress, newData) => { // Updated signature
                         if (selectedUser) {
                             await authService.updateChecklistProgress(selectedUser.id, newProgress);
@@ -429,6 +428,104 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                         }
                     }}
                 />
+            )}
+            {showPhaseModal && selectedPhaseUser && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 print:hidden animate-in fade-in duration-200">
+                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <ShieldCheck size={20} className="text-emerald-500" />
+                                    Fase do Checklist
+                                </h3>
+                                <p className="text-xs text-slate-400 mt-1">Gerencie o nível de acesso do usuário.</p>
+                            </div>
+                            <button
+                                onClick={() => setShowPhaseModal(false)}
+                                className="text-slate-500 hover:text-white transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => {
+                                    if (selectedPhaseUser) {
+                                        authService.updateUserChecklistPhase(selectedPhaseUser.id, 'LOCKED');
+                                        setUsers(users.map(u => u.id === selectedPhaseUser.id ? { ...u, checklistPhase: 'LOCKED' } : u));
+                                        setShowPhaseModal(false);
+                                    }
+                                }}
+                                className={`w-full p-4 rounded-xl border flex items-center justify-between group transition-all ${selectedPhaseUser.checklistPhase === 'LOCKED' || !selectedPhaseUser.checklistPhase
+                                    ? 'bg-slate-800 border-rose-500/50 text-white shadow-lg shadow-rose-900/10'
+                                    : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white hover:border-slate-600'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-lg ${selectedPhaseUser.checklistPhase === 'LOCKED' || !selectedPhaseUser.checklistPhase ? 'bg-rose-500/20 text-rose-500' : 'bg-slate-900 text-slate-600'}`}>
+                                        <Lock size={18} />
+                                    </div>
+                                    <div className="text-left">
+                                        <span className="block text-sm font-bold uppercase">Bloqueado</span>
+                                        <span className="block text-[10px] opacity-70">Sem acesso ao checklist</span>
+                                    </div>
+                                </div>
+                                {(selectedPhaseUser.checklistPhase === 'LOCKED' || !selectedPhaseUser.checklistPhase) && <CheckCircle2 size={18} className="text-rose-500" />}
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    if (selectedPhaseUser) {
+                                        authService.updateUserChecklistPhase(selectedPhaseUser.id, 'PHASE_1');
+                                        setUsers(users.map(u => u.id === selectedPhaseUser.id ? { ...u, checklistPhase: 'PHASE_1' } : u));
+                                        setShowPhaseModal(false);
+                                    }
+                                }}
+                                className={`w-full p-4 rounded-xl border flex items-center justify-between group transition-all ${selectedPhaseUser.checklistPhase === 'PHASE_1'
+                                    ? 'bg-slate-800 border-rose-500/50 text-white shadow-lg shadow-rose-900/10'
+                                    : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white hover:border-slate-600'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-lg ${selectedPhaseUser.checklistPhase === 'PHASE_1' ? 'bg-rose-500/20 text-rose-400' : 'bg-slate-900 text-slate-600'}`}>
+                                        <ListChecks size={18} />
+                                    </div>
+                                    <div className="text-left">
+                                        <span className="block text-sm font-bold uppercase">Fase 1: Diagnóstico</span>
+                                        <span className="block text-[10px] opacity-70">Checklist base (Sanhaço)</span>
+                                    </div>
+                                </div>
+                                {selectedPhaseUser.checklistPhase === 'PHASE_1' && <CheckCircle2 size={18} className="text-rose-500" />}
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    if (selectedPhaseUser) {
+                                        authService.updateUserChecklistPhase(selectedPhaseUser.id, 'PHASE_2');
+                                        setUsers(users.map(u => u.id === selectedPhaseUser.id ? { ...u, checklistPhase: 'PHASE_2' } : u));
+                                        setShowPhaseModal(false);
+                                    }
+                                }}
+                                className={`w-full p-4 rounded-xl border flex items-center justify-between group transition-all ${selectedPhaseUser.checklistPhase === 'PHASE_2'
+                                    ? 'bg-slate-800 border-amber-500/50 text-white shadow-lg shadow-amber-900/10'
+                                    : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white hover:border-slate-600'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-lg ${selectedPhaseUser.checklistPhase === 'PHASE_2' ? 'bg-amber-500/20 text-amber-500' : 'bg-slate-900 text-slate-600'}`}>
+                                        <Target size={18} />
+                                    </div>
+                                    <div className="text-left">
+                                        <span className="block text-sm font-bold uppercase">Fase 2: Retorno</span>
+                                        <span className="block text-[10px] opacity-70">Negociação e Ajustes</span>
+                                    </div>
+                                </div>
+                                {selectedPhaseUser.checklistPhase === 'PHASE_2' && <CheckCircle2 size={18} className="text-amber-500" />}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </>
     );
