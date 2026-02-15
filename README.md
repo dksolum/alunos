@@ -32,16 +32,21 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
 - **Gestão de Status**: Controle visual de funil (Novo > Consultoria > Mentoria > Acompanhamento).
 - **Ações Rápidas**: Editar perfil, alterar status, visualizar dashboard do cliente.
 
-### 5. Checklist Destruidor de Sanhaço (v2.0)
-- **Guia de Guerra**: Lista de verificação estratégica para organização financeira.
-- **Sub-itens e Inputs**: Etapas complexas agora possuem sub-tarefas e campos de texto para observações.
+### 5. Checklist Destruidor de Sanhaço (v2.1 - Multi-Fase)
+- **Sistema de Fases**:
+  - **Fase 1 (Diagnóstico)**: Organização inicial e levantamento de dívidas.
+  - **Fase 2 (Retorno)**: Execução do plano, negociação e definição de tetos de gastos.
+- **Logica Avançada**:
+  - **Sub-itens e Inputs**: Etapas com sub-tarefas e campos de texto condicionais.
+  - **Tetos de Gastos**: Usuário define metas para categorias ofensoras (ex: "Mercado", "Lazer").
 - **Estados Visuais**:
   - **Pendente (Cinza)**: Não iniciado.
-  - **Em Progresso (Amarelo)**: Sub-itens marcados ou texto preenchido.
+  - **Em Progresso (Amarelo/Azul)**: Sub-itens marcados ou texto preenchido.
   - **Concluído (Verde)**: Etapa finalizada.
 - **Controle de Acesso Hierárquico**:
-  - **Admins/Secretários**: Podem editar qualquer checklist (dados salvos automaticamente ao fechar).
-  - **Usuários**: Modo "Somente Leitura" (podem expandir para ver detalhes, mas não mudar status).
+  - **Admins** selecionam a fase do aluno via Dashboard.
+  - **Admins/Secretários**: Podem editar qualquer checklist.
+  - **Usuários**: Modo "Somente Leitura" (podem expandir para ver detalhes).
 
 ### 6. Painel Administrativo Otimizado
 - **Hierarquia Visual**: Lista de usuários ordenada por cargo (Admin > Secretário > Usuário) e data de criação.

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Save, FileText, HelpCircle, Target, Printer, Calendar, AlertTriangle, TrendingUp } from 'lucide-react';
 import { authService } from '../services/authService';
 import { User } from '../types';
+import { PrintText } from './PrintText';
 
 interface UserIntakeModalProps {
     user: User;
@@ -57,8 +58,6 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                 // Merge loaded data with default structure to ensure all fields exist
                 setFormData(prev => {
                     const dbDetails = data.details || {};
-                    console.log('UserIntakeModal: dbDetails:', dbDetails); // DEBUG
-
                     // Ensure deep merge of nested structures to preserve 'selected' and 'details' fields
                     const mergedData = {
                         main_problem: data.main_problem || '',
@@ -86,7 +85,6 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                             goals: { ...prev.details.goals, ...(dbDetails.goals || {}) }
                         }
                     };
-                    console.log('UserIntakeModal: mergedData:', mergedData); // DEBUG
                     return mergedData;
                 });
             } else {
@@ -125,9 +123,6 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
         setSaving(true);
         setError('');
         try {
-            console.log('UserIntakeModal: Saving payload:', formData); // DEBUG
-            console.log('UserIntakeModal: Target User ID:', user.id); // DEBUG
-
             const result = await authService.saveUserIntake(user.id, formData);
             if (result.success) {
                 onClose();
@@ -211,9 +206,10 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                 <textarea
                                     value={formData.main_problem}
                                     onChange={e => setFormData({ ...formData, main_problem: e.target.value })}
-                                    className="w-full h-32 bg-slate-800/50 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-sky-500 transition-all resize-none placeholder:text-slate-600 print:bg-white print:border-gray-300 print:text-black print:h-auto print:min-h-[100px]"
+                                    className="w-full h-32 bg-slate-800/50 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-sky-500 transition-all resize-none placeholder:text-slate-600 print:hidden"
                                     placeholder="Descreva detalhadamente o principal desafio financeiro..."
                                 />
+                                <PrintText content={formData.main_problem} />
                             </section>
 
                             {/* 2. Tentativas Anteriores */}
@@ -225,9 +221,10 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                 <textarea
                                     value={formData.resolution_attempts}
                                     onChange={e => setFormData({ ...formData, resolution_attempts: e.target.value })}
-                                    className="w-full h-24 bg-slate-800/50 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-emerald-500 transition-all resize-none placeholder:text-slate-600 print:bg-white print:border-gray-300 print:text-black print:h-auto print:min-h-[80px]"
+                                    className="w-full h-24 bg-slate-800/50 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-emerald-500 transition-all resize-none placeholder:text-slate-600 print:hidden"
                                     placeholder="Liste as tentativas anteriores..."
                                 />
+                                <PrintText content={formData.resolution_attempts} />
                             </section>
 
                             {/* 3. Visão Financeira (Checklist) */}
@@ -244,7 +241,7 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                         { key: 'emergency_fund', label: 'Tem reserva de emergência?' },
                                         { key: 'others', label: 'Outros' }
                                     ].map((item) => (
-                                        <div key={item.key} className="p-4 bg-slate-800/30 rounded-xl border border-slate-800 print:bg-transparent print:border-gray-300">
+                                        <div key={item.key} className="p-4 bg-slate-800/30 rounded-xl border border-slate-800 print:bg-transparent print:border-gray-300 print:p-2">
                                             <div className="flex flex-col gap-3">
                                                 <label className="flex items-center gap-3 cursor-pointer">
                                                     <input
@@ -268,25 +265,28 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                                     <span className="text-sm font-medium text-white print:text-black">{item.label}</span>
                                                 </label>
                                                 {formData.details.financial_view[item.key as keyof typeof formData.details.financial_view]?.selected && (
-                                                    <input
-                                                        type="text"
-                                                        value={formData.details.financial_view[item.key as keyof typeof formData.details.financial_view]?.details || ''}
-                                                        onChange={e => setFormData({
-                                                            ...formData,
-                                                            details: {
-                                                                ...formData.details,
-                                                                financial_view: {
-                                                                    ...formData.details.financial_view,
-                                                                    [item.key]: {
-                                                                        ...formData.details.financial_view[item.key as keyof typeof formData.details.financial_view],
-                                                                        details: e.target.value
+                                                    <>
+                                                        <textarea
+                                                            value={formData.details.financial_view[item.key as keyof typeof formData.details.financial_view]?.details || ''}
+                                                            onChange={e => setFormData({
+                                                                ...formData,
+                                                                details: {
+                                                                    ...formData.details,
+                                                                    financial_view: {
+                                                                        ...formData.details.financial_view,
+                                                                        [item.key]: {
+                                                                            ...formData.details.financial_view[item.key as keyof typeof formData.details.financial_view],
+                                                                            details: e.target.value
+                                                                        }
                                                                     }
                                                                 }
-                                                            }
-                                                        })}
-                                                        placeholder={item.key === 'others' ? "Descreva outros..." : "Observação..."}
-                                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:border-amber-500 outline-none animate-in slide-in-from-top-2 print:bg-white print:border-2 print:border-gray-500 print:text-black print:block"
-                                                    />
+                                                            })}
+                                                            placeholder={item.key === 'others' ? "Descreva outros..." : "Observação..."}
+                                                            rows={2}
+                                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:border-amber-500 outline-none animate-in slide-in-from-top-2 resize-none print:hidden"
+                                                        />
+                                                        <PrintText content={formData.details.financial_view[item.key as keyof typeof formData.details.financial_view]?.details || ''} />
+                                                    </>
                                                 )}
                                             </div>
                                         </div>
@@ -302,7 +302,7 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                 </label>
                                 <div className="space-y-4">
                                     {/* Impedimento Guardar */}
-                                    <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-800 print:bg-transparent print:border-gray-300">
+                                    <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-800 print:bg-transparent print:border-gray-300 print:p-2">
                                         <div className="flex flex-col gap-3">
                                             <label className="flex items-center gap-3 cursor-pointer">
                                                 <input
@@ -323,28 +323,31 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                                 <span className="text-sm font-medium text-white print:text-black">Tem algo que te impede de guardar dinheiro?</span>
                                             </label>
                                             {formData.details.problems.impediment_saving.has && (
-                                                <input
-                                                    type="text"
-                                                    value={formData.details.problems.impediment_saving.details}
-                                                    onChange={e => setFormData({
-                                                        ...formData,
-                                                        details: {
-                                                            ...formData.details,
-                                                            problems: {
-                                                                ...formData.details.problems,
-                                                                impediment_saving: { ...formData.details.problems.impediment_saving, details: e.target.value }
+                                                <>
+                                                    <textarea
+                                                        value={formData.details.problems.impediment_saving.details}
+                                                        onChange={e => setFormData({
+                                                            ...formData,
+                                                            details: {
+                                                                ...formData.details,
+                                                                problems: {
+                                                                    ...formData.details.problems,
+                                                                    impediment_saving: { ...formData.details.problems.impediment_saving, details: e.target.value }
+                                                                }
                                                             }
-                                                        }
-                                                    })}
-                                                    placeholder="O que impede?"
-                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:border-rose-500 outline-none animate-in slide-in-from-top-2 print:bg-white print:border-2 print:border-gray-500 print:text-black print:block"
-                                                />
+                                                        })}
+                                                        placeholder="O que impede?"
+                                                        rows={2}
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:border-rose-500 outline-none animate-in slide-in-from-top-2 resize-none print:hidden"
+                                                    />
+                                                    <PrintText content={formData.details.problems.impediment_saving.details} />
+                                                </>
                                             )}
                                         </div>
                                     </div>
 
                                     {/* Dívidas */}
-                                    <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-800 print:bg-transparent print:border-gray-300">
+                                    <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-800 print:bg-transparent print:border-gray-300 print:p-2">
                                         <div className="flex flex-col gap-3">
                                             <label className="flex items-center gap-3 cursor-pointer">
                                                 <input
@@ -365,28 +368,31 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                                 <span className="text-sm font-medium text-white print:text-black">Dificuldade para lidar com suas dívidas?</span>
                                             </label>
                                             {formData.details.problems.debt_difficulty.has && (
-                                                <input
-                                                    type="text"
-                                                    value={formData.details.problems.debt_difficulty.details}
-                                                    onChange={e => setFormData({
-                                                        ...formData,
-                                                        details: {
-                                                            ...formData.details,
-                                                            problems: {
-                                                                ...formData.details.problems,
-                                                                debt_difficulty: { ...formData.details.problems.debt_difficulty, details: e.target.value }
+                                                <>
+                                                    <textarea
+                                                        value={formData.details.problems.debt_difficulty.details}
+                                                        onChange={e => setFormData({
+                                                            ...formData,
+                                                            details: {
+                                                                ...formData.details,
+                                                                problems: {
+                                                                    ...formData.details.problems,
+                                                                    debt_difficulty: { ...formData.details.problems.debt_difficulty, details: e.target.value }
+                                                                }
                                                             }
-                                                        }
-                                                    })}
-                                                    placeholder="Qual dificuldade?"
-                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:border-rose-500 outline-none animate-in slide-in-from-top-2 print:bg-white print:border-2 print:border-gray-500 print:text-black print:block"
-                                                />
+                                                        })}
+                                                        placeholder="Qual dificuldade?"
+                                                        rows={2}
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:border-rose-500 outline-none animate-in slide-in-from-top-2 resize-none print:hidden"
+                                                    />
+                                                    <PrintText content={formData.details.problems.debt_difficulty.details} />
+                                                </>
                                             )}
                                         </div>
                                     </div>
 
                                     {/* Outros Problemas */}
-                                    <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-800 print:bg-transparent print:border-gray-300">
+                                    <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-800 print:bg-transparent print:border-gray-300 print:p-2">
                                         <div className="flex flex-col gap-3">
                                             <label className="flex items-center gap-3 cursor-pointer">
                                                 <input
@@ -407,22 +413,25 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                                 <span className="text-sm font-medium text-white print:text-black">Outros</span>
                                             </label>
                                             {formData.details.problems.others.has && (
-                                                <input
-                                                    type="text"
-                                                    value={formData.details.problems.others.details}
-                                                    onChange={e => setFormData({
-                                                        ...formData,
-                                                        details: {
-                                                            ...formData.details,
-                                                            problems: {
-                                                                ...formData.details.problems,
-                                                                others: { ...formData.details.problems.others, details: e.target.value }
+                                                <>
+                                                    <textarea
+                                                        value={formData.details.problems.others.details}
+                                                        onChange={e => setFormData({
+                                                            ...formData,
+                                                            details: {
+                                                                ...formData.details,
+                                                                problems: {
+                                                                    ...formData.details.problems,
+                                                                    others: { ...formData.details.problems.others, details: e.target.value }
+                                                                }
                                                             }
-                                                        }
-                                                    })}
-                                                    placeholder="Descreva outros problemas..."
-                                                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:border-rose-500 outline-none animate-in slide-in-from-top-2 print:bg-white print:border-2 print:border-gray-500 print:text-black print:block"
-                                                />
+                                                        })}
+                                                        placeholder="Descreva outros problemas..."
+                                                        rows={2}
+                                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:border-rose-500 outline-none animate-in slide-in-from-top-2 resize-none print:hidden"
+                                                    />
+                                                    <PrintText content={formData.details.problems.others.details} />
+                                                </>
                                             )}
                                         </div>
                                     </div>
@@ -439,9 +448,10 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                 <textarea
                                     value={formData.details.satisfaction}
                                     onChange={e => setFormData({ ...formData, details: { ...formData.details, satisfaction: e.target.value } })}
-                                    className="w-full h-24 bg-slate-800/50 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-purple-500 transition-all resize-none placeholder:text-slate-600 print:bg-white print:border-2 print:border-gray-500 print:text-black print:h-auto print:min-h-[80px] print:block"
+                                    className="w-full h-24 bg-slate-800/50 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-purple-500 transition-all resize-none placeholder:text-slate-600 print:hidden"
                                     placeholder="Descreva o que traria satisfação..."
                                 />
+                                <PrintText content={formData.details.satisfaction} />
                             </section>
 
                             {/* 6. Metas */}
@@ -460,7 +470,7 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                                 onChange={() => setFormData({ ...formData, details: { ...formData.details, goals: { ...formData.details.goals, has_goals: true } } })}
                                                 className="hidden"
                                             />
-                                            <div className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${formData.details.goals.has_goals ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>SIM</div>
+                                            <div className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${formData.details.goals.has_goals ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'} print:border print:border-black print:bg-transparent print:text-black ${formData.details.goals.has_goals ? 'print:bg-black/10' : ''}`}>SIM</div>
                                         </label>
                                         <label className="flex items-center gap-2 cursor-pointer">
                                             <input
@@ -470,20 +480,21 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                                 onChange={() => setFormData({ ...formData, details: { ...formData.details, goals: { ...formData.details.goals, has_goals: false } } })}
                                                 className="hidden"
                                             />
-                                            <div className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${!formData.details.goals.has_goals ? 'bg-slate-500 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>NÃO</div>
+                                            <div className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${!formData.details.goals.has_goals ? 'bg-slate-500 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'} print:border print:border-black print:bg-transparent print:text-black ${!formData.details.goals.has_goals ? 'print:bg-black/10' : ''}`}>NÃO</div>
                                         </label>
                                     </div>
                                 </div>
 
                                 {formData.details.goals.has_goals && (
                                     <div className="animate-in slide-in-from-top-2">
-                                        <p className="text-xs text-slate-400 mb-2 font-medium print:text-black">Por que alcançar essas metas é importante?</p>
+                                        <p className="text-xs text-slate-400 mb-2 font-medium print:hidden">Por que alcançar essas metas é importante?</p>
                                         <textarea
                                             value={formData.details.goals.importance}
                                             onChange={e => setFormData({ ...formData, details: { ...formData.details, goals: { ...formData.details.goals, importance: e.target.value } } })}
-                                            className="w-full h-24 bg-slate-800/50 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-blue-500 transition-all resize-none placeholder:text-slate-600 print:bg-white print:border-2 print:border-gray-500 print:text-black print:h-auto print:min-h-[80px] print:block"
+                                            className="w-full h-24 bg-slate-800/50 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-blue-500 transition-all resize-none placeholder:text-slate-600 print:hidden"
                                             placeholder="Descreva a importância das metas..."
                                         />
+                                        <PrintText content={formData.details.goals.importance} />
                                     </div>
                                 )}
                             </section>
@@ -498,9 +509,10 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                 <textarea
                                     value={formData.details.future_outlook}
                                     onChange={e => setFormData({ ...formData, details: { ...formData.details, future_outlook: e.target.value } })}
-                                    className="w-full h-24 bg-slate-800/50 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-teal-500 transition-all resize-none placeholder:text-slate-600 print:bg-white print:border-2 print:border-gray-500 print:text-black print:h-auto print:min-h-[80px] print:block"
+                                    className="w-full h-24 bg-slate-800/50 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-teal-500 transition-all resize-none placeholder:text-slate-600 print:hidden"
                                     placeholder="Sua previsão para o futuro..."
                                 />
+                                <PrintText content={formData.details.future_outlook} />
                             </section>
 
                         </div>

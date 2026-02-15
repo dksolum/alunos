@@ -430,7 +430,7 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
                                     }`}
                             >
                                 <ListChecks size={14} />
-                                Fase 1: Diagnóstico
+                                Fase 1: Consultoria
                             </button>
                             <button
                                 onClick={() => setActiveTab('phase2')}

@@ -35,9 +35,18 @@ O sistema implementa três níveis de permissão com regras de RLS (Row Level Se
 3.  **USER**:
     *   Acesso exclusivo ao próprio Dashboard e Diagnóstico.
     *   **Checklist Modo Leitura**: Pode visualizar o checklist e expandir itens para ver detalhes, mas *não pode alterar o status*.
-    *   Bloqueio progressivo de módulos baseado no status (Novo > Consultoria > Mentoria).
-
-## 3. Fluxo de Dados e Isolamento
+4.  **Checklist Destruidor de Sanhaço (v2.0)**:
+    *   **Estrutura de Dados (`checklist_data` JSONB)**:
+        *   Armazena o estado de sub-checklists e observações de texto.
+        *   Formato: `{ [stepId]: { subItems: { [subId]: { checked: boolean, value?: string } } } }`.
+    *   **Fases do Checklist (`checklist_phase`)**:
+        *   **LOCKED**: Usuário sem acesso ao checklist.
+        *   **PHASE_1 (Diagnóstico)**: Foco em organização e "estancar o sangramento".
+        *   **PHASE_2 (Retorno)**: Foco em negociação, reconciliação e limites de gastos.
+    *   **Lógica de Negócio**:
+        *   Transição de fase é controlada exclusivamente por Admins via Modal na Dashboard.
+        *   Inputs condicionais aparecem com base na resposta (ex: "Quais dívidas não estão em dia?").
+        *   Na Fase 2, o usuário define "Tetos de Gastos" para categorias críticas identificadas no diagnóstico.
 
 ### Prevenção de Poluição de Estado
 *   **Modo de Visualização (Admin)**: Ao selecionar um usuário, o sistema injeta o ID do cliente nos componentes. As funções de salvamento alternam dinamicamente entre `saveMyData` (User) e `saveClientData` (Admin RPC) dependendo do contexto.
