@@ -470,7 +470,7 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                                 onChange={() => setFormData({ ...formData, details: { ...formData.details, goals: { ...formData.details.goals, has_goals: true } } })}
                                                 className="hidden"
                                             />
-                                            <div className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${formData.details.goals.has_goals ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'} print:border print:border-black print:bg-transparent print:text-black ${formData.details.goals.has_goals ? 'print:bg-black/10' : ''}`}>SIM</div>
+                                            <div className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${formData.details.goals.has_goals ? 'bg-blue-500 text-white print:bg-black print:text-white print:border-2 print:border-black' : 'bg-slate-800 text-slate-400 hover:text-white print:bg-white print:text-gray-300 print:border print:border-gray-300'}`}>SIM</div>
                                         </label>
                                         <label className="flex items-center gap-2 cursor-pointer">
                                             <input
@@ -480,7 +480,7 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                                 onChange={() => setFormData({ ...formData, details: { ...formData.details, goals: { ...formData.details.goals, has_goals: false } } })}
                                                 className="hidden"
                                             />
-                                            <div className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${!formData.details.goals.has_goals ? 'bg-slate-500 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'} print:border print:border-black print:bg-transparent print:text-black ${!formData.details.goals.has_goals ? 'print:bg-black/10' : ''}`}>NÃO</div>
+                                            <div className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${!formData.details.goals.has_goals ? 'bg-slate-500 text-white print:bg-black print:text-white print:border-2 print:border-black' : 'bg-slate-800 text-slate-400 hover:text-white print:bg-white print:text-gray-300 print:border print:border-gray-300'}`}>NÃO</div>
                                         </label>
                                     </div>
                                 </div>
