@@ -124,6 +124,7 @@ export const Meeting1Content: React.FC<Meeting1ContentProps> = ({
                         <NonRecurringExpensesStage
                             userId={userId}
                             onPrint={() => handlePrint('expenses')}
+                            showDetails={false}
                         />
                     </div>
 
@@ -177,6 +178,7 @@ export const Meeting1Content: React.FC<Meeting1ContentProps> = ({
                             <NonRecurringExpensesStage
                                 userId={userId}
                                 initialItems={printData}
+                                showDetails={false}
                             />
                         </div>
                     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, Calendar, Edit2, CheckCircle2, X } from 'lucide-react';
+import { Plus, Trash2, Calendar, Edit2, CheckCircle2, X, RefreshCw } from 'lucide-react';
 import { NonRecurringExpenseItem } from '../../../types';
 import { authService } from '../../../services/authService';
 import { CATEGORIES } from '../../CostOfLiving';
@@ -8,11 +8,26 @@ interface NonRecurringExpensesStageProps {
     userId: string;
     onPrint?: (items?: NonRecurringExpenseItem[]) => void;
     initialItems?: NonRecurringExpenseItem[];
+    showDetails?: boolean;
+    items?: NonRecurringExpenseItem[];
+    onUpdateItems?: (items: NonRecurringExpenseItem[]) => void;
+    onReload?: () => void;
 }
 
-export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps> = ({ userId, onPrint, initialItems }) => {
-    const [items, setItems] = useState<NonRecurringExpenseItem[]>(initialItems || []);
-    const [loading, setLoading] = useState(!initialItems);
+export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps> = ({
+    userId,
+    onPrint,
+    initialItems,
+    showDetails = true,
+    items: controlledItems,
+    onUpdateItems,
+    onReload
+}) => {
+    const [internalItems, setInternalItems] = useState<NonRecurringExpenseItem[]>(initialItems || []);
+    const [loading, setLoading] = useState(!initialItems && !controlledItems);
+
+    // Choose which items to use
+    const displayItems = controlledItems !== undefined ? controlledItems : internalItems;
 
     // Edit State
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -24,10 +39,10 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
     const [frequency, setFrequency] = useState('1');
 
     const fetchItems = async () => {
-        if (initialItems) return; // Don't fetch if items provided
+        if (initialItems || controlledItems !== undefined) return; // Don't fetch if items provided or controlled
         setLoading(true);
         const state = await authService.getMentorshipState(userId);
-        setItems(state.nonRecurringExpenses);
+        setInternalItems(state.nonRecurringExpenses);
         setLoading(false);
     };
 
@@ -37,7 +52,7 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
 
     useEffect(() => {
         if (initialItems) {
-            setItems(initialItems);
+            setInternalItems(initialItems);
             setLoading(false);
         }
     }, [initialItems]);
@@ -74,17 +89,39 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
         }
 
         try {
-            await authService.saveNonRecurringExpense(userId, {
-                id: editingId || undefined,
+            const newItemData = {
                 category,
                 description,
                 value: numericValue,
                 frequency: parseInt(frequency) || 1
-            });
+            };
 
-            // Reset and Refresh
+            if (onUpdateItems) {
+                // Controlled mode (Meeting 2+)
+                const newItems = [...displayItems];
+                if (editingId) {
+                    const index = newItems.findIndex(i => i.id === editingId);
+                    if (index !== -1) newItems[index] = { ...newItems[index], ...newItemData };
+                } else {
+                    newItems.push({
+                        ...newItemData,
+                        id: crypto.randomUUID(),
+                        userId,
+                        createdAt: new Date().toISOString()
+                    } as NonRecurringExpenseItem);
+                }
+                onUpdateItems(newItems);
+            } else {
+                // Global mode (Meeting 1)
+                await authService.saveNonRecurringExpense(userId, {
+                    id: editingId || undefined,
+                    ...newItemData
+                });
+                await fetchItems();
+            }
+
+            // Reset
             handleCancelEdit();
-            await fetchItems();
         } catch (error) {
             console.error("Error saving", error);
             alert("Erro ao salvar. Tente novamente.");
@@ -94,9 +131,17 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
     const handleDelete = async (id: string) => {
         if (confirm('Tem certeza que deseja excluir este item?')) {
             try {
-                await authService.deleteNonRecurringExpense(id, userId);
+                if (onUpdateItems) {
+                    // Controlled mode
+                    const newItems = displayItems.filter(i => i.id !== id);
+                    onUpdateItems(newItems);
+                } else {
+                    // Global mode
+                    await authService.deleteNonRecurringExpense(id, userId);
+                    await fetchItems();
+                }
+
                 if (editingId === id) handleCancelEdit();
-                await fetchItems();
             } catch (error) {
                 console.error("Error deleting", error);
                 alert("Erro ao excluir.");
@@ -104,15 +149,31 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
         }
     };
 
-    const totalAnnual = items.reduce((acc, item) => acc + (item.value * item.frequency), 0);
+    const totalAnnual = displayItems.reduce((acc, item) => acc + (item.value * item.frequency), 0);
     const monthlyReserve = totalAnnual / 12;
 
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Header Actions */}
-            <div className="flex justify-end print:hidden">
+            <div className="flex justify-end gap-4 print:hidden">
+                {onReload && (
+                    <button
+                        onClick={() => {
+                            if (confirm('Isso irá substituir todos os dados de gastos não recorrentes desta reunião pelos dados globais (Reunião 1). Deseja continuar?')) {
+                                onReload();
+                            }
+                        }}
+                        className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+                        title="Sincronizar com Reunião 1"
+                    >
+                        <div className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700">
+                            <RefreshCw size={20} />
+                        </div>
+                        <span className="text-sm font-bold uppercase">Sincronizar</span>
+                    </button>
+                )}
                 <button
-                    onClick={() => onPrint ? onPrint(items) : window.print()}
+                    onClick={() => onPrint ? onPrint(displayItems) : window.print()}
                     className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
                     title="Imprimir visualização"
                 >
@@ -208,7 +269,7 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                         <h2 className="text-xl font-bold text-black uppercase border-b pb-2 mb-4">Gastos Não Recorrentes</h2>
                     </div>
 
-                    {items.map(item => (
+                    {displayItems.map(item => (
                         <div key={item.id} className={`p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group transition-colors print:bg-white print:border-gray-200 print:text-black ${editingId === item.id
                             ? 'bg-sky-500/10 border-sky-500/50'
                             : 'bg-slate-900/30 border-slate-800 hover:border-slate-700'
@@ -217,32 +278,36 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                                 <div className={`p-2 rounded-lg shrink-0 print:hidden ${editingId === item.id ? 'bg-sky-500/20 text-sky-400' : 'bg-slate-800 text-slate-400'}`}>
                                     <Calendar className="w-5 h-5" />
                                 </div>
-                                <div className="min-w-0">
-                                    <p className="font-bold text-white print:text-black truncate">{item.description}</p>
-                                    <p className="text-xs text-slate-500 print:text-gray-500 truncate">{item.category}</p>
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-bold text-white print:text-black leading-tight">{item.description}</p>
+                                    <p className="text-[10px] text-slate-500 print:text-gray-500 mt-0.5 uppercase tracking-wider">{item.category}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
                                 <div className="text-right shrink-0">
-                                    <span className="text-xs text-slate-500 print:text-gray-500">{item.frequency}x de</span>
-                                    <p className="font-bold text-slate-200 print:text-black">
+                                    <span className="text-[10px] text-slate-500 print:text-gray-500">{item.frequency}x de</span>
+                                    <p className="text-sm font-bold text-slate-200 print:text-black">
                                         R$ {item.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                     </p>
                                 </div>
                                 {/* Monthly Breakdown Column (Added for both UI and Print) */}
-                                <div className="text-right pl-4 border-l border-slate-800 print:border-gray-300 min-w-[100px] shrink-0">
-                                    <span className="text-xs text-slate-500 print:text-gray-500">Mensal (1/12)</span>
-                                    <p className="font-bold text-sky-400 print:text-black">
-                                        R$ {((item.value * item.frequency) / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                    </p>
-                                </div>
+                                {showDetails && (
+                                    <div className="text-right pl-4 border-l border-slate-800 print:border-gray-300 min-w-[100px] shrink-0">
+                                        <span className="text-[10px] text-slate-500 print:text-gray-500">Mensal (1/12)</span>
+                                        <p className="text-sm font-bold text-sky-400 print:text-black">
+                                            R$ {((item.value * item.frequency) / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                        </p>
+                                    </div>
+                                )}
                                 {/* New Total Column */}
-                                <div className="text-right pl-4 border-l border-slate-800 print:border-gray-300 min-w-[100px] shrink-0">
-                                    <span className="text-xs text-slate-500 print:text-gray-500">Total Anual</span>
-                                    <p className="font-bold text-emerald-400 print:text-black">
-                                        R$ {(item.value * item.frequency).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                    </p>
-                                </div>
+                                {showDetails && (
+                                    <div className="text-right pl-4 border-l border-slate-800 print:border-gray-300 min-w-[100px] shrink-0">
+                                        <span className="text-[10px] text-slate-500 print:text-gray-500">Total Anual</span>
+                                        <p className="text-sm font-bold text-emerald-400 print:text-black">
+                                            R$ {(item.value * item.frequency).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                        </p>
+                                    </div>
+                                )}
 
                                 <div className="flex items-center gap-2 print:hidden shrink-0">
                                     <button
@@ -266,7 +331,7 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                             </div>
                         </div>
                     ))}
-                    {items.length === 0 && (
+                    {displayItems.length === 0 && (
                         <div className="text-center py-10 text-slate-600 border border-dashed border-slate-800 rounded-xl print:hidden">
                             Nenhum gasto registrado.
                         </div>
@@ -274,28 +339,30 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                 </div>
 
                 {/* Summary */}
-                <div className="space-y-4 print:break-inside-avoid">
-                    <div className="bg-gradient-to-br from-slate-900 to-slate-950 p-6 rounded-2xl border border-slate-800 relative overflow-hidden print:bg-none print:bg-white print:border-gray-300 print:text-black">
-                        <div className="relative z-10">
-                            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1 print:text-gray-500">Custo Total Anual</p>
-                            <p className="text-3xl font-black text-white print:text-black">
-                                R$ {totalAnnual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </p>
+                {showDetails && (
+                    <div className="space-y-4 print:break-inside-avoid">
+                        <div className="bg-gradient-to-br from-slate-900 to-slate-950 p-6 rounded-2xl border border-slate-800 relative overflow-hidden print:bg-none print:bg-white print:border-gray-300 print:text-black">
+                            <div className="relative z-10">
+                                <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1 print:text-gray-500">Custo Total Anual</p>
+                                <p className="text-3xl font-black text-white print:text-black">
+                                    R$ {totalAnnual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="bg-gradient-to-br from-emerald-900/20 to-emerald-950/20 p-6 rounded-2xl border border-emerald-500/30 relative overflow-hidden print:bg-none print:bg-white print:border-gray-300 print:text-black">
-                        <div className="relative z-10">
-                            <p className="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1 print:text-gray-600">Reserva Mensal</p>
-                            <p className="text-3xl font-black text-emerald-400 print:text-black">
-                                R$ {monthlyReserve.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </p>
-                            <p className="text-xs text-emerald-500/60 mt-2 font-medium print:text-gray-500">
-                                Valor a guardar todo mês
-                            </p>
+                        <div className="bg-gradient-to-br from-emerald-900/20 to-emerald-950/20 p-6 rounded-2xl border border-emerald-500/30 relative overflow-hidden print:bg-none print:bg-white print:border-gray-300 print:text-black">
+                            <div className="relative z-10">
+                                <p className="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1 print:text-gray-600">Reserva Mensal</p>
+                                <p className="text-3xl font-black text-emerald-400 print:text-black">
+                                    R$ {monthlyReserve.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </p>
+                                <p className="text-xs text-emerald-500/60 mt-2 font-medium print:text-gray-500">
+                                    Valor a guardar todo mês
+                                </p>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

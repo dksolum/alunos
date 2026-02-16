@@ -5,7 +5,9 @@ import { TasksStage } from '../Meeting1/TasksStage';
 import { ReportsStage } from '../Meeting1/ReportsStage';
 import { PrintHeader } from '../Meeting1/PrintHeader';
 import { PrintPortal } from '../../PrintPortal';
-import { FinancialData, ChecklistData, User } from '../../../types';
+import { FinancialData, ChecklistData, User, NonRecurringExpenseItem } from '../../../types';
+import { useEffect } from 'react';
+import { authService } from '../../../services/authService';
 
 interface Meeting2ContentProps {
     userId: string;
@@ -40,6 +42,45 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
 
     const setActiveStep = async (step: number) => {
         onUpdateMeetingData({ ...meetingData, activeStep: step });
+    };
+
+    // Initialize local Non-Recurring Expenses from global list if empty
+    useEffect(() => {
+        const initExpenses = async () => {
+            if (!meetingData.nonRecurringExpenses) {
+                try {
+                    const state = await authService.getMentorshipState(userId);
+                    onUpdateMeetingData({
+                        ...meetingData,
+                        nonRecurringExpenses: state.nonRecurringExpenses || []
+                    });
+                } catch (error) {
+                    console.error("Error initializing expenses for Meeting 2:", error);
+                }
+            }
+        };
+        initExpenses();
+    }, [userId, meetingData, onUpdateMeetingData]);
+
+    const handleUpdateExpenses = (newItems: NonRecurringExpenseItem[]) => {
+        onUpdateMeetingData({
+            ...meetingData,
+            nonRecurringExpenses: newItems
+        });
+    };
+
+    const handleReloadExpenses = async () => {
+        try {
+            const state = await authService.getMentorshipState(userId);
+            const globalExpenses = state.nonRecurringExpenses || [];
+            onUpdateMeetingData({
+                ...meetingData,
+                nonRecurringExpenses: globalExpenses
+            });
+        } catch (error) {
+            console.error("Error reloading expenses:", error);
+            alert("Erro ao sincronizar gastos. Tente novamente.");
+        }
     };
 
     const steps = [
@@ -121,6 +162,9 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
                         <NonRecurringExpensesStage
                             userId={userId}
                             onPrint={(data) => handlePrint('expenses', data)}
+                            items={meetingData.nonRecurringExpenses || []}
+                            onUpdateItems={handleUpdateExpenses}
+                            onReload={handleReloadExpenses}
                         />
                     </div>
 
@@ -176,6 +220,8 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
                             <NonRecurringExpensesStage
                                 userId={userId}
                                 initialItems={printData}
+                                items={printData || meetingData.nonRecurringExpenses}
+                                showDetails={true}
                             />
                         </div>
                     </div>
