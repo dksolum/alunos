@@ -19,6 +19,8 @@ O sistema utiliza o cliente oficial do Supabase para todas as operações de dad
     *   `user_intakes`: Ficha de Anamnese e dados iniciais (acesso restrito Admin/Secretary).
     *   `debt_mappings`: Dívidas detalhadas.
     *   `cost_of_living`: Itens de custo de vida por categoria.
+    *   `mentorship_meetings`: Estado e dados das reuniões de mentoria (JSONB para flexibilidade de cada reunião).
+    *   `non_recurring_expenses`: Despesas anuais/semestrais cadastradas na Reunião 1.
 
 ### Controle de Acesso (RBAC) e Visibilidade
 O sistema implementa três níveis de permissão com regras de RLS (Row Level Security) e lógica de frontend:
@@ -65,3 +67,6 @@ A funcionalidade de PDF utiliza isolamento CSS:
 *   **RPCs Seguras**: Funções de banco de dados (`SECURITY DEFINER`) são usadas para permitir que Admins gerenciem dados de usuários sem violar as regras padrão de RLS.
     *   `save_diagnostic_by_admin`: Permite que Admins/Secretários salvem diagnósticos em nome de outros usuários.
     *   `save_checklist_data`: Atualiza o JSONB de checklist.
+    *   `upsert_mentorship_meeting_by_admin`: Permite criar/atualizar reuniões de mentoria de alunos.
+    *   `upsert_non_recurring_expense_by_admin`: Permite gerenciar despesas não recorrentes de alunos.
+    *   `get_mentorship_state_by_admin`: Leitura segura de todos os dados de mentoria de um aluno.

@@ -181,3 +181,29 @@ export interface DiagnosticRecord {
   data: FinancialData;
   updatedAt: string;
 }
+
+// --- MENTORSHIP ---
+
+export interface MentorshipMeeting {
+  userId: string;
+  meetingId: number;
+  status: 'locked' | 'unlocked' | 'completed';
+  data: any;
+  startedAt?: string;
+  completedAt?: string;
+}
+
+export interface NonRecurringExpenseItem {
+  id: string;
+  userId: string;
+  category: string;
+  description: string;
+  value: number;
+  frequency: number;
+  createdAt: string;
+}
+
+export interface MentorshipState {
+  meetings: MentorshipMeeting[];
+  nonRecurringExpenses: NonRecurringExpenseItem[];
+}

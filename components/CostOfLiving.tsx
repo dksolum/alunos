@@ -46,7 +46,7 @@ interface CostOfLivingProps {
     onDelete?: (itemId: string) => Promise<void>;
 }
 
-const CATEGORIES = [
+export const CATEGORIES = [
     { id: 'Alimentação', icon: ShoppingBag, color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20', examples: 'Ex: Supermercado, feira, padaria, restaurantes, delivery, açougue, cafeteria, bebidas e outros...' },
     { id: 'Moradia', icon: Home, color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20', examples: 'Ex: Aluguel ou financiamento, condomínio, luz, água, internet, gás, manutenção, IPTU, diarista e outros...' },
     { id: 'Transporte', icon: Car, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', examples: 'Ex: Combustível, Uber/99, ônibus, metrô, estacionamento, seguro, IPVA, manutenção do carro, pedágio, lavação e outros...' },

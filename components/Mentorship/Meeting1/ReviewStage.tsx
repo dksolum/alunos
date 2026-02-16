@@ -1,0 +1,312 @@
+import React, { useState, useEffect } from 'react';
+import { CheckCircle2, Edit2, Save, X, AlertCircle } from 'lucide-react';
+import { FinancialData, ChecklistData } from '../../../types';
+import { CATEGORIES } from '../../CostOfLiving';
+
+interface ReviewStageProps {
+    financialData: FinancialData;
+    checklistData: ChecklistData;
+    meetingData: any;
+    onUpdateMeetingData: (data: any) => void;
+    onUpdateFinancialData: (data: FinancialData) => void;
+    readOnly?: boolean;
+}
+
+interface ReviewItem {
+    id: string;
+    name: string;
+    type: 'Fixa' | 'Variável';
+    reference: number; // Read-only (Checklist Original)
+    defined: number;   // Editable (Checklist Snapshot)
+    realized: number;  // Manual Input
+}
+
+export const ReviewStage: React.FC<ReviewStageProps> = ({
+    financialData,
+    checklistData,
+    meetingData,
+    onUpdateMeetingData,
+    onUpdateFinancialData,
+    readOnly = false
+}) => {
+    const [bankChecked, setBankChecked] = useState(meetingData?.bankChecked || false);
+    const [items, setItems] = useState<ReviewItem[]>(meetingData?.reviewItems || []);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editField, setEditField] = useState<'defined' | 'realized' | null>(null);
+    const [tempValue, setTempValue] = useState('');
+    const [showSuccess, setShowSuccess] = useState(false);
+
+    // Initialization Logic
+    useEffect(() => {
+        if (!meetingData?.reviewItems || meetingData.reviewItems.length === 0) {
+            // 1. Get Limits from Checklist (Phase 1, Step 6, Subitem 3)
+            const limitsNode = checklistData?.[6]?.subItems?.[3];
+            const budgetLimits: Record<string, string> = limitsNode?.value
+                ? JSON.parse(limitsNode.value)
+                : {};
+
+            // 2. Build Items List
+            // We use the CATEGORIES list to ensure all standard categories are present
+            // plus any custom ones found in financialData if needed, but standard is safer for "Budget"
+
+            const initialItems: ReviewItem[] = CATEGORIES.map(cat => {
+                const catName = cat.id; // CATEGORIES is an array of objects { id, icon, ... }, id is the name
+                const limitVal = parseFloat(budgetLimits[catName] || '0');
+
+                return {
+                    id: `review-${catName}`,
+                    name: catName,
+                    type: 'Variável',
+                    reference: limitVal,
+                    defined: limitVal,
+                    realized: 0
+                };
+            });
+
+            setItems(initialItems);
+            onUpdateMeetingData({ ...meetingData, reviewItems: initialItems });
+        } else {
+            setItems(meetingData.reviewItems);
+        }
+    }, []); // Run once on mount
+
+    const handleToggleBankCheck = () => {
+        if (readOnly) return;
+        const newState = !bankChecked;
+        setBankChecked(newState);
+        onUpdateMeetingData({ ...meetingData, bankChecked: newState });
+    };
+
+    const startEdit = (id: string, field: 'defined' | 'realized', currentValue: number) => {
+        if (readOnly) return;
+        setEditingId(id);
+        setEditField(field);
+        setTempValue(currentValue === 0 && field === 'realized' ? '' : currentValue.toString());
+    };
+
+    const saveEdit = (id: string) => {
+        const numValue = parseFloat(tempValue.replace(',', '.'));
+        const finalValue = isNaN(numValue) ? 0 : numValue;
+
+        const newItems = items.map(item => {
+            if (item.id === id) {
+                return { ...item, [editField!]: finalValue };
+            }
+            return item;
+        });
+
+        setItems(newItems);
+        onUpdateMeetingData({ ...meetingData, reviewItems: newItems, bankChecked });
+        setEditingId(null);
+        setEditField(null);
+    };
+
+    const handleManualSave = () => {
+        // Explicitly trigger update to ensure persistence
+        onUpdateMeetingData({ ...meetingData, reviewItems: items, bankChecked });
+
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 2000);
+    };
+
+    return (
+        <div className="space-y-8 animate-fade-in relative pb-20">
+            {/* Header Actions - Print */}
+            <div className="flex justify-end print:hidden">
+                <button
+                    onClick={() => window.print()}
+                    className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+                    title="Imprimir visualização"
+                >
+                    <div className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2-2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    </div>
+                    <span className="text-sm font-bold uppercase">Imprimir</span>
+                </button>
+            </div>
+
+            {/* 1. Extrato Bancário */}
+            <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 print:bg-white print:border-gray-200 print:text-black">
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 print:text-black">
+                    1. Conferência de Extrato
+                </h3>
+                <label className={`flex items-start gap-3 group ${readOnly ? 'cursor-default opacity-80' : 'cursor-pointer'}`}>
+                    <div className={`w-6 h-6 rounded border flex items-center justify-center transition-colors mt-1
+            ${bankChecked ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600 group-hover:border-emerald-500'}`}
+                    >
+                        {bankChecked && <CheckCircle2 className="w-4 h-4 text-white" />}
+                    </div>
+                    <div className="flex-1">
+                        <span className="text-slate-300 font-medium">Validar lançamentos com o Extrato Bancário</span>
+                        <p className="text-sm text-slate-500 mt-1">
+                            Verifique se todos os gastos lançados na plataforma correspondem ao que está no seu banco.
+                        </p>
+                        <input
+                            type="checkbox"
+                            className="hidden"
+                            checked={bankChecked}
+                            onChange={handleToggleBankCheck}
+                            disabled={readOnly}
+                        />
+                    </div>
+                </label>
+            </div>
+
+            {/* 2. Orçamento vs Realizado */}
+            <div className="space-y-4">
+                <h3 className="text-lg font-bold text-white flex items-center gap-2 print:text-black">
+                    2. Revisão de Orçamento
+                    {readOnly && <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700 uppercase">Somente Leitura</span>}
+                </h3>
+
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-slate-700 text-slate-400 text-xs uppercase print:text-gray-500 print:border-gray-300">
+                                <th className="p-3">Categoria</th>
+                                <th className="p-3 text-right bg-slate-900/40 print:bg-gray-50">Referência</th>
+                                <th className="p-3 text-right">Definido</th>
+                                <th className="p-3 text-right">Realizado</th>
+                                <th className="p-3 text-center">%</th>
+                                <th className="p-3 text-right">Diferença</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800 print:divide-gray-200">
+                            {/* Renda (Income) */}
+                            <tr className="bg-slate-800/30 print:bg-gray-100">
+                                <td colSpan={4} className="p-3 text-xs font-bold text-emerald-400 uppercase tracking-wider print:text-black">
+                                    Entradas (Renda)
+                                </td>
+                            </tr>
+                            {items.map(item => {
+                                const percentage = item.defined > 0 ? (item.realized / item.defined) * 100 : 0;
+                                const difference = item.defined - item.realized;
+                                const isOver = difference < 0;
+
+                                return (
+                                    <tr key={item.id} className="hover:bg-slate-900/20 transition-colors print:text-black">
+                                        <td className="p-3 font-medium text-slate-300 print:text-black">
+                                            {item.name}
+                                        </td>
+
+                                        {/* Reference (Read-only) */}
+                                        <td className={`p-3 text-right bg-slate-900/40 text-sm ${item.reference === 0 ? 'text-slate-600 italic' : 'text-slate-500'} print:bg-gray-50 print:text-gray-600`}>
+                                            {item.reference === 0 ? 'Não previsto' : `R$ ${item.reference.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+                                        </td>
+
+                                        {/* Defined (Editable) */}
+                                        <td className="p-3 text-right print:text-black">
+                                            {editingId === item.id && editField === 'defined' ? (
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <input
+                                                        autoFocus
+                                                        type="text"
+                                                        value={tempValue}
+                                                        onChange={e => setTempValue(e.target.value)}
+                                                        onBlur={() => saveEdit(item.id)}
+                                                        onKeyDown={e => e.key === 'Enter' && saveEdit(item.id)}
+                                                        className="w-20 bg-slate-800 border border-slate-600 rounded px-1 text-right text-sm text-white focus:border-sky-500 outline-none"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div
+                                                    onClick={() => startEdit(item.id, 'defined', item.defined)}
+                                                    className={`group flex items-center justify-end gap-2 text-sm ${readOnly ? 'cursor-default text-slate-400' : 'cursor-pointer text-white hover:text-sky-400'}`}
+                                                >
+                                                    <span className={`${item.reference === 0 && item.defined > 0 ? 'text-amber-400 font-bold' : ''}`}>
+                                                        R$ {item.defined.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                    </span>
+                                                    {!readOnly && <Edit2 size={10} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-500" />}
+                                                </div>
+                                            )}
+                                        </td>
+
+                                        {/* Realized (Editable) */}
+                                        <td className="p-3 text-right">
+                                            {editingId === item.id && editField === 'realized' ? (
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <input
+                                                        autoFocus
+                                                        type="text"
+                                                        value={tempValue}
+                                                        onChange={e => setTempValue(e.target.value)}
+                                                        onBlur={() => saveEdit(item.id)}
+                                                        onKeyDown={e => e.key === 'Enter' && saveEdit(item.id)}
+                                                        className="w-20 bg-slate-800 border border-slate-600 rounded px-1 text-right text-sm text-white focus:border-emerald-500 outline-none"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div
+                                                    onClick={() => startEdit(item.id, 'realized', item.realized)}
+                                                    className={`group flex items-center justify-end gap-2 text-sm ${readOnly ? 'cursor-default text-slate-400' : 'cursor-pointer hover:text-emerald-400'} ${item.realized === 0 ? 'text-slate-600' : ''}`}
+                                                >
+                                                    {item.realized > 0 ? `R$ ${item.realized.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-'}
+                                                    {!readOnly && <Edit2 size={10} className="opacity-0 group-hover:opacity-100 transition-opacity" />}
+                                                </div>
+                                            )}
+                                        </td>
+
+                                        {/* Percentage */}
+                                        <td className="p-3 text-center">
+                                            <div className="flex items-center justify-center">
+                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${percentage > 100 ? 'bg-rose-500/10 text-rose-400' :
+                                                    percentage > 80 ? 'bg-amber-500/10 text-amber-400' :
+                                                        'bg-emerald-500/10 text-emerald-400'
+                                                    }`}>
+                                                    {percentage.toFixed(0)}%
+                                                </span>
+                                            </div>
+                                        </td>
+
+                                        {/* Difference */}
+                                        <td className={`p-3 text-right font-bold text-sm ${isOver ? 'text-rose-400' : 'text-emerald-400'}`}>
+                                            {isOver ? '-' : ''} R$ {Math.abs(difference).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                        <tfoot className="bg-slate-900/80 border-t border-slate-800">
+                            <tr>
+                                <td className="p-3 font-black text-slate-400 uppercase text-xs">Totais</td>
+                                <td className="p-3 text-right text-slate-500 font-bold text-xs">
+                                    R$ {items.reduce((acc, i) => acc + i.reference, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </td>
+                                <td className="p-3 text-right text-slate-300 font-bold text-xs">
+                                    R$ {items.reduce((acc, i) => acc + i.defined, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </td>
+                                <td className="p-3 text-right text-slate-300 font-bold text-xs">
+                                    R$ {items.reduce((acc, i) => acc + i.realized, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </td>
+                                <td></td>
+                                <td className={`p-3 text-right font-bold text-xs ${items.reduce((acc, i) => acc + (i.defined - i.realized), 0) < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                                    R$ {items.reduce((acc, i) => acc + (i.defined - i.realized), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+            {/* Bottom Save Button - Explicit "Conclusion" */}
+            {!readOnly && (
+                <div className="flex justify-end pt-6 border-t border-slate-800 print:hidden">
+                    <button
+                        onClick={handleManualSave}
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-500/20"
+                    >
+                        {showSuccess ? (
+                            <>
+                                <CheckCircle2 size={18} /> Salvo!
+                            </>
+                        ) : (
+                            <>
+                                <Save size={18} /> Salvar e Concluir Etapa
+                            </>
+                        )}
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+};

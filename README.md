@@ -12,6 +12,14 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
   - **3. Custo de Vida**: Mapeamento de despesas em 15 categorias com interface de Grid e Wizard.
   - **4. Diagnóstico Financeiro**: Assistente (Wizard) que consolida todos os dados para gerar o relatório final.
 
+### 2. Módulo de Mentoria (Novo)
+- **Estrutura de Reuniões**: 6 encontros progressivos para acompanhamento do cliente.
+- **Reunião 1 (Revisão e Gastos Não Recorrentes)**:
+  - **Revisão Financeira**: Comparativo entre Orçado x Realizado do diagnóstico.
+  - **Gastos Não Recorrentes**: Cadastro de despesas anuais/semestrais (IPVA, IPTU, etc.) com cálculo automático de reserva mensal.
+  - **Tarefas**: Checklist de ações práticas para o cliente.
+- **Persistência e Segurança**: Dados salvos via Supabase com trava de segurança (RLS) e acesso administrativo via RPCs.
+
 ### 2. Relatórios Avançados e Impressão
 - **Visão Geral**: Dashboard com gráficos de comprometimento de renda e saldo disponível.
 - **Relatório Detalhado**: Lista filtrada de entradas e saídas.
@@ -108,4 +116,7 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 - **Feat**: Implementação completa do módulo **Ficha Individual** (User Intake) com persistência no banco.
 - **Refactor**: Nova estrutura de Dashboard com bloqueio progressivo de módulos.
 - **Infra**: Migração completa de LocalStorage para Supabase com RLS.
+- **Feat**: Módulo de Mentoria (Reunião 1) com fluxo completo de Revisão e Gastos Não Recorrentes.
+- **Fix**: Permissões de Admin para salvar dados de mentoria em nome do cliente (RPCs `upsert_mentorship_meeting_by_admin`, `get_mentorship_state_by_admin`).
+- **Fix**: Correção de visualização de cards de mentoria e lógica de desbloqueio para Admins.
 

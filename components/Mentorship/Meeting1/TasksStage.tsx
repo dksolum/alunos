@@ -1,0 +1,69 @@
+import React, { useState } from 'react';
+import { CheckSquare, Square } from 'lucide-react';
+
+interface TasksStageProps {
+    meetingData: any;
+    onUpdateMeetingData: (data: any) => void;
+    onComplete: () => void;
+}
+
+export const TasksStage: React.FC<TasksStageProps> = ({ meetingData, onUpdateMeetingData, onComplete }) => {
+    const [tasks, setTasks] = useState<{ id: string; label: string; checked: boolean }[]>([
+        { id: 'task1', label: 'Continuar registrando entradas, saídas e transferências', checked: meetingData?.tasks?.task1 || false },
+        { id: 'task2', label: 'Preencher lista de gastos não recorrentes', checked: meetingData?.tasks?.task2 || false }
+    ]);
+
+    const handleToggle = (id: string) => {
+        const newTasks = tasks.map(t =>
+            t.id === id ? { ...t, checked: !t.checked } : t
+        );
+        setTasks(newTasks);
+
+        // Update data
+        const tasksObj = newTasks.reduce((acc, t) => ({ ...acc, [t.id]: t.checked }), {});
+        onUpdateMeetingData({ ...meetingData, tasks: tasksObj });
+    };
+
+    const allChecked = tasks.every(t => t.checked);
+
+    return (
+        <div className="space-y-8 animate-fade-in">
+            <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+                <h3 className="text-lg font-bold text-white mb-6">Tarefas da Semana</h3>
+                <div className="space-y-4">
+                    {tasks.map(task => (
+                        <label key={task.id} className="flex items-start gap-4 cursor-pointer group p-4 rounded-xl hover:bg-slate-900 border border-transparent hover:border-slate-800 transition-all">
+                            <div className={`mt-0.5 transition-colors ${task.checked ? 'text-emerald-500' : 'text-slate-600 group-hover:text-emerald-500'}`}>
+                                {task.checked ? <CheckSquare className="w-6 h-6" /> : <Square className="w-6 h-6" />}
+                            </div>
+                            <span className={`text-lg font-medium transition-colors ${task.checked ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
+                                {task.label}
+                            </span>
+                            <input
+                                type="checkbox"
+                                className="hidden"
+                                checked={task.checked}
+                                onChange={() => handleToggle(task.id)}
+                            />
+                        </label>
+                    ))}
+                </div>
+            </div>
+
+            <div className="flex justify-end pt-4">
+                <button
+                    disabled={!allChecked}
+                    onClick={onComplete}
+                    className={`
+              px-8 py-4 rounded-xl font-bold text-lg flex items-center gap-2 transition-all
+              ${allChecked
+                            ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transform hover:-translate-y-1'
+                            : 'bg-slate-800 text-slate-500 cursor-not-allowed'}
+            `}
+                >
+                    Concluir Mentoria
+                </button>
+            </div>
+        </div>
+    );
+};

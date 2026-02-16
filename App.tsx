@@ -775,6 +775,7 @@ const App: React.FC = () => {
           isCostOfLivingDone={costOfLivingData.length > 0}
           onLogout={handleLogout}
           financialData={data}
+          onUpdateFinancialData={setData}
         />
         {showEditProfile && (viewingUser || currentUser) && (
           <ProfileConfirmationModal

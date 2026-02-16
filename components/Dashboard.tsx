@@ -1,5 +1,5 @@
 import React from 'react';
-import { User as UserType, Anamnesis, ChecklistData, FinancialData } from '../types';
+import { User as UserType, Anamnesis, ChecklistData, FinancialData, MentorshipState, MentorshipMeeting } from '../types';
 import { UserIntakeModal } from './UserIntakeModal';
 import { ChecklistModal } from './ChecklistModal';
 import { authService } from '../services/authService';
@@ -23,6 +23,9 @@ import {
     ChevronRight,
     ListChecks
 } from 'lucide-react';
+import { MentorshipCard } from './Mentorship/MentorshipCard';
+import { MeetingModal } from './Mentorship/MeetingModal';
+import { Meeting1Content } from './Mentorship/Meeting1/Meeting1Content';
 
 interface DashboardProps {
     user: UserType;
@@ -39,6 +42,7 @@ interface DashboardProps {
     currentUser: UserType; // The logged-in user (admin or self)
     onChecklistUpdate: (progress: number[], data: ChecklistData) => void;
     financialData: FinancialData;
+    onUpdateFinancialData: (data: FinancialData) => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -56,11 +60,55 @@ export const Dashboard: React.FC<DashboardProps> = ({
     onEditProfile,
     currentUser,
     onChecklistUpdate,
-    financialData
+    financialData,
+    onUpdateFinancialData
 }) => {
     const isAnamnesisDone = !!anamnesisData;
     const [showIntakeModal, setShowIntakeModal] = React.useState(false);
     const [showChecklistModal, setShowChecklistModal] = React.useState(false);
+
+    // Mentorship State
+    const [mentorshipState, setMentorshipState] = React.useState<MentorshipState>({ meetings: [], nonRecurringExpenses: [] });
+    const [selectedMeeting, setSelectedMeeting] = React.useState<number | null>(null);
+
+    React.useEffect(() => {
+        if (user.id) {
+            authService.getMentorshipState(user.id).then(state => {
+                setMentorshipState(state);
+            });
+        }
+    }, [user.id, selectedMeeting]); // Refresh when modal closes/changes
+
+    const getMeeting = (id: number) => {
+        const meeting = mentorshipState.meetings.find(m => m.meetingId === id);
+        let status = meeting?.status || (id === 1 ? 'unlocked' : 'locked');
+
+        // Force unlock Meeting 1 if diagnostic is done and it's currently locked (and not completed)
+        if (id === 1 && hasDiagnosticData && status === 'locked') {
+            status = 'unlocked';
+        }
+
+        // Bloqueio condicional: Meeting 1 exige Diagnóstico finalizado (hasDiagnosticData)
+        if (id === 1 && !hasDiagnosticData && currentUser.role !== 'ADMIN') {
+            status = 'locked';
+        }
+
+        return {
+            userId: user.id,
+            meetingId: id,
+            status,
+            data: meeting?.data || {}
+        } as MentorshipMeeting;
+    };
+
+    const MEETING_TITLES = [
+        "Reunião 1",
+        "Reunião 2",
+        "Reunião 3",
+        "Reunião 4",
+        "Reunião 5",
+        "Reunião 6"
+    ];
 
     // Lógica de Controle de Acesso Baseada no Status do Usuário
     const getAccessLevel = (status: string) => {
@@ -76,9 +124,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const accessLevel = getAccessLevel(user.status);
 
     // Helpers de Bloqueio por Nível
-    const isConsultoriaUnlocked = accessLevel >= 1;
-    const isMentoriaUnlocked = accessLevel >= 2;
-    const isAcompanhamentoUnlocked = accessLevel >= 3;
+    const isConsultoriaUnlocked = accessLevel >= 1 || currentUser.role === 'ADMIN';
+    const isMentoriaUnlocked = accessLevel >= 2 || currentUser.role === 'ADMIN' || hasDiagnosticData;
+    const isAcompanhamentoUnlocked = accessLevel >= 3 || currentUser.role === 'ADMIN';
 
     // Helper para renderizar status e botão de ação dos módulos
     const renderModuleStatus = (
@@ -380,8 +428,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                         <button
                                             onClick={() => setShowChecklistModal(true)}
                                             className={`w-full py-4 rounded-xl font-bold uppercase tracking-wide text-xs transition-all shadow-lg flex items-center justify-center gap-2 hover:-translate-y-0.5 ${user.checklistPhase === 'PHASE_2'
-                                                    ? 'bg-amber-500 hover:bg-amber-400 text-slate-900 shadow-amber-900/20 hover:shadow-amber-500/20'
-                                                    : 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/20 hover:shadow-rose-500/20'
+                                                ? 'bg-amber-500 hover:bg-amber-400 text-slate-900 shadow-amber-900/20 hover:shadow-amber-500/20'
+                                                : 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/20 hover:shadow-rose-500/20'
                                                 }`}
                                         >
                                             {user.checklistPhase === 'PHASE_2' ? "Acessar Fase de Retorno" : "Acessar Guia de Guerra"} <ChevronRight size={14} />
@@ -416,133 +464,69 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         </h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {/* 5. Gastos Não Recorrentes */}
-                            <div className="bg-slate-900/20 border border-slate-800 rounded-[2rem] p-6 opacity-60">
-                                <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-slate-500 mb-4">
-                                    <Calendar size={20} />
-                                </div>
-                                <h3 className="text-sm font-black text-slate-400 uppercase mb-2">5. Gastos Não Recorrentes</h3>
-                                <div className="flex items-center gap-2 mt-4 px-3 py-1.5 bg-slate-800/50 rounded-lg w-fit">
-                                    {isMentoriaUnlocked ? (
-                                        <>
-                                            <Lock size={12} className="text-slate-600" />
-                                            <span className="text-[10px] font-bold text-slate-600 uppercase">Em Breve</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Lock size={12} className="text-rose-500" />
-                                            <span className="text-[10px] font-bold text-rose-500 uppercase">Bloqueado</span>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* 6. Mapeamento de Dívidas Atualizado */}
-                            <div className="bg-slate-900/20 border border-slate-800 rounded-[2rem] p-6 opacity-60">
-                                <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-slate-500 mb-4">
-                                    <RefreshCw size={20} />
-                                </div>
-                                <h3 className="text-sm font-black text-slate-400 uppercase mb-2">6. Mapeamento de Dívidas Atualizado</h3>
-                                <div className="flex items-center gap-2 mt-4 px-3 py-1.5 bg-slate-800/50 rounded-lg w-fit">
-                                    {isMentoriaUnlocked ? (
-                                        <>
-                                            <Lock size={12} className="text-slate-600" />
-                                            <span className="text-[10px] font-bold text-slate-600 uppercase">Em Breve</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Lock size={12} className="text-rose-500" />
-                                            <span className="text-[10px] font-bold text-rose-500 uppercase">Bloqueado</span>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* 7. Estratégias para eliminação de dívidas */}
-                            <div className="bg-slate-900/20 border border-slate-800 rounded-[2rem] p-6 opacity-60">
-                                <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-slate-500 mb-4">
-                                    <Target size={20} />
-                                </div>
-                                <h3 className="text-sm font-black text-slate-400 uppercase mb-2">7. Estratégias para eliminação de dívidas</h3>
-                                <div className="flex items-center gap-2 mt-4 px-3 py-1.5 bg-slate-800/50 rounded-lg w-fit">
-                                    {isMentoriaUnlocked ? (
-                                        <>
-                                            <Lock size={12} className="text-slate-600" />
-                                            <span className="text-[10px] font-bold text-slate-600 uppercase">Em Breve</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Lock size={12} className="text-rose-500" />
-                                            <span className="text-[10px] font-bold text-rose-500 uppercase">Bloqueado</span>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* 8. Planejamento de Sonhos e Metas */}
-                            <div className="bg-slate-900/20 border border-slate-800 rounded-[2rem] p-6 opacity-60">
-                                <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-slate-500 mb-4">
-                                    <Target size={20} />
-                                </div>
-                                <h3 className="text-sm font-black text-slate-400 uppercase mb-2">8. Planejamento de Sonhos e Metas</h3>
-                                <div className="flex items-center gap-2 mt-4 px-3 py-1.5 bg-slate-800/50 rounded-lg w-fit">
-                                    {isMentoriaUnlocked ? (
-                                        <>
-                                            <Lock size={12} className="text-slate-600" />
-                                            <span className="text-[10px] font-bold text-slate-600 uppercase">Em Breve</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Lock size={12} className="text-rose-500" />
-                                            <span className="text-[10px] font-bold text-rose-500 uppercase">Bloqueado</span>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* 9. Mapeamento de Patrimônio */}
-                            <div className="bg-slate-900/20 border border-slate-800 rounded-[2rem] p-6 opacity-60">
-                                <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-slate-500 mb-4">
-                                    <Shield size={20} />
-                                </div>
-                                <h3 className="text-sm font-black text-slate-400 uppercase mb-2">9. Mapeamento de Patrimônio</h3>
-                                <div className="flex items-center gap-2 mt-4 px-3 py-1.5 bg-slate-800/50 rounded-lg w-fit">
-                                    {isMentoriaUnlocked ? (
-                                        <>
-                                            <Lock size={12} className="text-slate-600" />
-                                            <span className="text-[10px] font-bold text-slate-600 uppercase">Em Breve</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Lock size={12} className="text-rose-500" />
-                                            <span className="text-[10px] font-bold text-rose-500 uppercase">Bloqueado</span>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* 10. Antes e Depois */}
-                            <div className="bg-slate-900/20 border border-slate-800 rounded-[2rem] p-6 opacity-60">
-                                <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-slate-500 mb-4">
-                                    <BarChart3 size={20} />
-                                </div>
-                                <h3 className="text-sm font-black text-slate-400 uppercase mb-2">10. Antes e Depois</h3>
-                                <div className="flex items-center gap-2 mt-4 px-3 py-1.5 bg-slate-800/50 rounded-lg w-fit">
-                                    {isMentoriaUnlocked ? (
-                                        <>
-                                            <Lock size={12} className="text-slate-600" />
-                                            <span className="text-[10px] font-bold text-slate-600 uppercase">Em Breve</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Lock size={12} className="text-rose-500" />
-                                            <span className="text-[10px] font-bold text-rose-500 uppercase">Bloqueado</span>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
+                            {[1, 2, 3, 4, 5, 6].map(id => {
+                                const meeting = getMeeting(id);
+                                return (
+                                    <MentorshipCard
+                                        key={id}
+                                        meetingId={id}
+                                        title={MEETING_TITLES[id - 1]}
+                                        status={meeting.status}
+                                        onClick={() => isMentoriaUnlocked && setSelectedMeeting(id)}
+                                    />
+                                );
+                            })}
                         </div>
                     </section>
+
+                    {/* Mentorship Modal */}
+                    <MeetingModal
+                        isOpen={!!selectedMeeting}
+                        onClose={() => setSelectedMeeting(null)}
+                        meetingId={selectedMeeting || 0}
+                        title={selectedMeeting ? MEETING_TITLES[selectedMeeting - 1] : ''}
+                    >
+                        {selectedMeeting === 1 ? (
+                            <Meeting1Content
+                                userId={user.id}
+                                currentUser={currentUser}
+                                financialData={financialData}
+                                checklistData={user.checklistData || {}}
+                                meetingData={getMeeting(1).data}
+                                onUpdateMeetingData={async (data) => {
+                                    // Update local state optimistic
+                                    const updatedMeetings = mentorshipState.meetings.map(m =>
+                                        m.meetingId === 1 ? { ...m, data } : m
+                                    );
+                                    if (!mentorshipState.meetings.find(m => m.meetingId === 1)) {
+                                        updatedMeetings.push({ ...getMeeting(1), data });
+                                    }
+                                    setMentorshipState(prev => ({ ...prev, meetings: updatedMeetings }));
+
+                                    await authService.saveMeetingData(user.id, 1, data);
+                                }}
+                                onUpdateFinancialData={async (data) => {
+                                    // Call parent to update global state
+                                    onUpdateFinancialData(data);
+                                    // And save to DB
+                                    await authService.saveDiagnostic(user.id, data);
+                                }}
+                                onComplete={async () => {
+                                    await authService.updateMeetingStatus(user.id, 1, 'completed');
+                                    // Unlock next? Not auto for now.
+                                    setSelectedMeeting(null);
+                                    // Refresh state
+                                    const state = await authService.getMentorshipState(user.id);
+                                    setMentorshipState(state);
+                                }}
+                            />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-64 text-slate-500">
+                                <Lock className="w-12 h-12 mb-4 opacity-50" />
+                                <p className="text-lg font-bold">Conteúdo em desenvolvimento.</p>
+                            </div>
+                        )}
+                    </MeetingModal>
 
                     {/* Seção 3: Acompanhamento */}
                     <section className={`space-y-6 transition-opacity duration-500 ${isAcompanhamentoUnlocked ? 'opacity-100' : 'opacity-50 grayscale'}`}>

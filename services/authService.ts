@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { supabase, supabaseUrl, supabaseAnonKey } from './supabaseClient';
-import { User, UserRole, FinancialData, UserStatus, Anamnesis, DebtMapItem, CostOfLivingItem } from '../types';
+import { User, UserRole, FinancialData, UserStatus, Anamnesis, DebtMapItem, CostOfLivingItem, MentorshipMeeting, NonRecurringExpenseItem, MentorshipState } from '../types';
 
 export const authService = {
     // Inicialização (pode carregar sessão)
@@ -388,6 +388,14 @@ export const authService = {
     },
 
     saveCostOfLiving: async (userId: string, item: { id?: string; category: string; description: string; value: number }) => {
+        const currentUser = await authService.getCurrentUser();
+
+        // Se for Admin editando outro usuário
+        if (currentUser?.role === 'ADMIN' && currentUser.id !== userId) {
+            await authService.saveCostOfLivingByAdmin(userId, item);
+            return true;
+        }
+
         if (item.id) {
             const { error } = await supabase
                 .from('cost_of_living')
@@ -420,9 +428,14 @@ export const authService = {
         return true;
     },
 
+    deleteCostOfLivingItem: async (id: string, userId: string = '') => { // Add userId param for context check
+        const currentUser = await authService.getCurrentUser();
 
+        if (currentUser?.role === 'ADMIN') {
+            await authService.deleteCostOfLivingByAdmin(id);
+            return true;
+        }
 
-    deleteCostOfLivingItem: async (id: string) => {
         const { error } = await supabase
             .from('cost_of_living')
             .delete()
@@ -646,5 +659,196 @@ export const authService = {
             return { success: false, message: error.message };
         }
         return { success: true, data };
+    },
+
+    // --- Mentorship Module ---
+
+    getMentorshipState: async (userId: string): Promise<MentorshipState> => {
+        const currentUser = await authService.getCurrentUser();
+        let meetings: any[] = [];
+        let expenses: any[] = [];
+        let error = null;
+
+        // Se for Admin acessando outro usuário
+        if (currentUser?.role === 'ADMIN' && currentUser.id !== userId) {
+            const { data, error: rpcError } = await supabase.rpc('get_mentorship_state_by_admin', { target_user_id: userId });
+
+            if (rpcError) {
+                console.error("RPC Error fetching mentorship state:", rpcError);
+                return { meetings: [], nonRecurringExpenses: [] };
+            }
+            if (data) {
+                // If the prompt says it returns JSONB, then data.meetings and data.nonRecurringExpenses are properties of the JSON
+                // However, RPC return type `JSONB` might need casting as `any` in TypeScript for `data`
+                const typedData = data as any;
+                meetings = typedData.meetings || [];
+                expenses = typedData.nonRecurringExpenses || [];
+            }
+        } else {
+            // Standard User Fetch
+            const { data: mData, error: mError } = await supabase
+                .from('mentorship_meetings')
+                .select('*')
+                .eq('user_id', userId)
+                .order('meeting_id', { ascending: true });
+
+            if (mError) {
+                console.error('Error fetching mentorship meetings:', mError);
+                return { meetings: [], nonRecurringExpenses: [] };
+            }
+            meetings = mData || [];
+
+            const { data: eData, error: eError } = await supabase
+                .from('non_recurring_expenses')
+                .select('*')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: true });
+
+            if (eError) {
+                console.error('Error fetching non-recurring expenses:', eError);
+                return { meetings: [], nonRecurringExpenses: [] };
+            }
+            expenses = eData || [];
+        }
+
+        const mappedMeetings = (meetings || []).map(m => ({
+            userId: m.user_id,
+            meetingId: m.meeting_id, // Postgres returns snake_case by default? Yes, waiting for confirmation on exact column names from previous step. 
+            // In apply_migration I used user_id, meeting_id, started_at, completed_at
+            // Supabase client might return them as is.
+            status: m.status,
+            data: m.data,
+            startedAt: m.started_at,
+            completedAt: m.completed_at
+        }));
+
+        const mappedExpenses = (expenses || []).map(e => ({
+            id: e.id,
+            userId: e.user_id,
+            category: e.category,
+            description: e.description,
+            value: e.value,
+            frequency: e.frequency,
+            createdAt: e.created_at
+        }));
+
+        return {
+            meetings: mappedMeetings as MentorshipMeeting[],
+            nonRecurringExpenses: mappedExpenses as NonRecurringExpenseItem[]
+        };
+    },
+
+
+
+    updateMeetingStatus: async (userId: string, meetingId: number, status: 'completed' | 'in_progress' | 'scheduled') => {
+        const currentUser = await authService.getCurrentUser();
+
+        // Se for Admin editando outro usuário
+        if (currentUser?.role === 'ADMIN' && currentUser.id !== userId) {
+            const { error } = await supabase.rpc('update_meeting_status_by_admin', {
+                target_user_id: userId,
+                target_meeting_id: meetingId,
+                new_status: status
+            });
+            if (error) throw error;
+        } else {
+            // Usuário normal
+            const { error } = await supabase
+                .from('mentorship_meetings')
+                .update({ status, completed_at: status === 'completed' ? new Date().toISOString() : null })
+                .eq('user_id', userId)
+                .eq('meeting_id', meetingId);
+
+            if (error) throw error;
+        }
+    },
+
+    saveMeetingData: async (userId: string, meetingId: number, data: any) => {
+        const currentUser = await authService.getCurrentUser();
+
+        // Se for Admin editando outro usuário
+        if (currentUser?.role === 'ADMIN' && currentUser.id !== userId) {
+
+            const { error } = await supabase.rpc('upsert_mentorship_meeting_by_admin', {
+                target_user_id: userId,
+                target_meeting_id: meetingId,
+                new_data: data
+            }); // status default to unlocked/unchanged inside RPC
+
+            if (error) {
+                alert(`ERRO AO SALVAR (ADMIN): ${error.message}`);
+                throw error;
+            }
+        } else {
+            // Usuário normal ou Admin editando a si mesmo
+            const { error } = await supabase
+                .from('mentorship_meetings')
+                .upsert({
+                    user_id: userId,
+                    meeting_id: meetingId,
+                    data
+                }, { onConflict: 'user_id, meeting_id' });
+
+            if (error) throw error;
+        }
+    },
+
+    saveNonRecurringExpense: async (userId: string, item: Omit<NonRecurringExpenseItem, 'id' | 'createdAt' | 'userId'> & { id?: string }) => {
+        const currentUser = await authService.getCurrentUser();
+
+        // Se for Admin editando outro usuário
+        if (currentUser?.role === 'ADMIN' && currentUser.id !== userId) {
+            const { error } = await supabase.rpc('upsert_non_recurring_expense_by_admin', {
+                target_user_id: userId,
+                expense_category: item.category,
+                expense_description: item.description,
+                expense_value: item.value,
+                expense_frequency: item.frequency,
+                expense_id: item.id || null
+            });
+            if (error) throw error;
+        } else {
+            // Usuário normal
+            if (item.id) {
+                const { error } = await supabase
+                    .from('non_recurring_expenses')
+                    .update({
+                        category: item.category,
+                        description: item.description,
+                        value: item.value,
+                        frequency: item.frequency
+                    })
+                    .eq('id', item.id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('non_recurring_expenses')
+                    .insert({
+                        user_id: userId,
+                        category: item.category,
+                        description: item.description,
+                        value: item.value,
+                        frequency: item.frequency
+                    });
+                if (error) throw error;
+            }
+        }
+    },
+
+    deleteNonRecurringExpense: async (id: string, userId: string = '') => { // Added userId optional param to check context if needed, but for delete by ID we need to know ownership or use Admin RPC
+        const currentUser = await authService.getCurrentUser();
+
+        if (currentUser?.role === 'ADMIN') {
+            // Admin delete by RPC
+            const { error } = await supabase.rpc('delete_non_recurring_expense_by_admin', { target_expense_id: id });
+            if (error) throw error;
+        } else {
+            const { error } = await supabase
+                .from('non_recurring_expenses')
+                .delete()
+                .eq('id', id);
+            if (error) throw error;
+        }
     }
+
 };
