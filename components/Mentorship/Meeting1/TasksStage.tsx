@@ -1,19 +1,42 @@
 import React, { useState } from 'react';
 import { CheckSquare, Square } from 'lucide-react';
 
+interface Task {
+    id: string;
+    label: string;
+    checked: boolean;
+}
+
 interface TasksStageProps {
     meetingData: any;
     meetingStatus?: 'locked' | 'unlocked' | 'completed';
     onUpdateMeetingData: (data: any) => void;
     onComplete: () => void;
     onUnlock?: () => void;
+    customTasks?: { id: string; label: string }[];
 }
 
-export const TasksStage: React.FC<TasksStageProps> = ({ meetingData, meetingStatus, onUpdateMeetingData, onComplete, onUnlock }) => {
-    const [tasks, setTasks] = useState<{ id: string; label: string; checked: boolean }[]>([
-        { id: 'task1', label: 'Continuar registrando entradas, saídas e transferências', checked: meetingData?.tasks?.task1 || false },
-        { id: 'task2', label: 'Preencher lista de gastos não recorrentes', checked: meetingData?.tasks?.task2 || false }
-    ]);
+export const TasksStage: React.FC<TasksStageProps> = ({
+    meetingData,
+    meetingStatus,
+    onUpdateMeetingData,
+    onComplete,
+    onUnlock,
+    customTasks
+}) => {
+    const defaultTasks = [
+        { id: 'task1', label: 'Continuar registrando entradas, saídas e transferências' },
+        { id: 'task2', label: 'Preencher lista de gastos não recorrentes' }
+    ];
+
+    const tasksToUse = customTasks || defaultTasks;
+
+    const [tasks, setTasks] = useState<Task[]>(
+        tasksToUse.map(t => ({
+            ...t,
+            checked: meetingData?.tasks?.[t.id] || false
+        }))
+    );
 
     const handleToggle = (id: string) => {
         const newTasks = tasks.map(t =>

@@ -14,11 +14,16 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
 
 ### 2. Módulo de Mentoria (Novo)
 - **Estrutura de Reuniões**: 6 encontros progressivos para acompanhamento do cliente.
-- **Reunião 1 (Revisão e Gastos Não Recorrentes)**:
+- **Reunião 1 (Fundação)**:
   - **Revisão Financeira**: Comparativo entre Orçado x Realizado do diagnóstico.
   - **Gastos Não Recorrentes**: Cadastro de despesas anuais/semestrais (IPVA, IPTU, etc.) com cálculo automático de reserva mensal.
-  - **Sistema de Relatórios**: Impressão seletiva de etapas com cabeçalho personalizado e correção de layout (Print Portal).
-  - **Tarefas**: Checklist de ações práticas para o cliente.
+  - **Sistema de Relatórios**: Impressão seletiva de etapas com cabeçalho personalizado.
+- **Reunião 2 (Ajuste de Rota)**:
+  - **Sincronização de Dados**: Herança automática do "Definido" da reunião anterior como "Referência" na atual.
+  - **Indicadores Visuais**: Ícones de variação (↑ ↑ Increase, ↓ Decrease, - Equal) para comparação visual de metas.
+  - **CRUD de Gastos Anuais**: Gestão centralizada de despesas não recorrentes.
+- **Controle Administrativo**:
+  - **Bloqueio/Desbloqueio (Lock/Unlock)**: Admins e Secretários podem liberar reuniões futuras ou bloquear reuniões em andamento.
 - **Persistência e Segurança**: Dados salvos via Supabase com trava de segurança (RLS) e acesso administrativo via RPCs.
 
 ### 2. Relatórios Avançados e Impressão
@@ -117,7 +122,10 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 - **Feat**: Implementação completa do módulo **Ficha Individual** (User Intake) com persistência no banco.
 - **Refactor**: Nova estrutura de Dashboard com bloqueio progressivo de módulos.
 - **Infra**: Migração completa de LocalStorage para Supabase com RLS.
-- **Feat**: Módulo de Mentoria (Reunião 1) com fluxo completo de Revisão e Gastos Não Recorrentes.
-- **Fix**: Permissões de Admin para salvar dados de mentoria em nome do cliente (RPCs `upsert_mentorship_meeting_by_admin`, `get_mentorship_state_by_admin`).
+- **Feat**: Módulo de Mentoria (Reunião 1 e 2) com fluxo completo de Revisão, Gastos Não Recorrentes e Relatórios.
+- **Feat**: Sincronização automática de metas (Referência) entre reuniões consecutivas na Mentoria.
+- **Feat**: Controle de Bloqueio/Desbloqueio (Lock/Unlock) para Admins/Secretários no Dashboard de Mentoria.
+- **Feat**: Indicadores visuais de variação de orçamento (↑, ↓, -) no ReviewStage.
+- **Fix**: Permissões de Admin para salvar dados de mentoria em nome do cliente via RPCs dedicadas.
 - **Fix**: Correção de visualização de cards de mentoria e lógica de desbloqueio para Admins.
 

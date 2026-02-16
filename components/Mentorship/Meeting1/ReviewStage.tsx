@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Edit2, Save, X, AlertCircle } from 'lucide-react';
+import { CheckCircle2, Edit2, Save, X, AlertCircle, ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { FinancialData, ChecklistData } from '../../../types';
 import { CATEGORIES } from '../../CostOfLiving';
 
@@ -11,6 +11,7 @@ interface ReviewStageProps {
     onUpdateFinancialData: (data: FinancialData) => void;
     readOnly?: boolean;
     onPrint?: () => void;
+    previousMeetingData?: any;
 }
 
 interface ReviewItem {
@@ -29,7 +30,8 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
     onUpdateMeetingData,
     onUpdateFinancialData,
     readOnly = false,
-    onPrint
+    onPrint,
+    previousMeetingData
 }) => {
     const [bankChecked, setBankChecked] = useState(meetingData?.bankChecked || false);
     const [items, setItems] = useState<ReviewItem[]>(meetingData?.reviewItems || []);
@@ -48,19 +50,22 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
                 : {};
 
             // 2. Build Items List
-            // We use the CATEGORIES list to ensure all standard categories are present
-            // plus any custom ones found in financialData if needed, but standard is safer for "Budget"
-
             const initialItems: ReviewItem[] = CATEGORIES.map(cat => {
-                const catName = cat.id; // CATEGORIES is an array of objects { id, icon, ... }, id is the name
-                const limitVal = parseFloat(budgetLimits[catName] || '0');
+                const catName = cat.id;
+                let referenceVal = parseFloat(budgetLimits[catName] || '0');
+
+                // If we have previous meeting data, the "Defined" value from there becomes our "Reference"
+                if (previousMeetingData?.reviewItems) {
+                    const prevItem = previousMeetingData.reviewItems.find((i: any) => i.name === catName);
+                    if (prevItem) referenceVal = prevItem.defined;
+                }
 
                 return {
                     id: `review-${catName}`,
                     name: catName,
                     type: 'Variável',
-                    reference: limitVal,
-                    defined: limitVal,
+                    reference: referenceVal,
+                    defined: referenceVal,
                     realized: 0
                 };
             });
@@ -71,6 +76,27 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
             setItems(meetingData.reviewItems);
         }
     }, []); // Run once on mount
+
+    // Sync logic for Reference values from previous meeting
+    useEffect(() => {
+        if (previousMeetingData?.reviewItems && items.length > 0) {
+            let hasChanges = false;
+            const updatedItems = items.map(item => {
+                const prevItem = previousMeetingData.reviewItems.find((i: any) => i.name === item.name);
+                if (prevItem && prevItem.defined !== item.reference) {
+                    hasChanges = true;
+                    return { ...item, reference: prevItem.defined };
+                }
+                return item;
+            });
+
+            if (hasChanges) {
+                setItems(updatedItems);
+                // Also update persistent data so it's ready when saved
+                onUpdateMeetingData({ ...meetingData, reviewItems: updatedItems });
+            }
+        }
+    }, [previousMeetingData, items.length]);
 
     const handleToggleBankCheck = () => {
         if (readOnly) return;
@@ -157,7 +183,7 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
             {/* 2. Orçamento vs Realizado */}
             <div className="space-y-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2 print:text-black">
-                    2. Revisão de Orçamento
+                    2. Orçamento vs Realizado
                     {readOnly && <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700 uppercase">Somente Leitura</span>}
                 </h3>
 
@@ -174,12 +200,6 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-800 print:divide-gray-200">
-                            {/* Renda (Income) */}
-                            <tr className="bg-slate-800/30 print:bg-gray-100">
-                                <td colSpan={4} className="p-3 text-xs font-bold text-emerald-400 uppercase tracking-wider print:text-black">
-                                    Entradas (Renda)
-                                </td>
-                            </tr>
                             {items.map(item => {
                                 const percentage = item.defined > 0 ? (item.realized / item.defined) * 100 : 0;
                                 const difference = item.defined - item.realized;
@@ -215,9 +235,18 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
                                                     onClick={() => startEdit(item.id, 'defined', item.defined)}
                                                     className={`group flex items-center justify-end gap-2 text-sm ${readOnly ? 'cursor-default text-slate-400' : 'cursor-pointer text-white hover:text-sky-400'}`}
                                                 >
-                                                    <span className={`${item.reference === 0 && item.defined > 0 ? 'text-amber-400 font-bold' : ''}`}>
-                                                        R$ {item.defined.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                                    </span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        {item.defined > item.reference ? (
+                                                            <ArrowUp size={12} className="text-rose-400" title="Aumentou em relação à referência" />
+                                                        ) : item.defined < item.reference ? (
+                                                            <ArrowDown size={12} className="text-emerald-400" title="Diminuiu em relação à referência" />
+                                                        ) : (
+                                                            <Minus size={12} className="text-slate-600" title="Manteve o valor" />
+                                                        )}
+                                                        <span className={`${item.reference === 0 && item.defined > 0 ? 'text-amber-400 font-bold' : ''}`}>
+                                                            R$ {item.defined.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                        </span>
+                                                    </div>
                                                     {!readOnly && <Edit2 size={10} className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-500" />}
                                                 </div>
                                             )}

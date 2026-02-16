@@ -43,7 +43,7 @@ A migração para um backend real foi realizada para permitir sincronização e 
 ## 🚧 Fase 5: Expansão (Próximos Passos)
 - [ ] **Integrações Futuras**:
     - [ ] WhatsApp API para lembretes.
-- [ ] **Módulos de Mentoria**: Desenvolver conteúdo para os módulos 5-10.
+- [/] **Módulos de Mentoria**: Reunião 1 (Fundação) e Reunião 2 (Retorno) concluídas. Desenvolver 3-6.
 - [ ] **Dashboard de Métricas**: Gráficos para o Admin ver quantos leads foram convertidos no mês.
 
 ## 📥 Idea Inbox

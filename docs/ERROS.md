@@ -1,21 +1,22 @@
 
 # Erros Conhecidos e Limitações Técnicas
 
-Este documento visa transparência sobre a fragilidade do software em seu estágio atual (MVP Local).
+Este documento visa transparência sobre o estado atual do software e limitações identificadas.
 
-## 1. Limitações de Arquitetura (Crítico)
-*   **Sincronização de Dados (Browser-Bound)**:
-    *   O sistema usa `localStorage`. Portanto, **não há sincronização em tempo real** entre dispositivos.
-    *   Se um Administrador editar o diagnóstico de um Usuário, essa alteração fica salva apenas no computador do Administrador. O Usuário não verá essa mudança no celular dele.
-    *   *Solução*: Migração para Supabase (Fase 3 - Prioridade Máxima).
-*   **Segurança de Credenciais**: As senhas estão salvas no navegador em texto simples (JSON). Isso serve apenas para prototipação do fluxo.
- 
-## 2. UX / Usabilidade
-*   **Inputs Numéricos**: O comportamento de inputs numéricos em iOS/Android pode variar (teclado decimal vs numérico).
-*   **Reset de Estado**: Ao fazer logout, o formulário é limpo visualmente. Se o usuário recarregar a página (F5) na tela de login, os dados podem persistir visualmente até um novo login ocorrer (comportamento de cache do React state), embora não afete o banco de dados.
+## 1. Módulos em Desenvolvimento
+*   **Mentoria (Reuniões 3-6)**: O conteúdo das reuniões 3 a 6 ainda está em fase de planejamento. Atualmente, apenas as reuniões 1 e 2 possuem fluxos completos de dados e relatórios.
+*   **Dashboard de Métricas**: O painel administrativo de conversão de leads e retenção de alunos ainda não foi implementado.
 
-## 3. Lógica de Negócios
-*   **Concorrência**: Inexistente. O modelo atual é "single-player" por dispositivo.
+## 2. Interface e UX
+*   **Mobile Experience**: Embora responsivo, a visualização de tabelas densas (como o ReviewStage ou Mapeamento de Dívidas) é otimizada para Desktop. Em dispositivos móveis, pode ser necessário o scroll horizontal.
+*   **Modo de Impressão (iOS)**: O "Print Portal" funciona perfeitamente em navegadores Desktop (Chrome/Safari/Edge). Em roteadores mobile, a formatação de "Páginas" pode variar dependendo do suporte do sistema operacional ao `@media print`.
 
-## 4. IA (Mock Engine)
-*   **Feedback Genérico**: Como removemos a dependência do Google Gemini para evitar custos e complexidade no MVP, as análises são baseadas em templates pré-definidos (Positivo/Negativo/Neutro). Embora funcionais, elas são menos específicas do que uma análise de LLM real.
+## 3. Sincronização e Cache
+*   **Refresh de Estado**: Após o Admin salvar alterações no diagnóstico ou mentoria de um aluno, o aluno pode precisar recarregar a página (F5) para ver as mudanças refletidas imediatamente se ele estiver com a sessão ativa no momento da edição.
+*   **Concorrência**: O sistema não possui lock de edição simultânea. Se mentor e aluno editarem o mesmo campo ao mesmo tempo, o último save irá prevalecer.
+
+## 4. IA e Análises
+*   **Motor Estático**: As análises automáticas atuais são baseadas em heurísticas e templates. A integração com o Google Gemini (IA Generativa) está mapeada para fases futuras para fornecer feedbacks personalizados por texto.
+
+## 5. Limitações de Exportação
+*   **PDF Nativo**: A exportação para PDF depende da função `window.print()` do navegador. Não há um gerador de PDF server-side (ex: Puppeteer) no momento.

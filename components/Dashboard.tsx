@@ -26,6 +26,7 @@ import {
 import { MentorshipCard } from './Mentorship/MentorshipCard';
 import { MeetingModal } from './Mentorship/MeetingModal';
 import { Meeting1Content } from './Mentorship/Meeting1/Meeting1Content';
+import { Meeting2Content } from './Mentorship/Meeting2/Meeting2Content';
 
 interface DashboardProps {
     user: UserType;
@@ -466,6 +467,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {[1, 2, 3, 4, 5, 6].map(id => {
                                 const meeting = getMeeting(id);
+                                const canUnlock = currentUser.role === 'ADMIN' || currentUser.role === 'SECRETARY';
+
                                 return (
                                     <MentorshipCard
                                         key={id}
@@ -473,6 +476,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                         title={MEETING_TITLES[id - 1]}
                                         status={meeting.status}
                                         onClick={() => isMentoriaUnlocked && setSelectedMeeting(id)}
+                                        onUnlock={canUnlock && meeting.status === 'locked' ? async () => {
+                                            try {
+                                                await authService.updateMeetingStatus(user.id, id, 'unlocked');
+                                                const state = await authService.getMentorshipState(user.id);
+                                                setMentorshipState(state);
+                                            } catch (error) {
+                                                console.error('Erro ao liberar reunião:', error);
+                                                alert('Erro ao liberar reunião. Tente novamente.');
+                                            }
+                                        } : undefined}
+                                        onLock={canUnlock && meeting.status !== 'locked' ? async () => {
+                                            try {
+                                                await authService.updateMeetingStatus(user.id, id, 'locked');
+                                                const state = await authService.getMentorshipState(user.id);
+                                                setMentorshipState(state);
+                                            } catch (error) {
+                                                console.error('Erro ao bloquear reunião:', error);
+                                                alert('Erro ao bloquear reunião. Tente novamente.');
+                                            }
+                                        } : undefined}
                                     />
                                 );
                             })}
@@ -523,6 +546,41 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 onUnlock={async () => {
                                     await authService.updateMeetingStatus(user.id, 1, 'unlocked');
                                     // Refresh state
+                                    const state = await authService.getMentorshipState(user.id);
+                                    setMentorshipState(state);
+                                }}
+                            />
+                        ) : selectedMeeting === 2 ? (
+                            <Meeting2Content
+                                userId={user.id}
+                                currentUser={currentUser}
+                                financialData={financialData}
+                                checklistData={user.checklistData || {}}
+                                meetingData={getMeeting(2).data}
+                                previousMeetingData={getMeeting(1).data}
+                                meetingStatus={getMeeting(2).status}
+                                onUpdateMeetingData={async (data) => {
+                                    const updatedMeetings = mentorshipState.meetings.map(m =>
+                                        m.meetingId === 2 ? { ...m, data } : m
+                                    );
+                                    if (!mentorshipState.meetings.find(m => m.meetingId === 2)) {
+                                        updatedMeetings.push({ ...getMeeting(2), data });
+                                    }
+                                    setMentorshipState(prev => ({ ...prev, meetings: updatedMeetings }));
+                                    await authService.saveMeetingData(user.id, 2, data);
+                                }}
+                                onUpdateFinancialData={async (data) => {
+                                    onUpdateFinancialData(data);
+                                    await authService.saveDiagnostic(user.id, data);
+                                }}
+                                onComplete={async () => {
+                                    await authService.updateMeetingStatus(user.id, 2, 'completed');
+                                    setSelectedMeeting(null);
+                                    const state = await authService.getMentorshipState(user.id);
+                                    setMentorshipState(state);
+                                }}
+                                onUnlock={async () => {
+                                    await authService.updateMeetingStatus(user.id, 2, 'unlocked');
                                     const state = await authService.getMentorshipState(user.id);
                                     setMentorshipState(state);
                                 }}

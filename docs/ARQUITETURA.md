@@ -37,11 +37,23 @@ Devido à necessidade de o Admin ler e escrever dados *em nome do usuário*, uti
 
 *   **`MentorshipCard`**: Exibe o status (Cadeado/Check) e controla abertura do modal.
 *   **`MeetingModal`**: Gerenciador de contexto da reunião.
-*   **`Meeting1Content`**: Orquestrador da Reunião 1. Gerencia os passos:
-    1.  `ReviewStage`: Tabela de Orçamento.
-    2.  `NonRecurringExpensesStage`: CRUD de gastos.
+*   **`Meeting1Content` / `Meeting2Content`**: Orquestradores das reuniões. Gerenciam os passos:
+    1.  `ReviewStage`: Tabela de Orçamento com suporte a herança de dados.
+    2.  `NonRecurringExpensesStage`: CRUD de gastos anuais.
     3.  `ReportsStage`: Central de Impressão.
-    4.  `TasksStage`: Checklist de finalização.
+    4.  `TasksStage`: Checklist de finalização com suporte a tarefas customizadas.
+
+### Sincronização de Dados entre Reuniões
+Para garantir a continuidade do planejamento financeiro, implementamos um padrão de **Herança de Metas**:
+1.  O componente `ReviewStage` recebe `previousMeetingData`.
+2.  Um `useEffect` monitora mudanças nos dados da reunião anterior.
+3.  O valor "Definido" (Meta) da Reunião N torna-se o valor "Referência" (Base) da Reunião N+1.
+4.  Isso permite que o mentor e o aluno vejam a evolução e comparem o planejado vs realizado de forma contínua.
+
+### Controle Administrativo de Acesso
+Adicionamos a funcionalidade de **Lock/Unlock Manual**:
+*   No `Dashboard.tsx`, admins podem disparar o `update_meeting_status_by_admin` RPC para alterar o status de qualquer reunião.
+*   Isso permite liberar reuniões antecipadamente ou bloquear revisões após a conclusão.
 
 ### Sistema de Impressão ("Print Portal")
 

@@ -6,9 +6,11 @@ interface MentorshipCardProps {
     title: string;
     status: 'locked' | 'unlocked' | 'completed';
     onClick: () => void;
+    onUnlock?: () => void;
+    onLock?: () => void;
 }
 
-export const MentorshipCard: React.FC<MentorshipCardProps> = ({ meetingId, title, status, onClick }) => {
+export const MentorshipCard: React.FC<MentorshipCardProps> = ({ meetingId, title, status, onClick, onUnlock, onLock }) => {
     const isLocked = status === 'locked';
     const isCompleted = status === 'completed';
 
@@ -28,13 +30,56 @@ export const MentorshipCard: React.FC<MentorshipCardProps> = ({ meetingId, title
                     <Layout className={`w-6 h-6 ${isLocked ? 'text-slate-600' : 'text-emerald-400'}`} />
                 </div>
                 {isCompleted ? (
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30">
-                        <CheckCircle className="w-3 h-3 text-emerald-400" />
-                        <span className="text-xs font-medium text-emerald-400">Concluído</span>
+                    <div className="flex items-center gap-2">
+                        {onLock && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onLock();
+                                }}
+                                className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors mr-2"
+                                title="Bloquear Reunião"
+                            >
+                                <Lock className="w-4 h-4" />
+                            </button>
+                        )}
+                        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30">
+                            <CheckCircle className="w-3 h-3 text-emerald-400" />
+                            <span className="text-xs font-medium text-emerald-400">Concluído</span>
+                        </div>
                     </div>
                 ) : isLocked ? (
-                    <Lock className="w-5 h-5 text-slate-600" />
-                ) : null}
+                    <div className="flex items-center gap-2">
+                        {onUnlock && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onUnlock();
+                                }}
+                                className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                                title="Liberar Reunião"
+                            >
+                                <Lock className="w-4 h-4" />
+                            </button>
+                        )}
+                        {!onUnlock && <Lock className="w-5 h-5 text-slate-600" />}
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        {onLock && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onLock();
+                                }}
+                                className="p-2 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors"
+                                title="Bloquear Reunião"
+                            >
+                                <Lock className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
 
             <h3 className={`text-lg font-bold mb-2 ${isLocked ? 'text-slate-500' : 'text-slate-200'}`}>
