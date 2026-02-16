@@ -56,12 +56,14 @@ export const Meeting1Content: React.FC<Meeting1ContentProps> = ({
         setPrintSection(section);
         if (data) setPrintData(data);
 
-        // Pequeno delay para garantir que o estado atualizou e o componente renderizou antes de imprimir
+        // Aumentar o delay se não houver data prévia, pois o componente terá que buscar no banco
+        const delay = data ? 300 : 1200;
+
         setTimeout(() => {
             window.print();
             setPrintSection(null);
             setPrintData(null);
-        }, 100);
+        }, delay);
     };
 
     // Callback para quando terminar a impressão (mas window.print bloqueia a thread, então difícil pegar o "cancelar")

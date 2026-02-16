@@ -35,6 +35,13 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
         fetchItems();
     }, [userId]);
 
+    useEffect(() => {
+        if (initialItems) {
+            setItems(initialItems);
+            setLoading(false);
+        }
+    }, [initialItems]);
+
     const handleEdit = (item: NonRecurringExpenseItem) => {
         setEditingId(item.id);
         setCategory(item.category);
@@ -222,9 +229,16 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                                         R$ {item.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                     </p>
                                 </div>
+                                {/* Monthly Breakdown Column (Added for both UI and Print) */}
+                                <div className="text-right pl-4 border-l border-slate-800 print:border-gray-300 min-w-[100px] shrink-0">
+                                    <span className="text-xs text-slate-500 print:text-gray-500">Mensal (1/12)</span>
+                                    <p className="font-bold text-sky-400 print:text-black">
+                                        R$ {((item.value * item.frequency) / 12).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </p>
+                                </div>
                                 {/* New Total Column */}
                                 <div className="text-right pl-4 border-l border-slate-800 print:border-gray-300 min-w-[100px] shrink-0">
-                                    <span className="text-xs text-slate-500 print:text-gray-500">Total</span>
+                                    <span className="text-xs text-slate-500 print:text-gray-500">Total Anual</span>
                                     <p className="font-bold text-emerald-400 print:text-black">
                                         R$ {(item.value * item.frequency).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                     </p>
