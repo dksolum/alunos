@@ -10,6 +10,95 @@ import {
 import { generateLocalAnalysis } from '../geminiService';
 import { AnamnesisForm } from './AnamnesisForm';
 import { authService } from '../services/authService';
+import { PrintPortal } from './PrintPortal';
+import { PrintHeader } from './Mentorship/Meeting1/PrintHeader';
+
+// --- Componentes Auxiliares (Definidos antes do uso para evitar erros de hoisting) ---
+
+const DetailItem: React.FC<{ label: string, value: string, sub: string }> = ({ label, value, sub }) => (
+  <div className="flex flex-col p-4 bg-slate-950/30 rounded-xl border border-slate-800/50 print-border">
+    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</span>
+    <span className="text-lg font-black text-white mb-0.5">{value}</span>
+    <span className="text-[9px] text-slate-600 font-bold uppercase">{sub}</span>
+  </div>
+);
+
+const DetailSection: React.FC<{ title: string, icon: React.ReactNode, items: FinancialItem[], total: number, color: 'emerald' | 'rose' | 'sky' | 'amber', hourlyWage: number }> = ({ title, icon, items, total, color, hourlyWage }) => {
+  const colorClasses = {
+    emerald: 'text-emerald-500 bg-emerald-500/10',
+    rose: 'text-rose-500 bg-rose-500/10',
+    sky: 'text-sky-500 bg-sky-500/10',
+    amber: 'text-amber-500 bg-amber-500/10'
+  };
+
+  const calculateTime = (cost: number) => {
+    if (hourlyWage <= 0) return "0h 0m";
+    const totalMinutes = (cost / hourlyWage) * 60;
+    const hours = Math.floor(totalMinutes / 60);
+    const mins = Math.round(totalMinutes % 60);
+    return `${hours}h ${mins}m`;
+  };
+
+  const filteredItems = items.filter(item => item.value > 0);
+
+  if (filteredItems.length === 0) return null;
+
+  return (
+    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 print-border break-inside-avoid">
+      <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-xl no-print ${colorClasses[color]}`}>{icon}</div>
+          <h3 className={`text-xl font-black uppercase tracking-tight ${colorClasses[color].split(' ')[0]}`}>{title}</h3>
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="text-lg font-black text-white">R$ {total.toLocaleString('pt-BR')}</span>
+          <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
+            <Clock size={12} /> {calculateTime(total)}
+          </span>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {filteredItems.map((item, idx) => (
+          <div key={idx} className="flex justify-between items-center p-3 bg-slate-950/30 rounded-xl border border-slate-800/50 hover:bg-slate-900 transition-colors print-border">
+            <span className="text-sm font-bold text-slate-300">{item.name || 'Item sem descrição'}</span>
+            <div className="flex flex-col items-end">
+              <span className="text-sm font-black text-white">R$ {item.value.toLocaleString('pt-BR')}</span>
+              <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
+                <Clock size={10} /> {calculateTime(item.value)}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const CheckItem: React.FC<{ label: string, desc: string }> = ({ label, desc }) => (
+  <div className="flex gap-4 group/check">
+    <div className="mt-1 text-slate-700 group-hover/check:text-sky-400 transition-colors"><Circle size={18} /></div>
+    <div className="flex flex-col">
+      <span className="text-[12px] font-black text-slate-200 uppercase">{label}</span>
+      <span className="text-[10px] text-slate-500 font-medium leading-tight">{desc}</span>
+    </div>
+  </div>
+);
+
+const StatCard: React.FC<{ icon: React.ReactNode, label: string, value: string }> = ({ icon, label, value }) => (
+  <div className="bg-slate-800/40 border border-slate-800 p-5 rounded-2xl flex flex-col gap-2 hover:border-sky-500/30 transition-all duration-300 backdrop-blur-sm">
+    <div className="flex items-center gap-2"><div className="p-1.5 bg-slate-900/50 rounded-lg">{icon}</div><span className="text-slate-500 text-[9px] font-black uppercase tracking-widest">{label}</span></div>
+    <div className="text-xl font-black text-slate-100">{value}</div>
+  </div>
+);
+
+const BooleanItem: React.FC<{ label: string, value: boolean }> = ({ label, value }) => (
+  <div className={`p-4 rounded-xl border flex items-center justify-between ${value ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-rose-500/5 border-rose-500/20'}`}>
+    <span className="text-xs font-bold text-slate-300 uppercase">{label}</span>
+    <span className={`text-[10px] font-black uppercase px-2 py-1 rounded ${value ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+      {value ? 'SIM' : 'NÃO'}
+    </span>
+  </div>
+);
 
 interface ReportProps {
   data: FinancialData;
@@ -37,6 +126,7 @@ export const Report: React.FC<ReportProps> = ({ data, user, onBack, onEdit, onSa
   const [viewMode, setViewMode] = useState<'overview' | 'detailed' | 'anamnesis'>('overview');
   const [showAnamnesisForm, setShowAnamnesisForm] = useState(false);
   const [anamnesisData, setAnamnesisData] = useState<Anamnesis | null>(propAnamnesis || null);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   useEffect(() => {
     if (propAnamnesis !== undefined) {
@@ -170,7 +260,11 @@ export const Report: React.FC<ReportProps> = ({ data, user, onBack, onEdit, onSa
   }, []);
 
   const handlePrint = () => {
-    window.print();
+    setIsPrinting(true);
+    setTimeout(() => {
+      window.print();
+      setIsPrinting(false);
+    }, 300);
   };
 
   return (
@@ -183,44 +277,6 @@ export const Report: React.FC<ReportProps> = ({ data, user, onBack, onEdit, onSa
           user={user}
         />
       )}
-      <style>{`
-        @media print {
-          body * {
-            visibility: hidden;
-          }
-          #report-content, #report-content * {
-            visibility: visible;
-          }
-          #report-content {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            background-color: white !important;
-            color: black !important;
-            padding: 20px;
-          }
-          .no-print {
-            display: none !important;
-          }
-          .print-black-text {
-            color: black !important;
-          }
-          .print-border {
-            border-color: #ddd !important;
-          }
-          /* Remove dark backgrounds for print */
-          [class*="bg-"] {
-             background-color: transparent !important;
-             color: black !important;
-          }
-          /* Ensure text visibility */
-          p, h1, h2, h3, h4, span, div {
-             color: black !important;
-             text-shadow: none !important;
-          }
-        }
-      `}</style>
 
       {/* Header e Navegação */}
       <div className="mb-8 flex flex-col gap-6">
@@ -736,93 +792,121 @@ export const Report: React.FC<ReportProps> = ({ data, user, onBack, onEdit, onSa
             )}
           </div>
         )}
-      </div>
-    </div >
-  );
-};
+        {isPrinting && (
+          <PrintPortal>
+            <div className="p-8 bg-white text-black min-h-screen">
+              <PrintHeader user={user} title={viewMode === 'anamnesis' ? "Anamnese Financeira" : "Relatório Detalhado"} />
 
-// Componentes Auxiliares para o Detalhamento
-const DetailItem: React.FC<{ label: string, value: string, sub: string }> = ({ label, value, sub }) => (
-  <div className="flex flex-col p-4 bg-slate-950/30 rounded-xl border border-slate-800/50 print-border">
-    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</span>
-    <span className="text-lg font-black text-white mb-0.5">{value}</span>
-    <span className="text-[9px] text-slate-600 font-bold uppercase">{sub}</span>
-  </div>
-);
+              {viewMode === 'detailed' && (
+                <div className="mt-8 space-y-8">
+                  <div className="bg-white border border-gray-200 rounded-3xl p-8">
+                    <div className="flex items-center gap-4 mb-6">
+                      <h3 className="text-xl font-black text-sky-600 uppercase tracking-tight">Trabalho e Renda</h3>
+                    </div>
+                    <div className="grid grid-cols-3 gap-6">
+                      <DetailItem label="Dias/Semana" value={data.work.daysPerWeek.toString()} sub="Dias trabalhados" />
+                      <DetailItem label="Horas/Dia" value={`${data.work.hoursPerDay}h`} sub="Carga horária diária" />
+                      <DetailItem label="Tipo de Renda" value={data.work.incomeType} sub="Modelo de recebimento" />
+                    </div>
+                  </div>
 
-const DetailSection: React.FC<{ title: string, icon: React.ReactNode, items: FinancialItem[], total: number, color: 'emerald' | 'rose' | 'sky' | 'amber', hourlyWage: number }> = ({ title, icon, items, total, color, hourlyWage }) => {
-  const colorClasses = {
-    emerald: 'text-emerald-500 bg-emerald-500/10',
-    rose: 'text-rose-500 bg-rose-500/10',
-    sky: 'text-sky-500 bg-sky-500/10',
-    amber: 'text-amber-500 bg-amber-500/10'
-  };
+                  <DetailSection
+                    title="Entradas Mensais"
+                    icon={<Wallet size={20} />}
+                    items={data.income}
+                    total={totalIncome}
+                    color="emerald"
+                    hourlyWage={hourlyWage}
+                  />
 
-  const calculateTime = (cost: number) => {
-    if (hourlyWage <= 0) return "0h 0m";
-    const totalMinutes = (cost / hourlyWage) * 60;
-    const hours = Math.floor(totalMinutes / 60);
-    const mins = Math.round(totalMinutes % 60);
-    return `${hours}h ${mins}m`;
-  };
+                  <DetailSection
+                    title="Despesas Fixas"
+                    icon={<Home size={20} />}
+                    items={data.fixedExpenses}
+                    total={totalFixed}
+                    color="rose"
+                    hourlyWage={hourlyWage}
+                  />
 
-  const filteredItems = items.filter(item => item.value > 0);
+                  <DetailSection
+                    title="Despesas Variáveis"
+                    icon={<ShoppingCart size={20} />}
+                    items={data.estimatedExpenses}
+                    total={totalEstimated}
+                    color="rose"
+                    hourlyWage={hourlyWage}
+                  />
 
-  if (filteredItems.length === 0) return null;
+                  <div className="bg-white border border-gray-200 rounded-3xl p-8 break-inside-avoid">
+                    <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
+                      <div className="flex items-center gap-4">
+                        <h3 className="text-xl font-black text-rose-600 uppercase tracking-tight">Dívidas e Empréstimos</h3>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <span className="text-lg font-black text-black">Total: R$ {totalDebts.toLocaleString('pt-BR')}</span>
+                      </div>
+                    </div>
 
-  return (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-8 print-border break-inside-avoid">
-      <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
-        <div className="flex items-center gap-4">
-          <div className={`p-3 rounded-xl no-print ${colorClasses[color]}`}>{icon}</div>
-          <h3 className={`text-xl font-black uppercase tracking-tight ${colorClasses[color].split(' ')[0]}`}>{title}</h3>
-        </div>
-        <div className="flex flex-col items-end">
-          <span className="text-lg font-black text-white">R$ {total.toLocaleString('pt-BR')}</span>
-          <span className="text-xs font-bold text-slate-500 flex items-center gap-1">
-            <Clock size={12} /> {calculateTime(total)}
-          </span>
-        </div>
-      </div>
-      <div className="space-y-2">
-        {filteredItems.map((item, idx) => (
-          <div key={idx} className="flex justify-between items-center p-3 bg-slate-950/30 rounded-xl border border-slate-800/50 hover:bg-slate-900 transition-colors print-border">
-            <span className="text-sm font-bold text-slate-300">{item.name || 'Item sem descrição'}</span>
-            <div className="flex flex-col items-end">
-              <span className="text-sm font-black text-white">R$ {item.value.toLocaleString('pt-BR')}</span>
-              <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                <Clock size={10} /> {calculateTime(item.value)}
-              </span>
+                    <div className="space-y-3">
+                      {data.debts.filter(d => d.value > 0).map((debt, idx) => (
+                        <div key={idx} className="p-4 bg-gray-50 rounded-2xl border border-gray-200 flex flex-col gap-2">
+                          <div className="flex justify-between items-start">
+                            <span className="text-sm font-bold text-gray-800">{debt.name || 'Dívida sem nome'}</span>
+                            <span className="text-sm font-black text-black">R$ {debt.value.toLocaleString('pt-BR')}/mês</span>
+                          </div>
+                          <div className="flex justify-between items-center text-[10px] font-bold text-gray-500 uppercase">
+                            <span>Parcela {debt.totalInstallments - debt.remainingInstallments + 1} de {debt.totalInstallments}</span>
+                            <span>Até {getEndDate(debt.remainingInstallments)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {viewMode === 'anamnesis' && anamnesisData && (
+                <div className="mt-8 space-y-6">
+                  <div className="bg-white border border-gray-200 rounded-3xl p-8">
+                    <h3 className="text-sky-600 font-black uppercase tracking-widest text-xs mb-6 border-b border-gray-100 pb-4">Reflexão Inicial</h3>
+                    <div className="space-y-6">
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest block">Motivação</span>
+                        <p className="text-sm text-gray-800 leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100">
+                          {anamnesisData.reason}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest block">Objetivos</span>
+                        <p className="text-sm text-gray-800 leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100">
+                          {anamnesisData.objectives}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-gray-200 rounded-3xl p-8">
+                    <h3 className="text-sky-600 font-black uppercase tracking-widest text-xs mb-6 border-b border-gray-100 pb-4">Hábitos e Comportamento</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <BooleanItem label="Gasta tudo que sobra?" value={anamnesisData.spendsAll} />
+                      <BooleanItem label="Possui Reserva de Emergência?" value={anamnesisData.emergencyFund} />
+                      <BooleanItem label="Possui Investimentos?" value={anamnesisData.investments} />
+                      <BooleanItem label="Investe Todos os Meses?" value={anamnesisData.investsMonthly} />
+                      <BooleanItem label="Planejamento Aposentadoria?" value={anamnesisData.retirementPlan} />
+                      <BooleanItem label="Decisões Independentes?" value={anamnesisData.independentDecisions} />
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 border border-gray-200 rounded-3xl p-8 flex flex-col items-center text-center gap-4">
+                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Autoavaliação Financeira (0-10)</span>
+                    <div className="text-8xl font-black text-sky-600">{anamnesisData.financialScore}</div>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          </PrintPortal>
+        )}
       </div>
     </div>
   );
 };
-
-const CheckItem: React.FC<{ label: string, desc: string }> = ({ label, desc }) => (
-  <div className="flex gap-4 group/check">
-    <div className="mt-1 text-slate-700 group-hover/check:text-sky-400 transition-colors"><Circle size={18} /></div>
-    <div className="flex flex-col">
-      <span className="text-[12px] font-black text-slate-200 uppercase">{label}</span>
-      <span className="text-[10px] text-slate-500 font-medium leading-tight">{desc}</span>
-    </div>
-  </div>
-);
-
-const StatCard: React.FC<{ icon: React.ReactNode, label: string, value: string }> = ({ icon, label, value }) => (
-  <div className="bg-slate-800/40 border border-slate-800 p-5 rounded-2xl flex flex-col gap-2 hover:border-sky-500/30 transition-all duration-300 backdrop-blur-sm">
-    <div className="flex items-center gap-2"><div className="p-1.5 bg-slate-900/50 rounded-lg">{icon}</div><span className="text-slate-500 text-[9px] font-black uppercase tracking-widest">{label}</span></div>
-    <div className="text-xl font-black text-slate-100">{value}</div>
-  </div>
-);
-
-const BooleanItem: React.FC<{ label: string, value: boolean }> = ({ label, value }) => (
-  <div className={`p-4 rounded-xl border flex items-center justify-between ${value ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-rose-500/5 border-rose-500/20'}`}>
-    <span className="text-xs font-bold text-slate-300 uppercase">{label}</span>
-    <span className={`text-[10px] font-black uppercase px-2 py-1 rounded ${value ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-      {value ? 'SIM' : 'NÃO'}
-    </span>
-  </div>
-);

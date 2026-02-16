@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { X, Save, CheckCircle2, ChevronRight, ChevronLeft, LogOut, Edit2, ArrowLeft, FileText } from 'lucide-react';
 import { Anamnesis, User } from '../types';
+import { PrintPortal } from './PrintPortal';
+import { PrintHeader } from './Mentorship/Meeting1/PrintHeader';
 
 interface AnamnesisFormProps {
     onClose?: () => void;
@@ -26,6 +28,7 @@ export const AnamnesisForm: React.FC<AnamnesisFormProps> = ({ onClose, onSave, i
         independentDecisions: initialData?.independentDecisions || false,
         financialScore: initialData?.financialScore || 5, // Default range value
     });
+    const [isPrinting, setIsPrinting] = useState(false);
 
     const handleNext = () => setStep(step + 1);
     const handleBack = () => setStep(step - 1);
@@ -38,7 +41,11 @@ export const AnamnesisForm: React.FC<AnamnesisFormProps> = ({ onClose, onSave, i
     };
 
     const handlePrint = () => {
-        window.print();
+        setIsPrinting(true);
+        setTimeout(() => {
+            window.print();
+            setIsPrinting(false);
+        }, 300);
     };
 
     const renderStep1 = () => (
@@ -300,21 +307,7 @@ export const AnamnesisForm: React.FC<AnamnesisFormProps> = ({ onClose, onSave, i
                 </div>
 
                 <div className="p-6 flex-1 print:p-0 print:overflow-visible">
-                    {/* Print Header */}
-                    {user && (
-                        <div className="hidden print:block mb-8 p-6 border-b border-slate-200 text-slate-800">
-                            <h1 className="text-2xl font-black mb-4">Anamnese Financeira</h1>
-                            <div className="text-sm space-y-1">
-                                <p><span className="font-bold">Cliente:</span> {user.name}</p>
-                                <p><span className="font-bold">Email:</span> {user.email}</p>
-                                {user.whatsapp && <p><span className="font-bold">WhatsApp:</span> {user.whatsapp}</p>}
-                            </div>
-                            <div className="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center">
-                                <span className="text-xs font-bold text-slate-500 uppercase">SOLUM Diagnóstico</span>
-                                <span className="text-[10px] text-slate-500">{new Date().toLocaleDateString()}</span>
-                            </div>
-                        </div>
-                    )}
+                    {/* Inline Print Header Removed - Used in Portal */}
 
                     {mode === 'view' ? renderViewMode() : (
                         <>
@@ -362,6 +355,17 @@ export const AnamnesisForm: React.FC<AnamnesisFormProps> = ({ onClose, onSave, i
                     )}
                 </div>
             </div>
+
+            {isPrinting && (
+                <PrintPortal>
+                    <div className="p-8 bg-white text-black">
+                        <PrintHeader user={user || { name: 'Cliente', email: '', id: '', role: 'USER' }} title="Anamnese Financeira" />
+                        <div className="mt-8">
+                            {renderViewMode()}
+                        </div>
+                    </div>
+                </PrintPortal>
+            )}
         </div>
     );
 };

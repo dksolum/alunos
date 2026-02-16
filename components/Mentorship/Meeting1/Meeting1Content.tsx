@@ -4,6 +4,7 @@ import { NonRecurringExpensesStage } from './NonRecurringExpensesStage';
 import { TasksStage } from './TasksStage';
 import { ReportsStage } from './ReportsStage';
 import { PrintHeader } from './PrintHeader';
+import { PrintPortal } from '../../PrintPortal';
 import { FinancialData, ChecklistData } from '../../../types';
 import { ChevronRight, Check } from 'lucide-react';
 
@@ -36,6 +37,7 @@ export const Meeting1Content: React.FC<Meeting1ContentProps> = ({
 }) => {
     const activeStep = meetingData?.activeStep || 0;
     const [printSection, setPrintSection] = useState<'review' | 'expenses' | null>(null);
+    const [printData, setPrintData] = useState<any>(null);
 
     const setActiveStep = async (step: number) => {
         onUpdateMeetingData({ ...meetingData, activeStep: step });
@@ -50,12 +52,15 @@ export const Meeting1Content: React.FC<Meeting1ContentProps> = ({
 
     const isUser = currentUser.role === 'USER';
 
-    const handlePrint = (section: 'review' | 'expenses') => {
+    const handlePrint = (section: 'review' | 'expenses', data?: any) => {
         setPrintSection(section);
+        if (data) setPrintData(data);
+
         // Pequeno delay para garantir que o estado atualizou e o componente renderizou antes de imprimir
         setTimeout(() => {
             window.print();
             setPrintSection(null);
+            setPrintData(null);
         }, 100);
     };
 
@@ -97,11 +102,10 @@ export const Meeting1Content: React.FC<Meeting1ContentProps> = ({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar print:overflow-visible print:h-auto">
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar print:hidden">
                 <div className="max-w-6xl mx-auto w-full">
                     {/* REVIEW STAGE */}
-                    <div className={`${activeStep === 0 || printSection === 'review' ? 'block' : 'hidden'} ${printSection === 'expenses' ? 'print:hidden' : ''} ${printSection === 'review' ? 'print-content' : ''}`}>
-                        {printSection === 'review' && <PrintHeader user={currentUser} title="Revisão de Orçamento" />}
+                    <div className={`${activeStep === 0 ? 'block' : 'hidden'}`}>
                         <ReviewStage
                             financialData={financialData}
                             checklistData={checklistData}
@@ -109,18 +113,21 @@ export const Meeting1Content: React.FC<Meeting1ContentProps> = ({
                             onUpdateMeetingData={onUpdateMeetingData}
                             onUpdateFinancialData={onUpdateFinancialData}
                             readOnly={isUser}
+                            onPrint={() => handlePrint('review')}
                         />
                     </div>
 
                     {/* EXPENSES STAGE */}
-                    <div className={`${activeStep === 1 || printSection === 'expenses' ? 'block' : 'hidden'} ${printSection === 'review' ? 'print:hidden' : ''} ${printSection === 'expenses' ? 'print-content' : ''}`}>
-                        {printSection === 'expenses' && <PrintHeader user={currentUser} title="Gastos Não Recorrentes" />}
-                        <NonRecurringExpensesStage userId={userId} />
+                    <div className={`${activeStep === 1 ? 'block' : 'hidden'}`}>
+                        <NonRecurringExpensesStage
+                            userId={userId}
+                            onPrint={() => handlePrint('expenses')}
+                        />
                     </div>
 
                     {/* REPORTS STAGE */}
                     {activeStep === 2 && (
-                        <div className="print:hidden">
+                        <div>
                             <ReportsStage
                                 onPrintReview={() => handlePrint('review')}
                                 onPrintExpenses={() => handlePrint('expenses')}
@@ -130,7 +137,7 @@ export const Meeting1Content: React.FC<Meeting1ContentProps> = ({
 
                     {/* TASKS STAGE */}
                     {activeStep === 3 && (
-                        <div className="print:hidden">
+                        <div>
                             <TasksStage
                                 meetingData={meetingData}
                                 meetingStatus={meetingStatus}
@@ -142,6 +149,37 @@ export const Meeting1Content: React.FC<Meeting1ContentProps> = ({
                     )}
                 </div>
             </div>
+
+            {/* PRINT PORTAL */}
+            <PrintPortal>
+                {printSection === 'review' && (
+                    <div className="p-8">
+                        <PrintHeader user={currentUser} title="Revisão de Orçamento" />
+                        <div className="mt-8">
+                            <ReviewStage
+                                financialData={financialData}
+                                checklistData={checklistData}
+                                meetingData={meetingData}
+                                onUpdateMeetingData={onUpdateMeetingData}
+                                onUpdateFinancialData={onUpdateFinancialData}
+                                readOnly={true} // Always read-only in print
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {printSection === 'expenses' && (
+                    <div className="p-8">
+                        <PrintHeader user={currentUser} title="Gastos Não Recorrentes" />
+                        <div className="mt-8">
+                            <NonRecurringExpensesStage
+                                userId={userId}
+                                initialItems={printData}
+                            />
+                        </div>
+                    </div>
+                )}
+            </PrintPortal>
         </div>
     );
 };

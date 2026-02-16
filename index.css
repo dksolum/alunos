@@ -6,55 +6,50 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
+/* Hide print root from screen view */
+#print-root {
+  display: none;
+}
+
 @media print {
   @page {
     margin: 10mm;
     size: auto;
   }
 
-  /* Hide everything by default */
-  body * {
-    visibility: hidden;
-  }
-
-  /* Reset root containers to allow full flow */
-  html,
-  body,
-  #root {
-    height: auto !important;
-    overflow: visible !important;
-    min-height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  /* Only show the specific print content and its children */
-  .print-content,
-  .print-content * {
-    visibility: visible;
-  }
-
-  /* Position the print content to flow naturally */
-  .print-content {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-
-    /* Ensure background is white and text is black */
-    background: white !important;
+  /* Reset body background for print */
+  body {
+    background-color: white !important;
     color: black !important;
   }
 
-  /* Prevent page breaks inside items if possible */
-  .print-break-inside-avoid {
-    break-inside: avoid;
+  /* PORTAL STRATEGY: Only hide root if using the Portal */
+  body.printing-portal #root {
+    display: none !important;
   }
 
-  /* Hide scrollbars */
-  ::-webkit-scrollbar {
+  /* Show portal content ONLY when portal is active */
+  #print-root {
     display: none;
+  }
+
+  body.printing-portal #print-root {
+    display: block !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  /* Ensure print content is sharp */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Utility to hide elements during print */
+  .no-print,
+  .print\:hidden {
+    display: none !important;
   }
 }

@@ -30,6 +30,8 @@ import {
 } from 'lucide-react';
 import { CostOfLivingItem } from '../types';
 import { authService } from '../services/authService';
+import { PrintPortal } from './PrintPortal';
+import { PrintHeader } from './Mentorship/Meeting1/PrintHeader';
 
 interface CostOfLivingProps {
     userId: string;
@@ -85,6 +87,7 @@ export const CostOfLiving: React.FC<CostOfLivingProps> = ({
     const [value, setValue] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
+    const [isPrinting, setIsPrinting] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -202,7 +205,11 @@ export const CostOfLiving: React.FC<CostOfLivingProps> = ({
     };
 
     const handlePrint = () => {
-        window.print();
+        setIsPrinting(true);
+        setTimeout(() => {
+            window.print();
+            setIsPrinting(false);
+        }, 300);
     };
 
     const wrapperClasses = isStandalone
@@ -594,77 +601,71 @@ export const CostOfLiving: React.FC<CostOfLivingProps> = ({
                 )}
             </div>
 
-            {/* Print Layout (Hidden on screen, visible on print) */}
-            <div className="hidden print:block fixed inset-0 bg-white text-black p-8 overflow-y-auto z-[100]">
-                {/* Header */}
-                <div className="border-b-2 border-slate-200 pb-6 mb-8">
-                    <h1 className="text-3xl font-black uppercase mb-2">Relatório de Custo de Vida</h1>
-                    <div className="flex justify-between items-end">
-                        <div className="text-sm text-slate-600">
-                            {user && (
-                                <>
-                                    <p><span className="font-bold">Cliente:</span> {user.name}</p>
-                                    <p><span className="font-bold">Email:</span> {user.email}</p>
-                                    {user.whatsapp && <p><span className="font-bold">WhatsApp:</span> {user.whatsapp}</p>}
-                                </>
-                            )}
-                            <p className="mt-2 text-xs text-slate-400">Gerado em {new Date().toLocaleDateString()}</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-sm font-bold text-slate-500 uppercase">Custo Total Mensal</p>
-                            <p className="text-4xl font-black text-emerald-600">
-                                {grandTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                            </p>
+            {/* Print Layout via Portal */}
+            {isPrinting && (
+                <PrintPortal>
+                    <div className="p-8 bg-white text-black">
+                        <PrintHeader user={user || { name: 'Cliente', email: '', id: '', role: 'USER' }} title="Relatório de Custo de Vida" />
+
+                        <div className="mt-8">
+                            <div className="flex justify-end mb-8 border-b border-slate-200 pb-4">
+                                <div className="text-right">
+                                    <p className="text-sm font-bold text-slate-500 uppercase">Custo Total Mensal</p>
+                                    <p className="text-4xl font-black text-black">
+                                        {grandTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Categories */}
+                            <div className="space-y-8">
+                                {CATEGORIES.map(cat => {
+                                    const catItems = items.filter(i => i.category === cat.id);
+                                    if (catItems.length === 0) return null;
+                                    const catTotal = catItems.reduce((acc, curr) => acc + curr.value, 0);
+
+                                    return (
+                                        <div key={cat.id} className="break-inside-avoid">
+                                            <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-200">
+                                                <h3 className="text-lg font-black uppercase flex items-center gap-2 text-black">
+                                                    <span className="text-slate-400 text-sm">■ </span>
+                                                    {cat.id}
+                                                </h3>
+                                                <span className="font-bold text-lg text-black">
+                                                    {catTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                                </span>
+                                            </div>
+                                            <table className="w-full text-sm">
+                                                <thead>
+                                                    <tr className="text-left text-slate-500 text-xs uppercase">
+                                                        <th className="pb-2 font-bold w-3/4">Descrição</th>
+                                                        <th className="pb-2 font-bold text-right">Valor</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="text-black">
+                                                    {catItems.map(item => (
+                                                        <tr key={item.id} className="border-b border-slate-100">
+                                                            <td className="py-2">{item.description}</td>
+                                                            <td className="py-2 text-right font-medium">
+                                                                {item.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Footer Note */}
+                            <div className="mt-12 pt-6 border-t border-slate-200 text-center text-xs text-slate-400">
+                                <p>Relatório gerado automaticamente pelo sistema de Diagnóstico Financeiro.</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                {/* Categories */}
-                <div className="space-y-8">
-                    {CATEGORIES.map(cat => {
-                        const catItems = items.filter(i => i.category === cat.id);
-                        if (catItems.length === 0) return null;
-                        const catTotal = catItems.reduce((acc, curr) => acc + curr.value, 0);
-
-                        return (
-                            <div key={cat.id} className="break-inside-avoid">
-                                <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
-                                    <h3 className="text-lg font-black uppercase flex items-center gap-2">
-                                        <span className="text-slate-400 text-sm">■ </span>
-                                        {cat.id}
-                                    </h3>
-                                    <span className="font-bold text-lg">
-                                        {catTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                    </span>
-                                </div>
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="text-left text-slate-400 text-xs uppercase">
-                                            <th className="pb-2 font-bold w-3/4">Descrição</th>
-                                            <th className="pb-2 font-bold text-right">Valor</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="text-slate-700">
-                                        {catItems.map(item => (
-                                            <tr key={item.id} className="border-b border-slate-50/50">
-                                                <td className="py-2">{item.description}</td>
-                                                <td className="py-2 text-right font-medium">
-                                                    {item.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Footer Note */}
-                <div className="mt-12 pt-6 border-t border-slate-200 text-center text-xs text-slate-400">
-                    <p>Relatório gerado automaticamente pelo sistema de Diagnóstico Financeiro.</p>
-                </div>
-            </div>
+                </PrintPortal>
+            )}
         </div>
     );
 };

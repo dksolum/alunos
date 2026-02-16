@@ -14,6 +14,8 @@ import {
     CalendarClock
 } from 'lucide-react';
 import { DebtMapItem } from '../types';
+import { PrintPortal } from './PrintPortal';
+import { PrintHeader } from './Mentorship/Meeting1/PrintHeader';
 
 interface DebtMappingProps {
     onClose?: () => void;
@@ -31,6 +33,7 @@ export const DebtMapping: React.FC<DebtMappingProps> = ({ onClose, onSave, initi
     const [debts, setDebts] = useState<DebtMapItem[]>(initialData);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [isPrinting, setIsPrinting] = useState(false);
 
     // Form States
     const [name, setName] = useState('');
@@ -120,7 +123,11 @@ export const DebtMapping: React.FC<DebtMappingProps> = ({ onClose, onSave, initi
     };
 
     const handlePrint = () => {
-        window.print();
+        setIsPrinting(true);
+        setTimeout(() => {
+            window.print();
+            setIsPrinting(false);
+        }, 300);
     };
 
     const wrapperClasses = isStandalone
@@ -149,14 +156,7 @@ export const DebtMapping: React.FC<DebtMappingProps> = ({ onClose, onSave, initi
                             </h2>
                             <span className="text-xs text-slate-400 font-bold uppercase print:hidden">Cadastre todas as suas dívidas ativas</span>
 
-                            {/* Print-only User Info */}
-                            {user && (
-                                <div className="hidden print:block mt-2 text-sm text-slate-600">
-                                    <p><span className="font-bold">Cliente:</span> {user.name}</p>
-                                    <p><span className="font-bold">Email:</span> {user.email}</p>
-                                    {user.whatsapp && <p><span className="font-bold">WhatsApp:</span> {user.whatsapp}</p>}
-                                </div>
-                            )}
+                            {/* Inline Print Info Removed - Used in Portal */}
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
@@ -441,6 +441,86 @@ export const DebtMapping: React.FC<DebtMappingProps> = ({ onClose, onSave, initi
                     </button>
                 </div>
             </div>
+
+            {isPrinting && (
+                <PrintPortal>
+                    <div className="p-8 bg-white text-black">
+                        <PrintHeader user={user || { name: 'Cliente', email: '', id: '', role: 'USER' }} title="Mapeamento de Dívidas" />
+
+                        <div className="mt-8">
+                            <div className="flex justify-between items-center mb-6 border-b border-slate-200 pb-4">
+                                <div>
+                                    <span className="text-xs font-bold text-slate-500 uppercase block">Total Mensal</span>
+                                    <span className="text-xl font-black text-black">
+                                        {debts.reduce((acc, curr) => acc + curr.installmentValue, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                    </span>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-xs font-bold text-slate-500 uppercase block">Total Devido</span>
+                                    <span className="text-xl font-black text-black">
+                                        {debts.reduce((acc, curr) => acc + curr.currentValue, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                {debts.map(debt => (
+                                    <div key={debt.id} className="border border-slate-200 rounded-xl p-4 break-inside-avoid">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div>
+                                                <h4 className="font-bold text-black mb-0.5">{debt.name}</h4>
+                                                <div className="flex items-center gap-1 text-slate-600 text-xs">
+                                                    <Building2 size={12} />
+                                                    <span>{debt.creditor || 'Credor não informado'}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-3 gap-4 text-xs mb-3">
+                                            <div>
+                                                <span className="block text-slate-500 font-bold uppercase text-[10px]">Valor Parcela</span>
+                                                <span className="text-black font-mono">
+                                                    {debt.installmentValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-slate-500 font-bold uppercase text-[10px]">Restam</span>
+                                                <span className="text-black font-mono flex items-center gap-1">
+                                                    {debt.remainingInstallments}x
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span className="block text-slate-500 font-bold uppercase text-[10px]">Juros (CET)</span>
+                                                <span className="text-black font-mono flex items-center gap-1">
+                                                    {debt.interestRate ? `${debt.interestRate}%` : '-'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-3 border-t border-slate-200 flex justify-between items-center">
+                                            <div>
+                                                <span className="text-[10px] text-slate-500 font-bold uppercase">Término Previsto</span>
+                                                <div className="text-black font-bold text-xs">
+                                                    {new Date(debt.endDate).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }).toUpperCase()}
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-[10px] text-slate-500 font-bold uppercase">Total Atual</span>
+                                                <div className="text-black font-black text-sm">
+                                                    {debt.currentValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {debts.length === 0 && (
+                                    <p className="text-center text-slate-500 italic py-8">Nenhuma dívida cadastrada.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </PrintPortal>
+            )}
         </div>
     );
 };

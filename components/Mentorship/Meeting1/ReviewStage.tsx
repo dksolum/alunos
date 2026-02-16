@@ -10,6 +10,7 @@ interface ReviewStageProps {
     onUpdateMeetingData: (data: any) => void;
     onUpdateFinancialData: (data: FinancialData) => void;
     readOnly?: boolean;
+    onPrint?: () => void;
 }
 
 interface ReviewItem {
@@ -27,7 +28,8 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
     meetingData,
     onUpdateMeetingData,
     onUpdateFinancialData,
-    readOnly = false
+    readOnly = false,
+    onPrint
 }) => {
     const [bankChecked, setBankChecked] = useState(meetingData?.bankChecked || false);
     const [items, setItems] = useState<ReviewItem[]>(meetingData?.reviewItems || []);
@@ -114,7 +116,7 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
             {/* Header Actions - Print */}
             <div className="flex justify-end print:hidden">
                 <button
-                    onClick={() => window.print()}
+                    onClick={() => onPrint ? onPrint() : window.print()}
                     className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
                     title="Imprimir visualização"
                 >

@@ -6,11 +6,13 @@ import { CATEGORIES } from '../../CostOfLiving';
 
 interface NonRecurringExpensesStageProps {
     userId: string;
+    onPrint?: (items?: NonRecurringExpenseItem[]) => void;
+    initialItems?: NonRecurringExpenseItem[];
 }
 
-export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps> = ({ userId }) => {
-    const [items, setItems] = useState<NonRecurringExpenseItem[]>([]);
-    const [loading, setLoading] = useState(true);
+export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps> = ({ userId, onPrint, initialItems }) => {
+    const [items, setItems] = useState<NonRecurringExpenseItem[]>(initialItems || []);
+    const [loading, setLoading] = useState(!initialItems);
 
     // Edit State
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -22,6 +24,7 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
     const [frequency, setFrequency] = useState('1');
 
     const fetchItems = async () => {
+        if (initialItems) return; // Don't fetch if items provided
         setLoading(true);
         const state = await authService.getMentorshipState(userId);
         setItems(state.nonRecurringExpenses);
@@ -102,7 +105,7 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
             {/* Header Actions */}
             <div className="flex justify-end print:hidden">
                 <button
-                    onClick={() => window.print()}
+                    onClick={() => onPrint ? onPrint(items) : window.print()}
                     className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
                     title="Imprimir visualização"
                 >
@@ -258,7 +261,7 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
 
                 {/* Summary */}
                 <div className="space-y-4 print:break-inside-avoid">
-                    <div className="bg-gradient-to-br from-slate-900 to-slate-950 p-6 rounded-2xl border border-slate-800 relative overflow-hidden print:bg-white print:border-gray-300 print:text-black">
+                    <div className="bg-gradient-to-br from-slate-900 to-slate-950 p-6 rounded-2xl border border-slate-800 relative overflow-hidden print:bg-none print:bg-white print:border-gray-300 print:text-black">
                         <div className="relative z-10">
                             <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1 print:text-gray-500">Custo Total Anual</p>
                             <p className="text-3xl font-black text-white print:text-black">
@@ -267,7 +270,7 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                         </div>
                     </div>
 
-                    <div className="bg-gradient-to-br from-emerald-900/20 to-emerald-950/20 p-6 rounded-2xl border border-emerald-500/30 relative overflow-hidden print:bg-white print:border-gray-300 print:text-black">
+                    <div className="bg-gradient-to-br from-emerald-900/20 to-emerald-950/20 p-6 rounded-2xl border border-emerald-500/30 relative overflow-hidden print:bg-none print:bg-white print:border-gray-300 print:text-black">
                         <div className="relative z-10">
                             <p className="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1 print:text-gray-600">Reserva Mensal</p>
                             <p className="text-3xl font-black text-emerald-400 print:text-black">

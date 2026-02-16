@@ -1,8 +1,9 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Save, FileText, HelpCircle, Target, Printer, Calendar, AlertTriangle, TrendingUp } from 'lucide-react';
 import { authService } from '../services/authService';
 import { User } from '../types';
+import { PrintPortal } from './PrintPortal';
+import { UserIntakePrint } from './UserIntakePrint';
 import { PrintText } from './PrintText';
 
 interface UserIntakeModalProps {
@@ -12,6 +13,7 @@ interface UserIntakeModalProps {
 }
 
 export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, onClose }) => {
+    // ... existing state ... 
     const [formData, setFormData] = useState({
         main_problem: '',
         resolution_attempts: '',
@@ -37,6 +39,7 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
         }
     });
 
+    // ... existing loading/saving logic ...
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -48,17 +51,14 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
     }, [isOpen, user]);
 
     const loadIntakeData = async () => {
+        // ... same implementation ...
         setLoading(true);
         setError('');
         try {
             const data = await authService.getUserIntake(user.id);
-            console.log('UserIntakeModal: Loaded data:', data); // DEBUG
-
             if (data) {
-                // Merge loaded data with default structure to ensure all fields exist
                 setFormData(prev => {
                     const dbDetails = data.details || {};
-                    // Ensure deep merge of nested structures to preserve 'selected' and 'details' fields
                     const mergedData = {
                         main_problem: data.main_problem || '',
                         resolution_attempts: data.resolution_attempts || '',
@@ -68,7 +68,6 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                             financial_view: {
                                 ...prev.details.financial_view,
                                 ...(dbDetails.financial_view || {}),
-                                // Explicitly merge each key if it exists to ensure structure integrity
                                 surviving: { ...prev.details.financial_view.surviving, ...(dbDetails.financial_view?.surviving || {}) },
                                 spending_more: { ...prev.details.financial_view.spending_more, ...(dbDetails.financial_view?.spending_more || {}) },
                                 saving: { ...prev.details.financial_view.saving, ...(dbDetails.financial_view?.saving || {}) },
@@ -88,7 +87,6 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                     return mergedData;
                 });
             } else {
-                // Reset to defaults if new
                 setFormData({
                     main_problem: '',
                     resolution_attempts: '',
@@ -144,25 +142,18 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 print:static print:block print:bg-white print:h-auto print:w-full print:p-0">
-            <div className="absolute inset-0 bg-[#0f172a]/90 backdrop-blur-sm animate-in fade-in print:hidden" onClick={onClose}></div>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+
+            {/* Always Render Print Version via Portal */}
+            <PrintPortal>
+                <UserIntakePrint user={user} data={formData} />
+            </PrintPortal>
+
+            <div className="absolute inset-0 bg-[#0f172a]/90 backdrop-blur-sm animate-in fade-in" onClick={onClose}></div>
 
             {/* Main Modal Container */}
-            <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-[2rem] shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh] print:max-h-none print:w-full print:max-w-none print:static print:border-none print:bg-white print:text-black print:overflow-visible print:shadow-none print:m-0 print:p-0">
+            <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-[2rem] shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
 
-                {/* Print Header (Visible only in print) */}
-                <div className="hidden print:block p-8 border-b border-gray-200 mb-6 print:break-inside-avoid">
-                    <div className="flex items-center justify-between mb-4">
-                        <img src="/images/logo.png" alt="Solum" className="h-12" />
-                        <h1 className="text-2xl font-bold uppercase">Ficha Individual do Cliente</h1>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                        <p><strong>Nome:</strong> {user.name}</p>
-                        <p><strong>Email:</strong> {user.email}</p>
-                        <p><strong>Telefone:</strong> {user.phone || 'Não informado'}</p>
-                        <p><strong>Data:</strong> {new Date().toLocaleDateString()}</p>
-                    </div>
-                </div>
 
                 {/* Screen Header (Hidden in print) */}
                 <div className="flex items-center justify-between p-8 pb-4 print:hidden">
