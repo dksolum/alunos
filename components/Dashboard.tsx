@@ -493,6 +493,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 financialData={financialData}
                                 checklistData={user.checklistData || {}}
                                 meetingData={getMeeting(1).data}
+                                meetingStatus={getMeeting(1).status}
                                 onUpdateMeetingData={async (data) => {
                                     // Update local state optimistic
                                     const updatedMeetings = mentorshipState.meetings.map(m =>
@@ -515,6 +516,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                     await authService.updateMeetingStatus(user.id, 1, 'completed');
                                     // Unlock next? Not auto for now.
                                     setSelectedMeeting(null);
+                                    // Refresh state
+                                    const state = await authService.getMentorshipState(user.id);
+                                    setMentorshipState(state);
+                                }}
+                                onUnlock={async () => {
+                                    await authService.updateMeetingStatus(user.id, 1, 'unlocked');
                                     // Refresh state
                                     const state = await authService.getMentorshipState(user.id);
                                     setMentorshipState(state);

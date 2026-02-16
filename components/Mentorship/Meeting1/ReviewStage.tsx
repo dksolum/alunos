@@ -110,7 +110,7 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
     };
 
     return (
-        <div className="space-y-8 animate-fade-in relative pb-20">
+        <div className="space-y-8 animate-fade-in relative pb-20 print:space-y-4 print:p-10 print:max-w-[210mm] print:mx-auto">
             {/* Header Actions - Print */}
             <div className="flex justify-end print:hidden">
                 <button
@@ -159,7 +159,7 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
                     {readOnly && <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700 uppercase">Somente Leitura</span>}
                 </h3>
 
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto print:overflow-visible">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-slate-700 text-slate-400 text-xs uppercase print:text-gray-500 print:border-gray-300">

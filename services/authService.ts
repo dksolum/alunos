@@ -740,7 +740,7 @@ export const authService = {
 
 
 
-    updateMeetingStatus: async (userId: string, meetingId: number, status: 'completed' | 'in_progress' | 'scheduled') => {
+    updateMeetingStatus: async (userId: string, meetingId: number, status: 'locked' | 'unlocked' | 'completed') => {
         const currentUser = await authService.getCurrentUser();
 
         // Se for Admin editando outro usuário

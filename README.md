@@ -17,6 +17,7 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
 - **Reunião 1 (Revisão e Gastos Não Recorrentes)**:
   - **Revisão Financeira**: Comparativo entre Orçado x Realizado do diagnóstico.
   - **Gastos Não Recorrentes**: Cadastro de despesas anuais/semestrais (IPVA, IPTU, etc.) com cálculo automático de reserva mensal.
+  - **Sistema de Relatórios**: Impressão seletiva de etapas com cabeçalho personalizado e correção de layout (Print Portal).
   - **Tarefas**: Checklist de ações práticas para o cliente.
 - **Persistência e Segurança**: Dados salvos via Supabase com trava de segurança (RLS) e acesso administrativo via RPCs.
 

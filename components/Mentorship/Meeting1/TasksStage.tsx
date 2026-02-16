@@ -3,11 +3,13 @@ import { CheckSquare, Square } from 'lucide-react';
 
 interface TasksStageProps {
     meetingData: any;
+    meetingStatus?: 'locked' | 'unlocked' | 'completed';
     onUpdateMeetingData: (data: any) => void;
     onComplete: () => void;
+    onUnlock?: () => void;
 }
 
-export const TasksStage: React.FC<TasksStageProps> = ({ meetingData, onUpdateMeetingData, onComplete }) => {
+export const TasksStage: React.FC<TasksStageProps> = ({ meetingData, meetingStatus, onUpdateMeetingData, onComplete, onUnlock }) => {
     const [tasks, setTasks] = useState<{ id: string; label: string; checked: boolean }[]>([
         { id: 'task1', label: 'Continuar registrando entradas, saídas e transferências', checked: meetingData?.tasks?.task1 || false },
         { id: 'task2', label: 'Preencher lista de gastos não recorrentes', checked: meetingData?.tasks?.task2 || false }
@@ -22,6 +24,12 @@ export const TasksStage: React.FC<TasksStageProps> = ({ meetingData, onUpdateMee
         // Update data
         const tasksObj = newTasks.reduce((acc, t) => ({ ...acc, [t.id]: t.checked }), {});
         onUpdateMeetingData({ ...meetingData, tasks: tasksObj });
+
+        // Logic to revert completion if unchecking a task
+        const isUnchecking = tasks.find(t => t.id === id)?.checked && !newTasks.find(t => t.id === id)?.checked;
+        if (isUnchecking && meetingStatus === 'completed' && onUnlock) {
+            onUnlock();
+        }
     };
 
     const allChecked = tasks.every(t => t.checked);

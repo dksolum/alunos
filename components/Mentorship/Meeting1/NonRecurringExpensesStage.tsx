@@ -166,7 +166,7 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                         />
                     </div>
 
-                    <div className="md:col-start-4 flex gap-2">
+                    <div className="md:col-span-2 flex gap-2">
                         {editingId && (
                             <button
                                 onClick={handleCancelEdit}
@@ -199,35 +199,35 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                     </div>
 
                     {items.map(item => (
-                        <div key={item.id} className={`p-4 rounded-xl border flex items-center justify-between group transition-colors print:bg-white print:border-gray-200 print:text-black ${editingId === item.id
+                        <div key={item.id} className={`p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 group transition-colors print:bg-white print:border-gray-200 print:text-black ${editingId === item.id
                             ? 'bg-sky-500/10 border-sky-500/50'
                             : 'bg-slate-900/30 border-slate-800 hover:border-slate-700'
                             }`}>
-                            <div className="flex items-center gap-4">
-                                <div className={`p-2 rounded-lg print:hidden ${editingId === item.id ? 'bg-sky-500/20 text-sky-400' : 'bg-slate-800 text-slate-400'}`}>
+                            <div className="flex items-center gap-4 min-w-0 overflow-hidden">
+                                <div className={`p-2 rounded-lg shrink-0 print:hidden ${editingId === item.id ? 'bg-sky-500/20 text-sky-400' : 'bg-slate-800 text-slate-400'}`}>
                                     <Calendar className="w-5 h-5" />
                                 </div>
-                                <div>
-                                    <p className="font-bold text-white print:text-black">{item.description}</p>
-                                    <p className="text-xs text-slate-500 print:text-gray-500">{item.category}</p>
+                                <div className="min-w-0">
+                                    <p className="font-bold text-white print:text-black truncate">{item.description}</p>
+                                    <p className="text-xs text-slate-500 print:text-gray-500 truncate">{item.category}</p>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <div className="text-right">
+                            <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                                <div className="text-right shrink-0">
                                     <span className="text-xs text-slate-500 print:text-gray-500">{item.frequency}x de</span>
                                     <p className="font-bold text-slate-200 print:text-black">
                                         R$ {item.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                     </p>
                                 </div>
                                 {/* New Total Column */}
-                                <div className="text-right pl-4 border-l border-slate-800 print:border-gray-300 min-w-[100px]">
+                                <div className="text-right pl-4 border-l border-slate-800 print:border-gray-300 min-w-[100px] shrink-0">
                                     <span className="text-xs text-slate-500 print:text-gray-500">Total</span>
                                     <p className="font-bold text-emerald-400 print:text-black">
                                         R$ {(item.value * item.frequency).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                     </p>
                                 </div>
 
-                                <div className="flex items-center gap-2 print:hidden">
+                                <div className="flex items-center gap-2 print:hidden shrink-0">
                                     <button
                                         onClick={() => handleEdit(item)}
                                         className={`p-2 rounded-lg transition-colors ${editingId === item.id
