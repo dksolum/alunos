@@ -12,6 +12,7 @@ interface ReviewStageProps {
     readOnly?: boolean;
     onPrint?: () => void;
     previousMeetingData?: any;
+    feedbackQuestion?: string;
 }
 
 interface ReviewItem {
@@ -31,14 +32,22 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
     onUpdateFinancialData,
     readOnly = false,
     onPrint,
-    previousMeetingData
+    previousMeetingData,
+    feedbackQuestion
 }) => {
     const [bankChecked, setBankChecked] = useState(meetingData?.bankChecked || false);
+    const [feedbackValue, setFeedbackValue] = useState(meetingData?.feedback || '');
     const [items, setItems] = useState<ReviewItem[]>(meetingData?.reviewItems || []);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editField, setEditField] = useState<'defined' | 'realized' | null>(null);
     const [tempValue, setTempValue] = useState('');
     const [showSuccess, setShowSuccess] = useState(false);
+
+    const handleFeedbackChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const val = e.target.value;
+        setFeedbackValue(val);
+        onUpdateMeetingData({ ...meetingData, feedback: val });
+    };
 
     // Initialization Logic
     useEffect(() => {
@@ -102,7 +111,7 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
         if (readOnly) return;
         const newState = !bankChecked;
         setBankChecked(newState);
-        onUpdateMeetingData({ ...meetingData, bankChecked: newState });
+        onUpdateMeetingData({ ...meetingData, bankChecked: newState, feedback: feedbackValue });
     };
 
     const startEdit = (id: string, field: 'defined' | 'realized', currentValue: number) => {
@@ -124,14 +133,14 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
         });
 
         setItems(newItems);
-        onUpdateMeetingData({ ...meetingData, reviewItems: newItems, bankChecked });
+        onUpdateMeetingData({ ...meetingData, reviewItems: newItems, bankChecked, feedback: feedbackValue });
         setEditingId(null);
         setEditField(null);
     };
 
     const handleManualSave = () => {
         // Explicitly trigger update to ensure persistence
-        onUpdateMeetingData({ ...meetingData, reviewItems: items, bankChecked });
+        onUpdateMeetingData({ ...meetingData, reviewItems: items, bankChecked, feedback: feedbackValue });
 
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
@@ -153,10 +162,41 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
                 </button>
             </div>
 
-            {/* 1. Extrato Bancário */}
+            {/* 0. Feedback (Optional) */}
+            {feedbackQuestion && (
+                <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 print:bg-white print:border-gray-200 print:text-black">
+                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 print:text-black">
+                        1. Feedback do Mês
+                    </h3>
+                    <div className="space-y-3">
+                        <p className="text-slate-300 font-medium">
+                            {feedbackQuestion}
+                        </p>
+                        <textarea
+                            value={feedbackValue}
+                            onChange={handleFeedbackChange}
+                            readOnly={readOnly}
+                            placeholder="Sua resposta aqui..."
+                            className={`
+                                w-full min-h-[100px] p-4 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 
+                                placeholder:text-slate-600 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/20 
+                                outline-none transition-all resize-none
+                                ${readOnly ? 'opacity-70 cursor-not-allowed' : ''}
+                                print:hidden
+                            `}
+                        />
+                        {/* Print-only version that expands naturally */}
+                        <div className="hidden print:block min-h-[100px] p-4 rounded-xl border border-gray-300 text-black whitespace-pre-wrap text-sm leading-relaxed">
+                            {feedbackValue || 'Nenhuma observação registrada.'}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 1 or 2. Extrato Bancário */}
             <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 print:bg-white print:border-gray-200 print:text-black">
                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 print:text-black">
-                    1. Conferência de Extrato
+                    {feedbackQuestion ? '2' : '1'}. Conferência de Extrato
                 </h3>
                 <label className={`flex items-start gap-3 group ${readOnly ? 'cursor-default opacity-80' : 'cursor-pointer'}`}>
                     <div className={`w-6 h-6 rounded border flex items-center justify-center transition-colors mt-1
@@ -180,10 +220,10 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
                 </label>
             </div>
 
-            {/* 2. Orçamento vs Realizado */}
+            {/* 2 or 3. Orçamento vs Realizado */}
             <div className="space-y-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2 print:text-black">
-                    2. Orçamento vs Realizado
+                    {feedbackQuestion ? '3' : '2'}. Orçamento vs Realizado
                     {readOnly && <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700 uppercase">Somente Leitura</span>}
                 </h3>
 

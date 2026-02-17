@@ -156,6 +156,7 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
                             onUpdateFinancialData={onUpdateFinancialData}
                             readOnly={isUser}
                             onPrint={() => handlePrint('review')}
+                            feedbackQuestion="É notável que já fizemos algumas mudanças, então responda o seguinte: Qual a experiência neste último mês? Teve dificuldade em algo ou passou por algum desafio?"
                         />
                     </div>
 
@@ -222,6 +223,7 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
                                 onUpdateMeetingData={onUpdateMeetingData}
                                 onUpdateFinancialData={onUpdateFinancialData}
                                 readOnly={true}
+                                feedbackQuestion="É notável que já fizemos algumas mudanças, então responda o seguinte: Qual a experiência neste último mês? Teve dificuldade em algo ou passou por algum desafio?"
                             />
                         </div>
                     </div>
