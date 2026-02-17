@@ -448,6 +448,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                         financialData={financialData}
                                         checklistData={user.checklistData || {}}
                                         debtMapItems={debtMapItems}
+                                        user={user}
                                     />
                                 )}
                             </div>
@@ -463,6 +464,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         financialData={financialData}
                         debtMapItems={debtMapItems}
                         phase={user.checklistPhase || 'LOCKED'}
+                        user={user}
                         onSave={async (newProgress, newData) => {
                             if (currentUser.role === 'USER') return; // Double check security
                             await authService.updateChecklistProgress(user.id, newProgress);

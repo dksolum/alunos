@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, Circle, ChevronDown, ChevronUp, AlertCircle, Clock, Target, ListChecks, ShieldCheck, RefreshCw } from 'lucide-react';
-import { ChecklistData, FinancialData, DebtMapItem } from '../types';
+import { X, CheckCircle2, Circle, ChevronDown, ChevronUp, AlertCircle, Clock, Target, ListChecks, ShieldCheck, RefreshCw, Printer } from 'lucide-react';
+import { ChecklistData, FinancialData, DebtMapItem, User } from '../types';
+import { PrintHeader } from './Mentorship/Meeting1/PrintHeader';
+import { PrintPortal } from './PrintPortal';
 
 interface ChecklistModalProps {
     isOpen: boolean;
@@ -12,6 +14,7 @@ interface ChecklistModalProps {
     financialData?: FinancialData;
     debtMapItems?: DebtMapItem[];
     phase?: 'LOCKED' | 'PHASE_1' | 'PHASE_2';
+    user: User;
 }
 
 interface SubItemConfig {
@@ -214,7 +217,8 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
     readOnly = true,
     financialData,
     debtMapItems = [],
-    phase = 'PHASE_1'
+    phase = 'PHASE_1',
+    user
 }) => {
     // Tab state for Phase 2 users
     const [activeTab, setActiveTab] = useState<'phase1' | 'phase2'>('phase1');
@@ -226,6 +230,178 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
 
     const [expandedSteps, setExpandedSteps] = useState<number[]>([]);
     const [isSaving, setIsSaving] = useState(false);
+    const [isPrinting, setIsPrinting] = useState(false);
+
+    const handlePrint = () => {
+        setIsPrinting(true);
+        setTimeout(() => {
+            window.print();
+            setIsPrinting(false);
+        }, 100);
+    };
+
+    const renderSubItemValuePrint = (stepId: number, subId: number, value: string) => {
+        if (!value) return null;
+
+        // Special Case: Debt Negotiations (Step 11, Sub-item 2)
+        if (stepId === 11 && subId === 2) {
+            try {
+                const negotiations = JSON.parse(value);
+                if (!Array.isArray(negotiations) || negotiations.length === 0) return null;
+
+                return (
+                    <div className="not-italic mt-2">
+                        <strong className="block mb-2 text-[10px] uppercase border-b pb-1">Detalhamento das Negociações:</strong>
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-gray-300">
+                                    <th className="py-1 pr-2 uppercase text-[8px] font-bold">Dívida/Credor</th>
+                                    <th className="py-1 px-2 uppercase text-[8px] font-bold">Vlr. Parcela</th>
+                                    <th className="py-1 px-2 uppercase text-[8px] font-bold">Prazo</th>
+                                    <th className="py-1 px-2 uppercase text-[8px] font-bold">Juros</th>
+                                    <th className="py-1 pl-2 uppercase text-[8px] font-bold text-right">Término</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {negotiations.map((neg: any, idx: number) => (
+                                    <tr key={idx} className="border-b border-gray-100 last:border-0 text-[9px]">
+                                        <td className="py-1.5 pr-2">
+                                            <span className="font-bold block">{neg.name}</span>
+                                            <span className="text-[7px] text-gray-500 uppercase">{neg.creditor}</span>
+                                        </td>
+                                        <td className="py-1.5 px-2 font-bold">
+                                            {neg.installmentValue ? `R$ ${neg.installmentValue}` : '---'}
+                                        </td>
+                                        <td className="py-1.5 px-2">
+                                            {neg.quantity ? `${neg.quantity}x` : '---'}
+                                        </td>
+                                        <td className="py-1.5 px-2">
+                                            {neg.interestRate || '---'}
+                                        </td>
+                                        <td className="py-1.5 pl-2 text-right font-black text-sky-700 uppercase">
+                                            {neg.endDate || '---'}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                );
+            } catch (e) {
+                return <div className="text-red-500 text-xs italic">Erro ao carregar dados de negociação</div>;
+            }
+        }
+
+        // Special Case: Expense Limits (Step 3, Sub-item 1)
+        if (stepId === 3 && subId === 1) {
+            try {
+                const limits = JSON.parse(value);
+                const categories = Object.keys(limits).filter(cat => limits[cat] && limits[cat].trim() !== "");
+                if (categories.length === 0) return null;
+
+                return (
+                    <div className="not-italic mt-2">
+                        <strong className="block mb-2 text-[10px] uppercase border-b pb-1">Tetos Estabelecidos:</strong>
+                        <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+                            {categories.map(cat => (
+                                <div key={cat} className="flex justify-between border-b border-gray-100 py-1 text-[9px]">
+                                    <span className="text-gray-600 uppercase font-bold text-[8px]">{cat}</span>
+                                    <span className="font-black text-emerald-700">R$ {limits[cat]}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Default: Plain text response
+        return (
+            <div className="mt-1 bg-gray-50 border border-gray-200 p-2 text-xs italic rounded">
+                <strong>Resposta:</strong> {value}
+            </div>
+        );
+    };
+
+    const renderPrintView = () => (
+        <div className="printable-checklist bg-white text-black">
+            <h2 className="text-xl font-bold border-b-2 border-black pb-2 mb-6 uppercase">Pilar 1: Diagnóstico e Sangria (Fase 1)</h2>
+            <div className="space-y-8">
+                {PHASE1_STEPS.map(step => (
+                    <div key={step.id} className="avoid-break">
+                        <div className="flex items-start gap-3 mb-2">
+                            <div className={`mt-1 w-5 h-5 border-2 border-black flex items-center justify-center shrink-0 ${completedSteps.includes(step.id) ? 'bg-black' : ''}`}>
+                                {completedSteps.includes(step.id) && <CheckCircle2 size={14} className="text-white" />}
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg leading-tight uppercase">{step.id}. {step.title}</h3>
+                                <p className="text-sm text-gray-700">{step.description}</p>
+                            </div>
+                        </div>
+
+                        {step.subItems && (
+                            <div className="ml-8 space-y-4 pt-2">
+                                {step.subItems.map(subItem => {
+                                    const data = checklistData[step.id]?.subItems?.[subItem.id];
+                                    return (
+                                        <div key={subItem.id} className="border-l-2 border-gray-200 pl-4 py-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className={`w-4 h-4 border-2 border-black flex items-center justify-center shrink-0 ${data?.checked ? 'bg-black' : ''}`}>
+                                                    {data?.checked && <CheckCircle2 size={12} className="text-white" />}
+                                                </div>
+                                                <span className="text-sm font-semibold">{subItem.text}</span>
+                                            </div>
+                                            {data?.value && renderSubItemValuePrint(step.id, subItem.id, data.value)}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            <div className="my-12 border-t-4 border-gray-100" />
+
+            <h2 className="text-xl font-bold border-b-2 border-black pb-2 mb-6 uppercase">Pilar 2: Retorno e Blindagem (Fase 2)</h2>
+            <div className="space-y-8">
+                {PHASE2_STEPS.map(step => (
+                    <div key={step.id} className="avoid-break">
+                        <div className="flex items-start gap-3 mb-2">
+                            <div className={`mt-1 w-5 h-5 border-2 border-black flex items-center justify-center shrink-0 ${completedSteps.includes(step.id) ? 'bg-black' : ''}`}>
+                                {completedSteps.includes(step.id) && <CheckCircle2 size={14} className="text-white" />}
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-lg leading-tight uppercase">{step.id}. {step.title}</h3>
+                                <p className="text-sm text-gray-700">{step.description}</p>
+                            </div>
+                        </div>
+
+                        {step.subItems && (
+                            <div className="ml-8 space-y-4 pt-2">
+                                {step.subItems.map(subItem => {
+                                    const data = checklistData[step.id]?.subItems?.[subItem.id];
+                                    return (
+                                        <div key={subItem.id} className="border-l-2 border-gray-200 pl-4 py-1">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className={`w-4 h-4 border-2 border-black flex items-center justify-center shrink-0 ${data?.checked ? 'bg-black' : ''}`}>
+                                                    {data?.checked && <CheckCircle2 size={12} className="text-white" />}
+                                                </div>
+                                                <span className="text-sm font-semibold">{subItem.text}</span>
+                                            </div>
+                                            {data?.value && renderSubItemValuePrint(step.id, subItem.id, data.value)}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
 
     // Sync state with props when modal opens
     useEffect(() => {
@@ -240,7 +416,8 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
                 setActiveTab('phase1');
             }
         }
-    }, [isOpen, phase]); // Removed initialData/initialProgress from deps to prevent re-render clobbering
+    }, [isOpen, phase]);
+    // Removed initialData/initialProgress from deps to prevent re-render clobbering
 
     // Auto-save debounce effect for text
     useEffect(() => {
@@ -413,12 +590,24 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
                                 Seu guia de sobrevivência para sair do caos financeiro.
                             </p>
                         </div>
-                        <button
-                            onClick={handleClose}
-                            className="p-2 bg-slate-800/50 hover:bg-slate-800 text-rose-400 rounded-xl transition-colors"
-                        >
-                            <X size={20} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handlePrint}
+                                className="p-2 bg-slate-800/50 hover:bg-slate-800 text-sky-400 rounded-xl transition-colors group relative"
+                                title="Imprimir Checklist"
+                            >
+                                <Printer size={20} />
+                                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none border border-slate-700">
+                                    Imprimir Relatório
+                                </span>
+                            </button>
+                            <button
+                                onClick={handleClose}
+                                className="p-2 bg-slate-800/50 hover:bg-slate-800 text-rose-400 rounded-xl transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Tabs - Only show if user has access to PHASE_2 */}
@@ -840,6 +1029,14 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
                     </div>
                 </div>
             </div>
+            {isPrinting && (
+                <PrintPortal>
+                    <div className="p-8">
+                        <PrintHeader user={user} title="Checklist Destruidor de Sanhaço" />
+                        {renderPrintView()}
+                    </div>
+                </PrintPortal>
+            )}
         </div>
     );
 };
