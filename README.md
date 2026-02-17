@@ -20,8 +20,10 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
   - **Sistema de Relatórios**: Impressão seletiva de etapas com cabeçalho personalizado.
 - **Reunião 2 (Ajuste de Rota)**:
   - **Sincronização de Dados**: Herança automática do "Definido" da reunião anterior como "Referência" na atual.
-  - **Indicadores Visuais**: Ícones de variação (↑ ↑ Increase, ↓ Decrease, - Equal) para comparação visual de metas.
-  - **CRUD de Gastos Anuais**: Gestão centralizada de despesas não recorrentes.
+  - **Etapa "Atualização de Dívidas"**: Acompanhamento de negociações e inserção de novas dívidas.
+- **Reunião 3 (Plano de Quitação)**:
+  - **Estratégia "Turning Point"**: Foco em dívidas não pagas para liberação definitiva de fluxo de caixa.
+  - **Plano de Quitação**: Visualização estratégica da ordem de pagamento e impacto financeiro futuro.
 - **Controle Administrativo**:
   - **Bloqueio/Desbloqueio (Lock/Unlock)**: Admins e Secretários podem liberar reuniões futuras ou bloquear reuniões em andamento.
 - **Persistência e Segurança**: Dados salvos via Supabase com trava de segurança (RLS) e acesso administrativo via RPCs.
@@ -60,7 +62,9 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
   - **Destaques de Realização**: Brilho verde pulsante (glow) e texto riscado (strikethrough) em valores reduzidos nos cards de **Dívidas** e **Custo de Vida**.
   - **Impacto na Vida**: Exibição da porcentagem exata de redução nas parcelas mensais de dívidas.
   - **Persistência Inteligente**: Se uma dívida não for negociada, o sistema mantém e soma o valor original no cenário "Depois".
-  - **Impacto Total**: Consolidação da economia mensal (Gastos + Dívidas) no cabeçalho do card.
+  - **Gestão de Dívidas Avançada (Reunião 3)**:
+  - **Sincronização Inteligente**: Deduplicação por ID e feedback visual (loading state) na sincronização com reuniões anteriores.
+  - **Estratégia de Quitação**: Filtro automático de dívidas pendentes para priorização de pagamento.
 - **Estados Visuais**:
   - **Pendente (Cinza)**: Não iniciado.
   - **Em Progresso (Amarelo/Azul)**: Sub-itens marcados ou texto preenchido.
@@ -120,11 +124,9 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 
 ## 📝 Histórico de Atualizações Recentes
 
+- **Feat**: Implementação completa da **Reunião 3** (Plano de Quitação).
+- **Fix**: Prevenção de loop de duplicação infinita na sincronização de dívidas (Deduplicação por ID).
+- **UI**: Feedback visual (loading/spin) no botão de sincronização "Sincronizar M2".
+- **Refactor**: Sincronização de Gastos Não Recorrentes agora prioriza dados da reunião anterior para consistência.
 - **Feat**: Nova etapa "Atualização de Dívidas" na Reunião 2 da Mentoria com preenchimento via Checklist.
-- **Feat**: Suporte a inclusão manual de novas dívidas (descobertas durante a mentoria).
-- **Refactor**: Reorganização do fluxo da Reunião 2 para melhor sequência lógica.
-- **Feat**: Relatório especializado de Dívidas com otimização para impressão (alto contraste).
-- **Fix**: Correção da lógica de parcelas restantes (fallback robusto para originalQuantity).
-- **Fix**: Bug do JSON visível no campo de observações das dívidas.
-- **Feat**: Exibição de valor de parcela original no acompanhamento de dívidas para comparação visual.
 

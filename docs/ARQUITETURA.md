@@ -37,12 +37,13 @@ Devido à necessidade de o Admin ler e escrever dados *em nome do usuário*, uti
 
 *   **`MentorshipCard`**: Exibe o status (Cadeado/Check) e controla abertura do modal.
 *   **`MeetingModal`**: Gerenciador de contexto da reunião.
-*   **`Meeting1Content` / `Meeting2Content`**: Orquestradores das reuniões. Gerenciam os passos:
+*   **`Meeting1Content` / `Meeting2Content` / `Meeting3Content`**: Orquestradores das reuniões. Gerenciam os passos:
     1.  `ReviewStage`: Tabela de Orçamento com suporte a herança de dados.
     2.  `NonRecurringExpensesStage`: CRUD de gastos anuais.
-    3.  `DebtUpdateStage` (Reunião 2): Etapa obrigatória para revisão de dívidas negociadas.
-    4.  `ReportsStage`: Central de Impressão.
-    5.  `TasksStage`: Checklist de finalização com suporte a tarefas customizadas.
+    3.  `DebtUpdateStage` (Reunião 2 e 3): Etapa para revisão de dívidas negociadas.
+    4.  `DebtRepaymentPlanStage` (Reunião 3): Estratégia "Turning Point".
+    5.  `ReportsStage`: Central de Impressão.
+    6.  `TasksStage`: Checklist de finalização.
 
 ### Sincronização de Dados entre Reuniões
 Para garantir a continuidade do planejamento financeiro, implementamos um padrão de **Herança de Metas**:
@@ -109,7 +110,19 @@ A `DebtUpdateStage` na Reunião 2 é responsável por consolidar o status das ne
 1.  **Sincronização**: Consome dados do `debt_mapping` global e do `checklistData` (Passo 11).
 2.  **Inclusão Manual**: Permite que o mentor adicione "Dívidas Descobertas" que não estavam no mapeamento original, garantindo que o plano financeiro seja completo.
 3.  **Persistência**: Salva um snapshot das dívidas dentro do objeto `data` da reunião para histórico e impressão.
-4.  **Impressão Otimizada**: Utiliza classes `print:` para forçar fundo branco, texto preto e remover backgrounds escuros dos inputs, garantindo legibilidade em papel A4.
+4.  **Impressão Otimizada**: Utiliza classes `print:` para forçar fundo branco, texto preto e remover backgrounds escuros dos inputs.
+
+### Módulo de Plano de Quitação (Reunião 3)
+A etapa `DebtRepaymentPlanStage` introduz a visão estratégica de longo prazo:
+1.  **Estratégia "Turning Point"**: Diferente das etapas anteriores, esta foca apenas em dívidas que **ainda não foram pagas** (amortizadas).
+2.  **Filtragem Automática**: O sistema identifica dívidas com `isPaid: false` em reuniões anteriores e as traz para o primeiro plano.
+3.  **Visualização de Futuro**: Calcula e exibe quando cada dívida terminará, permitindo que o mentor e o aluno visualize a liberação de fluxo de caixa para investimentos.
+
+### Padronização e Estabilização de Sincronização
+Para evitar inconsistências e redundâncias, implementamos:
+1.  **Deduplicação por ID**: No processo de `fetchAndMergeDebts`, o sistema usa um `Set` de IDs já existentes para garantir que dívidas manuais ou sincronizadas não sejam duplicadas na interface.
+2.  **Herança de Referência Prioritária**: A Reunião 3 prioriza dados da Reunião 2 (`previousMeetingData`) para sincronização de Gastos Não Recorrentes, garantindo que o planejamento evolua linearmente.
+3.  **Feedback de Estado Transitório**: Botões de sincronização agora disparam estados de `loading`/`refreshing` com indicadores visuais (spinners e rótulos dinâmicos), melhorando a percepção de interatividade da aplicação.
 
 ### Regras de Negócio e Segurança
 *   **Acesso Administrativo**: Apenas Admins podem alterar a Fase do Checklist de um aluno através do Dashboard.

@@ -12,6 +12,7 @@ interface NonRecurringExpensesStageProps {
     items?: NonRecurringExpenseItem[];
     onUpdateItems?: (items: NonRecurringExpenseItem[]) => void;
     onReload?: () => void;
+    syncLabel?: string;
 }
 
 export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps> = ({
@@ -21,7 +22,8 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
     showDetails = true,
     items: controlledItems,
     onUpdateItems,
-    onReload
+    onReload,
+    syncLabel
 }) => {
     const [internalItems, setInternalItems] = useState<NonRecurringExpenseItem[]>(initialItems || []);
     const [loading, setLoading] = useState(!initialItems && !controlledItems);
@@ -159,12 +161,12 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                 {onReload && (
                     <button
                         onClick={() => {
-                            if (confirm('Isso irá substituir todos os dados de gastos não recorrentes desta reunião pelos dados globais (Reunião 1). Deseja continuar?')) {
+                            if (confirm(`Isso irá substituir todos os dados de gastos não recorrentes desta reunião pelos dados da ${syncLabel || 'Reunião 1'}. Deseja continuar?`)) {
                                 onReload();
                             }
                         }}
                         className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-                        title="Sincronizar com Reunião 1"
+                        title={syncLabel || "Sincronizar com Reunião 1"}
                     >
                         <div className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700">
                             <RefreshCw size={20} />
