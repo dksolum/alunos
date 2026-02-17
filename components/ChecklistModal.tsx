@@ -670,14 +670,28 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
                                                                                         <p className="text-[10px] text-slate-500 italic">Nenhuma negociação registrada.</p>
                                                                                         <button
                                                                                             onClick={() => {
-                                                                                                const initial = debtMapItems.map(d => ({
-                                                                                                    debtId: d.id,
-                                                                                                    name: d.name,
-                                                                                                    creditor: d.creditor,
-                                                                                                    installmentValue: '',
-                                                                                                    quantity: '',
-                                                                                                    interest: ''
-                                                                                                }));
+                                                                                                const now = new Date().toISOString();
+                                                                                                const calculateEndDate = (months: number) => {
+                                                                                                    if (!months || months <= 0) return '---';
+                                                                                                    const date = new Date();
+                                                                                                    date.setMonth(date.getMonth() + months);
+                                                                                                    return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                                                                                                };
+
+                                                                                                const initial = debtMapItems.map(d => {
+                                                                                                    const qty = Number(d.remainingInstallments) || Number(d.totalInstallments) || 0;
+                                                                                                    return {
+                                                                                                        debtId: d.id,
+                                                                                                        name: d.name,
+                                                                                                        creditor: d.creditor,
+                                                                                                        installmentValue: '',
+                                                                                                        quantity: '',
+                                                                                                        interest: '',
+                                                                                                        createdAt: now,
+                                                                                                        updatedAt: now,
+                                                                                                        endDate: calculateEndDate(qty)
+                                                                                                    };
+                                                                                                });
                                                                                                 handleInputChange(step.id, sub.id, JSON.stringify(initial));
                                                                                             }}
                                                                                             className="px-3 py-1.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[9px] font-black uppercase hover:bg-amber-500/20 transition-all"
@@ -702,15 +716,25 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
 
                                                                                 return (
                                                                                     <div key={neg.debtId || index} className="space-y-2 p-3 bg-slate-900/40 rounded-xl border border-slate-700/30">
-                                                                                        <div className="flex justify-between items-center text-[10px]">
-                                                                                            <span className="text-slate-300 font-bold">{neg.name}</span>
-                                                                                            <span className="text-[8px] text-slate-500 uppercase">{neg.creditor}</span>
+                                                                                        <div className="flex justify-between items-start text-[10px]">
+                                                                                            <div>
+                                                                                                <span className="text-slate-300 font-bold block">{neg.name}</span>
+                                                                                                <span className="text-[8px] text-slate-500 uppercase block">{neg.creditor}</span>
+                                                                                            </div>
+                                                                                            <div className="flex flex-col text-[7px] text-slate-500 uppercase font-bold text-right gap-0.5">
+                                                                                                <span>Registrado: {neg.createdAt ? new Date(neg.createdAt).toLocaleDateString('pt-BR') : '---'}</span>
+                                                                                                <span>Atualizado: {neg.updatedAt ? new Date(neg.updatedAt).toLocaleDateString('pt-BR') : '---'}</span>
+                                                                                            </div>
                                                                                         </div>
                                                                                         <div className="grid grid-cols-4 gap-2">
                                                                                             <div className="space-y-1">
                                                                                                 <label className="text-[8px] uppercase font-black text-slate-600">Parc. Atual</label>
                                                                                                 <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-1.5 text-[10px] text-slate-400 font-bold">
                                                                                                     R$ {originalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                                                                </div>
+                                                                                                <div className="mt-2 pt-1.5 border-t border-slate-700/30">
+                                                                                                    <p className="text-[7px] text-slate-500 uppercase font-bold mb-0.5">Prazo Ant.</p>
+                                                                                                    <p className="text-[9px] text-slate-400 font-black">{Number(originalDebt?.remainingInstallments) || Number(originalDebt?.totalInstallments) || 0}x</p>
                                                                                                 </div>
                                                                                             </div>
                                                                                             <div className="space-y-1">
@@ -725,6 +749,7 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
                                                                                                         onChange={(e) => {
                                                                                                             const newNegs = [...negotiations];
                                                                                                             newNegs[index].installmentValue = e.target.value;
+                                                                                                            newNegs[index].updatedAt = new Date().toISOString();
                                                                                                             handleInputChange(step.id, sub.id, JSON.stringify(newNegs));
                                                                                                         }}
                                                                                                         disabled={readOnly}
@@ -741,10 +766,24 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
                                                                                                     onChange={(e) => {
                                                                                                         const newNegs = [...negotiations];
                                                                                                         newNegs[index].quantity = e.target.value;
+                                                                                                        newNegs[index].updatedAt = new Date().toISOString();
+
+                                                                                                        const calculateEndDate = (months: number) => {
+                                                                                                            if (!months || months <= 0) return '---';
+                                                                                                            const date = new Date();
+                                                                                                            date.setMonth(date.getMonth() + months);
+                                                                                                            return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                                                                                                        };
+                                                                                                        newNegs[index].endDate = calculateEndDate(parseInt(e.target.value) || 0);
+
                                                                                                         handleInputChange(step.id, sub.id, JSON.stringify(newNegs));
                                                                                                     }}
                                                                                                     disabled={readOnly}
                                                                                                 />
+                                                                                                <div className="mt-2 pt-1 border-t border-slate-700/30">
+                                                                                                    <p className="text-[7px] text-slate-500 uppercase font-bold mb-0.5">Término</p>
+                                                                                                    <p className="text-[8px] text-sky-400 font-black uppercase">{neg.endDate || '---'}</p>
+                                                                                                </div>
                                                                                             </div>
                                                                                             <div className="space-y-1">
                                                                                                 <label className="text-[8px] uppercase font-black text-slate-600">Juros/CET</label>

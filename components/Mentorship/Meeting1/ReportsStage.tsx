@@ -1,12 +1,13 @@
 import React from 'react';
-import { Printer, FileText, CreditCard } from 'lucide-react';
+import { Printer, FileText, CreditCard, TrendingDown } from 'lucide-react';
 
 interface ReportsStageProps {
     onPrintReview: () => void;
     onPrintExpenses: () => void;
+    onPrintDebts?: () => void;
 }
 
-export const ReportsStage: React.FC<ReportsStageProps> = ({ onPrintReview, onPrintExpenses }) => {
+export const ReportsStage: React.FC<ReportsStageProps> = ({ onPrintReview, onPrintExpenses, onPrintDebts }) => {
     return (
         <div className="space-y-8 animate-fade-in">
             <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 text-center md:text-left">
@@ -24,7 +25,7 @@ export const ReportsStage: React.FC<ReportsStageProps> = ({ onPrintReview, onPri
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Card Revisão */}
                 <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl hover:border-emerald-500/30 transition-all group">
                     <div className="flex items-center gap-4 mb-6">
@@ -66,6 +67,29 @@ export const ReportsStage: React.FC<ReportsStageProps> = ({ onPrintReview, onPri
                         Imprimir Relatório
                     </button>
                 </div>
+
+                {/* Card Atualização de Dívidas */}
+                {onPrintDebts && (
+                    <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-2xl hover:border-emerald-500/30 transition-all group">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                                <TrendingDown size={24} />
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-white text-lg">Atualização de Dívidas</h4>
+                                <p className="text-sm text-slate-500">Status de Negociações</p>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={onPrintDebts}
+                            className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-bold uppercase text-xs flex items-center justify-center gap-2 transition-colors"
+                        >
+                            <Printer size={16} />
+                            Imprimir Dívidas
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

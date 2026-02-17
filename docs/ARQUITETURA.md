@@ -40,8 +40,9 @@ Devido à necessidade de o Admin ler e escrever dados *em nome do usuário*, uti
 *   **`Meeting1Content` / `Meeting2Content`**: Orquestradores das reuniões. Gerenciam os passos:
     1.  `ReviewStage`: Tabela de Orçamento com suporte a herança de dados.
     2.  `NonRecurringExpensesStage`: CRUD de gastos anuais.
-    3.  `ReportsStage`: Central de Impressão.
-    4.  `TasksStage`: Checklist de finalização com suporte a tarefas customizadas.
+    3.  `DebtUpdateStage` (Reunião 2): Etapa obrigatória para revisão de dívidas negociadas.
+    4.  `ReportsStage`: Central de Impressão.
+    5.  `TasksStage`: Checklist de finalização com suporte a tarefas customizadas.
 
 ### Sincronização de Dados entre Reuniões
 Para garantir a continuidade do planejamento financeiro, implementamos um padrão de **Herança de Metas**:
@@ -103,6 +104,13 @@ Em Fevereiro de 2026, foi realizada uma auditoria técnica completa na infraestr
     *   Adicionar/Remover itens (Gastos Não Recorrentes).
     *   Alterar qualquer input no Checklist (ChecklistModal).
 
+### Módulo de Atualização de Dívidas (Mentoria)
+A `DebtUpdateStage` na Reunião 2 é responsável por consolidar o status das negociações:
+1.  **Sincronização**: Consome dados do `debt_mapping` global e do `checklistData` (Passo 11).
+2.  **Inclusão Manual**: Permite que o mentor adicione "Dívidas Descobertas" que não estavam no mapeamento original, garantindo que o plano financeiro seja completo.
+3.  **Persistência**: Salva um snapshot das dívidas dentro do objeto `data` da reunião para histórico e impressão.
+4.  **Impressão Otimizada**: Utiliza classes `print:` para forçar fundo branco, texto preto e remover backgrounds escuros dos inputs, garantindo legibilidade em papel A4.
+
 ### Regras de Negócio e Segurança
 *   **Acesso Administrativo**: Apenas Admins podem alterar a Fase do Checklist de um aluno através do Dashboard.
-*   **Somente Leitura**: Quando o progresso é visualizado pelo próprio `USER`, o checklist entra em modo `readOnly`, permitindo apenas a visualização das estratégias definidas pelo mentor.
+*   **Somente Leitura**: Quando o progresso é visualizado pelo próprio `USER`, o checklist e as etapas de mentoria entram em modo `readOnly`, permitindo apenas a visualização das estratégias definidas pelo mentor.

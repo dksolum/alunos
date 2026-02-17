@@ -120,22 +120,11 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 
 ## 📝 Histórico de Atualizações Recentes
 
-- **Fix**: Persistência de dados do checklist corrigida (Admin agora vê e salva dados de texto corretamente).
-- **Feat**: Hierarquia de usuários no Dashboard Admin (Admin > Secretário > Usuário).
-- **Feat**: Checklist 2.0 com sub-itens, inputs condicionais e estados visuais (Pendente/Em Progresso/Concluído).
-- **Feat**: Modo "Somente Leitura" no checklist para usuários comuns.
-- **Fix**: Correção de impressão (páginas em branco e vazamento de conteúdo admin).
-- **Fix**: Contexto de salvamento de diagnóstico por Admins (RPC `save_diagnostic_by_admin`).
-- **Feat**: Remoção simplificada de Cartões de Crédito dos relatórios.
-- **Feat**: Implementação completa do módulo **Ficha Individual** (User Intake) com persistência no banco.
-- **Refactor**: Nova estrutura de Dashboard com bloqueio progressivo de módulos.
-- **Infra**: Migração completa de LocalStorage para Supabase com RLS.
-- **Feat**: Módulo de Mentoria (Reunião 1 e 2) com fluxo completo de Revisão, Gastos Não Recorrentes e Relatórios.
-- **Feat**: Sincronização automática de metas (Referência) entre reuniões consecutivas na Mentoria.
-- **Feat**: Controle de Bloqueio/Desbloqueio (Lock/Unlock) para Admins/Secretários no Dashboard de Mentoria.
-- **Feat**: Indicadores visuais de variação de orçamento (↑, ↓, -) no ReviewStage.
-- **Fix**: Permissões de Admin para salvar dados de mentoria em nome do cliente via RPCs dedicadas.
-- **Fix**: Correção de visualização de cards de mentoria e lógica de desbloqueio para Admins.
-- **Refactor**: Overhaul estético na Proposta de Valor (Tons positivos, % de redução e efeitos de conquista).
-- **Infra**: Auditoria técnica completa do banco de dados (Segurança RLS e integridade de tipos JSONB validada).
+- **Feat**: Nova etapa "Atualização de Dívidas" na Reunião 2 da Mentoria com preenchimento via Checklist.
+- **Feat**: Suporte a inclusão manual de novas dívidas (descobertas durante a mentoria).
+- **Refactor**: Reorganização do fluxo da Reunião 2 para melhor sequência lógica.
+- **Feat**: Relatório especializado de Dívidas com otimização para impressão (alto contraste).
+- **Fix**: Correção da lógica de parcelas restantes (fallback robusto para originalQuantity).
+- **Fix**: Bug do JSON visível no campo de observações das dívidas.
+- **Feat**: Exibição de valor de parcela original no acompanhamento de dívidas para comparação visual.
 

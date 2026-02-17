@@ -3,6 +3,7 @@ import { ReviewStage } from '../Meeting1/ReviewStage';
 import { NonRecurringExpensesStage } from '../Meeting1/NonRecurringExpensesStage';
 import { TasksStage } from '../Meeting1/TasksStage';
 import { ReportsStage } from '../Meeting1/ReportsStage';
+import { DebtUpdateStage } from './DebtUpdateStage';
 import { PrintHeader } from '../Meeting1/PrintHeader';
 import { PrintPortal } from '../../PrintPortal';
 import { FinancialData, ChecklistData, User, NonRecurringExpenseItem } from '../../../types';
@@ -37,7 +38,7 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
     onUnlock
 }) => {
     const activeStep = meetingData?.activeStep || 0;
-    const [printSection, setPrintSection] = useState<'review' | 'expenses' | null>(null);
+    const [printSection, setPrintSection] = useState<'review' | 'expenses' | 'debts' | null>(null);
     const [printData, setPrintData] = useState<any>(null);
 
     const setActiveStep = async (step: number) => {
@@ -86,13 +87,14 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
     const steps = [
         { title: 'Revisão', description: 'Orçamento vs Realizado' },
         { title: 'Gastos Não Recorrentes', description: 'Mapeamento Anual' },
+        { title: 'Atualização de Dívidas', description: 'Status de Negociações' },
         { title: 'Relatórios', description: 'Impressão' },
         { title: 'Tarefas', description: 'Próximos Passos' }
     ];
 
     const isUser = currentUser.role === 'USER';
 
-    const handlePrint = (section: 'review' | 'expenses', data?: any) => {
+    const handlePrint = (section: 'review' | 'expenses' | 'debts', data?: any) => {
         setPrintSection(section);
         if (data) setPrintData(data);
 
@@ -168,18 +170,30 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
                         />
                     </div>
 
-                    {/* REPORTS STAGE */}
+                    {/* DEBT UPDATE STAGE */}
                     {activeStep === 2 && (
+                        <DebtUpdateStage
+                            userId={userId}
+                            checklistData={checklistData}
+                            meetingData={meetingData}
+                            onUpdateMeetingData={onUpdateMeetingData}
+                            readOnly={false}
+                        />
+                    )}
+
+                    {/* REPORTS STAGE */}
+                    {activeStep === 3 && (
                         <div>
                             <ReportsStage
                                 onPrintReview={() => handlePrint('review')}
                                 onPrintExpenses={() => handlePrint('expenses')}
+                                onPrintDebts={() => handlePrint('debts')}
                             />
                         </div>
                     )}
 
                     {/* TASKS STAGE */}
-                    {activeStep === 3 && (
+                    {activeStep === 4 && (
                         <div>
                             <TasksStage
                                 meetingData={meetingData}
@@ -222,6 +236,20 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
                                 initialItems={printData}
                                 items={printData || meetingData.nonRecurringExpenses}
                                 showDetails={true}
+                            />
+                        </div>
+                    </div>
+                )}
+                {printSection === 'debts' && (
+                    <div className="p-8">
+                        <PrintHeader user={currentUser} title="Atualização de Dívidas - Reunião 2" />
+                        <div className="mt-8">
+                            <DebtUpdateStage
+                                userId={userId}
+                                checklistData={checklistData}
+                                meetingData={meetingData}
+                                onUpdateMeetingData={onUpdateMeetingData}
+                                readOnly={true}
                             />
                         </div>
                     </div>

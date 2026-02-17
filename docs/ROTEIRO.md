@@ -43,6 +43,7 @@ A migração para um backend real foi realizada para permitir sincronização e 
 ## ✅ Fase 5: Expansão (Em Andamento)
 - [x] **Módulos de Mentoria**: Reunião 1 (Fundação) e Reunião 2 (Retorno) 100% integradas.
     - [x] Gestão de Gastos Não Recorrentes.
+    - [x] **Etapa "Atualização de Dívidas" (Novo)**: Acompanhamento de negociações no Retorno.
     - [x] Sincronização automática de metas entre reuniões.
     - [x] Sistema de Bloqueio/Desbloqueio (Lock/Unlock) para Admins.
 - [x] **Checklist v2.2 (Refinamento de Negociação & Estética)**:
@@ -50,6 +51,7 @@ A migração para um backend real foi realizada para permitir sincronização e 
     - [x] Lógica de fallback para parcelas não negociadas.
     - [x] **Card de Proposta de Valor Premium**: Overhaul estético com eliminação de tons de alerta, brilho de conquista e % de redução.
     - [x] **Auditoria de Dados**: Validação completa da camada de persistência e segurança no Supabase.
+- [x] **Otimização de Impressão**: Relatórios de Revisão, Gastos e Dívidas (Alto contraste).
 - [ ] **Integrações Futuras**:
     - [ ] WhatsApp API para lembretes.
 - [ ] **Próximas Reuniões**: Desenvolver Reuniões 3 a 6.
