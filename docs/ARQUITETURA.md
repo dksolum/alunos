@@ -68,16 +68,41 @@ Para resolver problemas de layout ao imprimir de dentro de um Modal, implementam
 
 Isso garante que o navegador "veja" apenas o relatório limpo, sem barras de rolagem, fundos escuros ou cortes de página.
 
-## Fluxos Críticos
+## Módulo de Checklist & Negociação (Fase 2)
 
-### Conclusão de Reunião
-1.  Usuário/Admin marca todas as tarefas em `TasksStage`.
-2.  Botão "Concluir" chama `updateMeetingStatus('completed')`.
-3.  Card no Dashboard fica verde.
-4.  **Reversão**: Se uma tarefa for desmarcada posteriormente, o status reverte automaticamente para `'unlocked'`.
+### Integração de Dados
+A Fase 2 do checklist introduz uma integração profunda com o Mapeamento de Dívidas:
 
-### Persistência de Dados
+1.  **Fluxo de Dados**:
+    *   **Mapeamento Global**: Fonte da verdade para dívidas originais (`debt_mapping` table).
+    *   **Passo 11 (Negociação)**: Consome `debtMapItems` via props. Armazena um array JSON no `checklistData` do usuário.
+    *   **Estrutura do JSON**: `[{ debtId, name, creditor, installmentValue, quantity, interestRate }]`.
+
+2.  **Lógica de Cálculo (Proposta de Valor)**:
+    *   **Cenário "Antes"**: Soma das parcelas originais (`installmentValue`) de todos os itens no `debtMapItems`.
+    *   **Cenário "Depois"**: 
+        *   Itera sobre o mapeamento global.
+        *   Para cada dívida, busca se há uma negociação registrada no Passo 11.
+        *   **Regra de Fallback**: Se o valor negociado estiver vazio/não informado, o sistema assume que não houve mudança e utiliza o valor da parcela original para compor o total.
+    *   **Impacto Estimado**: Somatório da redução de custo de vida (Meeting 1/2) + redução total nas parcelas de dívidas.
+
+### Estética de Sucesso e Realização
+Para maximizar a percepção de valor do cliente, implementamos indicadores visuais de progresso:
+- **Pulsed Achievement Glow**: Elementos que representam o cenário "Depois" (economia) recebem um brilho verde esmeralda (`bg-emerald-500/10 blur-xl animate-pulse`) quando o valor é inferior ao original.
+- **Visual Strikethrough**: No cenário "Antes", os valores impactados são exibidos com um traço `line-through` sutil, simbolizando a eliminação ou redução do gasto/dívida.
+- **Quantificação de Impacto**: Cálculo dinâmico da porcentagem de redução nas parcelas de dívidas para tangibilizar o benefício da negociação.
+
+### Auditoria de Dados e Segurança
+Em Fevereiro de 2026, foi realizada uma auditoria técnica completa na infraestrutura Supabase:
+- **Tabelas e Schema**: Validado o alinhamento 1:1 entre os tipos do TypeScript e as colunas do PostgreSQL (incluindo campos `JSONB` para flexibilidade).
+- **Isolamento via RLS**: Verificada a eficácia das políticas de segurança baseadas em `auth.uid()`, garantindo que dados de diagnóstico e mentoria sejam estritamente privados ou acessíveis apenas por Admins autorizados.
+- **Integridade JSONB**: Confirmada a robustez das operações de merge em planos complexos, evitando sobrescrita acidental de dados entre diferentes sessões de preenchimento.
 *   Os dados são salvos automaticamente ao:
     *   Mudar de aba (passo do stepper).
     *   Clicar em "Salvar" explicitamente (ReviewStage).
     *   Adicionar/Remover itens (Gastos Não Recorrentes).
+    *   Alterar qualquer input no Checklist (ChecklistModal).
+
+### Regras de Negócio e Segurança
+*   **Acesso Administrativo**: Apenas Admins podem alterar a Fase do Checklist de um aluno através do Dashboard.
+*   **Somente Leitura**: Quando o progresso é visualizado pelo próprio `USER`, o checklist entra em modo `readOnly`, permitindo apenas a visualização das estratégias definidas pelo mentor.

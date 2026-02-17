@@ -776,6 +776,7 @@ const App: React.FC = () => {
           onLogout={handleLogout}
           financialData={data}
           onUpdateFinancialData={setData}
+          debtMapItems={debtMappingData}
         />
         {showEditProfile && (viewingUser || currentUser) && (
           <ProfileConfirmationModal

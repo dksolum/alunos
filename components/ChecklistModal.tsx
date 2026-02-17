@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, Circle, ChevronDown, ChevronUp, AlertCircle, Clock, Target, ListChecks, ShieldCheck } from 'lucide-react';
-import { ChecklistData, FinancialData } from '../types';
+import { X, CheckCircle2, Circle, ChevronDown, ChevronUp, AlertCircle, Clock, Target, ListChecks, ShieldCheck, RefreshCw } from 'lucide-react';
+import { ChecklistData, FinancialData, DebtMapItem } from '../types';
 
 interface ChecklistModalProps {
     isOpen: boolean;
@@ -10,6 +10,7 @@ interface ChecklistModalProps {
     onSave?: (progress: number[], data: ChecklistData) => Promise<void>;
     readOnly?: boolean;
     financialData?: FinancialData;
+    debtMapItems?: DebtMapItem[];
     phase?: 'LOCKED' | 'PHASE_1' | 'PHASE_2';
 }
 
@@ -212,6 +213,7 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
     onSave,
     readOnly = true,
     financialData,
+    debtMapItems = [],
     phase = 'PHASE_1'
 }) => {
     // Tab state for Phase 2 users
@@ -547,7 +549,7 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
                                                             </div>
                                                         )}
 
-                                                        {showInput && (
+                                                        {showInput && !(step.id === 11 && sub.id === 2) && (
                                                             <div className="ml-7 space-y-1">
                                                                 {sub.conditionalInput?.label && (
                                                                     <label className="text-[10px] uppercase font-bold text-slate-500 block">
@@ -606,6 +608,164 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
                                                                         {financialData.estimatedExpenses.filter(e => Number(e.value) > 0).length === 0 && (
                                                                             <p className="text-[10px] text-slate-500 italic text-center py-2">Nenhum gasto variável encontrado no diagnóstico.</p>
                                                                         )}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Specific Logic for Debt Negotiations (Phase 2, Step 11, Subitem 2) */}
+                                                        {step.id === 11 && sub.id === 2 && isSubChecked && activeTab === 'phase2' && (
+                                                            <div className="ml-7 space-y-3 animate-in slide-in-from-top-2">
+                                                                <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 space-y-4">
+                                                                    <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-700/50">
+                                                                        <div className="flex items-center gap-2 text-amber-400">
+                                                                            <ShieldCheck size={14} />
+                                                                            <span className="text-[10px] font-bold uppercase tracking-wide">Detalhamento das Negociações</span>
+                                                                        </div>
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                const currentNegotiationsArr: any[] = [];
+                                                                                try {
+                                                                                    const existing = subValue ? JSON.parse(subValue) : [];
+                                                                                    if (Array.isArray(existing)) currentNegotiationsArr.push(...existing);
+                                                                                } catch (e) { }
+
+                                                                                // Merge: add missing debts from map
+                                                                                const newNegotiations = [...currentNegotiationsArr];
+                                                                                debtMapItems.forEach(debt => {
+                                                                                    const exists = newNegotiations.find(n => n.debtId === debt.id);
+                                                                                    if (!exists) {
+                                                                                        newNegotiations.push({
+                                                                                            debtId: debt.id,
+                                                                                            name: debt.name,
+                                                                                            creditor: debt.creditor,
+                                                                                            installmentValue: '',
+                                                                                            quantity: '',
+                                                                                            interest: ''
+                                                                                        });
+                                                                                    }
+                                                                                });
+                                                                                handleInputChange(step.id, sub.id, JSON.stringify(newNegotiations));
+                                                                            }}
+                                                                            className="p-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg transition-colors flex items-center gap-1.5 text-[9px] font-bold uppercase"
+                                                                            title="Sincronizar com Mapeamento Global"
+                                                                        >
+                                                                            <RefreshCw size={12} /> Atualizar Lista
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <div className="space-y-4">
+                                                                        {(() => {
+                                                                            let negotiations: any[] = [];
+                                                                            try {
+                                                                                negotiations = subValue ? JSON.parse(subValue) : [];
+                                                                                if (!Array.isArray(negotiations)) negotiations = [];
+                                                                            } catch (e) {
+                                                                                negotiations = [];
+                                                                            }
+
+                                                                            if (negotiations.length === 0 && debtMapItems.length > 0) {
+                                                                                return (
+                                                                                    <div className="text-center py-4 space-y-2">
+                                                                                        <p className="text-[10px] text-slate-500 italic">Nenhuma negociação registrada.</p>
+                                                                                        <button
+                                                                                            onClick={() => {
+                                                                                                const initial = debtMapItems.map(d => ({
+                                                                                                    debtId: d.id,
+                                                                                                    name: d.name,
+                                                                                                    creditor: d.creditor,
+                                                                                                    installmentValue: '',
+                                                                                                    quantity: '',
+                                                                                                    interest: ''
+                                                                                                }));
+                                                                                                handleInputChange(step.id, sub.id, JSON.stringify(initial));
+                                                                                            }}
+                                                                                            className="px-3 py-1.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-[9px] font-black uppercase hover:bg-amber-500/20 transition-all"
+                                                                                        >
+                                                                                            Importar Dívidas do Mapeamento
+                                                                                        </button>
+                                                                                    </div>
+                                                                                );
+                                                                            }
+
+                                                                            return negotiations.map((neg, index) => {
+                                                                                const originalDebt = debtMapItems.find(d => d.id === neg.debtId);
+                                                                                const originalValue = Number(originalDebt?.installmentValue) || 0;
+                                                                                const negotiatedValue = parseFloat(neg.installmentValue?.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+
+                                                                                let diffColor = 'text-slate-500';
+                                                                                if (negotiatedValue > 0) {
+                                                                                    if (negotiatedValue < originalValue) diffColor = 'text-emerald-400';
+                                                                                    else if (negotiatedValue > originalValue) diffColor = 'text-rose-400';
+                                                                                    else diffColor = 'text-amber-400';
+                                                                                }
+
+                                                                                return (
+                                                                                    <div key={neg.debtId || index} className="space-y-2 p-3 bg-slate-900/40 rounded-xl border border-slate-700/30">
+                                                                                        <div className="flex justify-between items-center text-[10px]">
+                                                                                            <span className="text-slate-300 font-bold">{neg.name}</span>
+                                                                                            <span className="text-[8px] text-slate-500 uppercase">{neg.creditor}</span>
+                                                                                        </div>
+                                                                                        <div className="grid grid-cols-4 gap-2">
+                                                                                            <div className="space-y-1">
+                                                                                                <label className="text-[8px] uppercase font-black text-slate-600">Parc. Atual</label>
+                                                                                                <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-1.5 text-[10px] text-slate-400 font-bold">
+                                                                                                    R$ {originalValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <div className="space-y-1">
+                                                                                                <label className="text-[8px] uppercase font-black text-slate-600">Vlr. Parcela</label>
+                                                                                                <div className="relative">
+                                                                                                    <span className={`absolute left-2 top-1/2 -translate-y-1/2 text-[8px] font-bold ${negotiatedValue > 0 ? diffColor : 'text-slate-500'}`}>R$</span>
+                                                                                                    <input
+                                                                                                        type="text"
+                                                                                                        placeholder="0,00"
+                                                                                                        className={`w-full bg-slate-800 border border-slate-700 rounded-lg p-1.5 pl-5 text-[10px] focus:border-amber-500 outline-none ${negotiatedValue > 0 ? diffColor + ' font-bold' : 'text-white'}`}
+                                                                                                        value={neg.installmentValue}
+                                                                                                        onChange={(e) => {
+                                                                                                            const newNegs = [...negotiations];
+                                                                                                            newNegs[index].installmentValue = e.target.value;
+                                                                                                            handleInputChange(step.id, sub.id, JSON.stringify(newNegs));
+                                                                                                        }}
+                                                                                                        disabled={readOnly}
+                                                                                                    />
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <div className="space-y-1">
+                                                                                                <label className="text-[8px] uppercase font-black text-slate-600">Qtd. Parc.</label>
+                                                                                                <input
+                                                                                                    type="text"
+                                                                                                    placeholder="00"
+                                                                                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-center text-[10px] text-white focus:border-amber-500 outline-none"
+                                                                                                    value={neg.quantity}
+                                                                                                    onChange={(e) => {
+                                                                                                        const newNegs = [...negotiations];
+                                                                                                        newNegs[index].quantity = e.target.value;
+                                                                                                        handleInputChange(step.id, sub.id, JSON.stringify(newNegs));
+                                                                                                    }}
+                                                                                                    disabled={readOnly}
+                                                                                                />
+                                                                                            </div>
+                                                                                            <div className="space-y-1">
+                                                                                                <label className="text-[8px] uppercase font-black text-slate-600">Juros/CET</label>
+                                                                                                <input
+                                                                                                    type="text"
+                                                                                                    placeholder="0%"
+                                                                                                    className="w-full bg-slate-800 border border-slate-700 rounded-lg p-1.5 text-[10px] text-white focus:border-amber-500 outline-none"
+                                                                                                    value={neg.interestRate}
+                                                                                                    onChange={(e) => {
+                                                                                                        const newNegs = [...negotiations];
+                                                                                                        newNegs[index].interestRate = e.target.value;
+                                                                                                        handleInputChange(step.id, sub.id, JSON.stringify(newNegs));
+                                                                                                    }}
+                                                                                                    disabled={readOnly}
+                                                                                                />
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                );
+                                                                            });
+                                                                        })()}
                                                                     </div>
                                                                 </div>
                                                             </div>

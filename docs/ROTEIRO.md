@@ -40,10 +40,19 @@ A migração para um backend real foi realizada para permitir sincronização e 
 - [x] **Relatórios Profissionais**: Layout de impressão limpo e cabeçalhos personalizados.
 - [x] **Checklist Destruidor de Sanhaço**: Guia de guerra passo-a-passo com barra de progresso.
 
-## 🚧 Fase 5: Expansão (Próximos Passos)
+## ✅ Fase 5: Expansão (Em Andamento)
+- [x] **Módulos de Mentoria**: Reunião 1 (Fundação) e Reunião 2 (Retorno) 100% integradas.
+    - [x] Gestão de Gastos Não Recorrentes.
+    - [x] Sincronização automática de metas entre reuniões.
+    - [x] Sistema de Bloqueio/Desbloqueio (Lock/Unlock) para Admins.
+- [x] **Checklist v2.2 (Refinamento de Negociação & Estética)**:
+    - [x] Integração bidirecional com Mapeamento de Dívidas.
+    - [x] Lógica de fallback para parcelas não negociadas.
+    - [x] **Card de Proposta de Valor Premium**: Overhaul estético com eliminação de tons de alerta, brilho de conquista e % de redução.
+    - [x] **Auditoria de Dados**: Validação completa da camada de persistência e segurança no Supabase.
 - [ ] **Integrações Futuras**:
     - [ ] WhatsApp API para lembretes.
-- [/] **Módulos de Mentoria**: Reunião 1 (Fundação) e Reunião 2 (Retorno) concluídas. Desenvolver 3-6.
+- [ ] **Próximas Reuniões**: Desenvolver Reuniões 3 a 6.
 - [ ] **Dashboard de Métricas**: Gráficos para o Admin ver quantos leads foram convertidos no mês.
 
 ## 📥 Idea Inbox

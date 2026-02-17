@@ -1,5 +1,5 @@
 import React from 'react';
-import { User as UserType, Anamnesis, ChecklistData, FinancialData, MentorshipState, MentorshipMeeting } from '../types';
+import { User as UserType, Anamnesis, ChecklistData, FinancialData, MentorshipState, MentorshipMeeting, DebtMapItem } from '../types';
 import { UserIntakeModal } from './UserIntakeModal';
 import { ChecklistModal } from './ChecklistModal';
 import { authService } from '../services/authService';
@@ -27,6 +27,7 @@ import { MentorshipCard } from './Mentorship/MentorshipCard';
 import { MeetingModal } from './Mentorship/MeetingModal';
 import { Meeting1Content } from './Mentorship/Meeting1/Meeting1Content';
 import { Meeting2Content } from './Mentorship/Meeting2/Meeting2Content';
+import { ConsultingValueCard } from './ConsultingValueCard';
 
 interface DashboardProps {
     user: UserType;
@@ -44,6 +45,7 @@ interface DashboardProps {
     onChecklistUpdate: (progress: number[], data: ChecklistData) => void;
     financialData: FinancialData;
     onUpdateFinancialData: (data: FinancialData) => void;
+    debtMapItems: DebtMapItem[];
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({
@@ -62,7 +64,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     currentUser,
     onChecklistUpdate,
     financialData,
-    onUpdateFinancialData
+    onUpdateFinancialData,
+    debtMapItems
 }) => {
     const isAnamnesisDone = !!anamnesisData;
     const [showIntakeModal, setShowIntakeModal] = React.useState(false);
@@ -405,38 +408,48 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                         {/* Checklist Destruidor de Sanhaço (Condicional) */}
                         {(user.checklistPhase === 'PHASE_1' || user.checklistPhase === 'PHASE_2') && (
-                            <div className="mt-6 group relative overflow-hidden rounded-[2rem] border p-8 transition-all duration-300 bg-slate-900 border-rose-500/30 shadow-2xl shadow-rose-500/5 hover:border-rose-500/50">
-                                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                                    <ListChecks size={120} />
-                                </div>
-
-                                <div className="relative z-10 flex flex-col h-full justify-between gap-6">
-                                    <div className="space-y-4">
-                                        <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-rose-500/10 text-rose-400">
-                                            <ListChecks size={24} />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2">Checklist Destruidor de Sanhaço</h3>
-                                            <p className="text-sm text-slate-400 font-medium leading-relaxed">
-                                                {user.checklistPhase === 'PHASE_2'
-                                                    ? "Fase de Retorno: renegociação, cortes e ajustes finos."
-                                                    : "Guia de sobrevivência passo-a-passo para sair do caos financeiro."}
-                                            </p>
-                                        </div>
+                            <div className="mt-6 flex flex-col gap-6">
+                                <div className="group relative overflow-hidden rounded-[2rem] border p-8 transition-all duration-300 bg-slate-900 border-rose-500/30 shadow-2xl shadow-rose-500/5 hover:border-rose-500/50">
+                                    <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                                        <ListChecks size={120} />
                                     </div>
 
-                                    <div className="pt-4 border-t border-slate-800/50">
-                                        <button
-                                            onClick={() => setShowChecklistModal(true)}
-                                            className={`w-full py-4 rounded-xl font-bold uppercase tracking-wide text-xs transition-all shadow-lg flex items-center justify-center gap-2 hover:-translate-y-0.5 ${user.checklistPhase === 'PHASE_2'
-                                                ? 'bg-amber-500 hover:bg-amber-400 text-slate-900 shadow-amber-900/20 hover:shadow-amber-500/20'
-                                                : 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/20 hover:shadow-rose-500/20'
-                                                }`}
-                                        >
-                                            {user.checklistPhase === 'PHASE_2' ? "Acessar Fase de Retorno" : "Acessar Guia de Guerra"} <ChevronRight size={14} />
-                                        </button>
+                                    <div className="relative z-10 flex flex-col h-full justify-between gap-6">
+                                        <div className="space-y-4">
+                                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-rose-500/10 text-rose-400">
+                                                <ListChecks size={24} />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2">Checklist Destruidor de Sanhaço</h3>
+                                                <p className="text-sm text-slate-400 font-medium leading-relaxed">
+                                                    {user.checklistPhase === 'PHASE_2'
+                                                        ? "Fase de Retorno: renegociação, cortes e ajustes finos."
+                                                        : "Guia de sobrevivência passo-a-passo para sair do caos financeiro."}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-4 border-t border-slate-800/50">
+                                            <button
+                                                onClick={() => setShowChecklistModal(true)}
+                                                className={`w-full py-4 rounded-xl font-bold uppercase tracking-wide text-xs transition-all shadow-lg flex items-center justify-center gap-2 hover:-translate-y-0.5 ${user.checklistPhase === 'PHASE_2'
+                                                    ? 'bg-amber-500 hover:bg-amber-400 text-slate-900 shadow-amber-900/20 hover:shadow-amber-500/20'
+                                                    : 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/20 hover:shadow-rose-500/20'
+                                                    }`}
+                                            >
+                                                {user.checklistPhase === 'PHASE_2' ? "Acessar Fase de Retorno" : "Acessar Guia de Guerra"} <ChevronRight size={14} />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
+
+                                {user.checklistPhase === 'PHASE_2' && (
+                                    <ConsultingValueCard
+                                        financialData={financialData}
+                                        checklistData={user.checklistData || {}}
+                                        debtMapItems={debtMapItems}
+                                    />
+                                )}
                             </div>
                         )}
                     </section>
@@ -448,6 +461,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         initialData={user.checklistData || {}}
                         readOnly={currentUser.role === 'USER'}
                         financialData={financialData}
+                        debtMapItems={debtMapItems}
                         phase={user.checklistPhase || 'LOCKED'}
                         onSave={async (newProgress, newData) => {
                             if (currentUser.role === 'USER') return; // Double check security

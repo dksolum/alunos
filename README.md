@@ -49,10 +49,18 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
 ### 5. Checklist Destruidor de Sanhaço (v2.1 - Multi-Fase)
 - **Sistema de Fases**:
   - **Fase 1 (Diagnóstico)**: Organização inicial e levantamento de dívidas.
-  - **Fase 2 (Retorno)**: Execução do plano, negociação e definição de tetos de gastos.
+  - **Fase 2 (Retorno)**: Execução do plano, negociação estruturada de dívidas e definição de tetos de gastos.
 - **Logica Avançada**:
   - **Sub-itens e Inputs**: Etapas com sub-tarefas e campos de texto condicionais.
+  - **Negociação de Dívidas (Passo 11)**: Interface dedicada para listar dívidas do mapeamento, com campos para nova parcela, quantidade e juros.
+  - **Comparação em Tempo Real**: Exibição da parcela original ("Parc. Atual") vs negociada, com indicadores coloridos de economia.
   - **Tetos de Gastos**: Usuário define metas para categorias ofensoras (ex: "Mercado", "Lazer").
+- **Card Proposta de Valor da Consultoria (Premium)**:
+  - **Estética Positiva**: Substituição de tons de alerta (vermelho) por **Índigo e Azul** para promover calma e foco em resultados.
+  - **Destaques de Realização**: Brilho verde pulsante (glow) e texto riscado (strikethrough) em valores reduzidos nos cards de **Dívidas** e **Custo de Vida**.
+  - **Impacto na Vida**: Exibição da porcentagem exata de redução nas parcelas mensais de dívidas.
+  - **Persistência Inteligente**: Se uma dívida não for negociada, o sistema mantém e soma o valor original no cenário "Depois".
+  - **Impacto Total**: Consolidação da economia mensal (Gastos + Dívidas) no cabeçalho do card.
 - **Estados Visuais**:
   - **Pendente (Cinza)**: Não iniciado.
   - **Em Progresso (Amarelo/Azul)**: Sub-itens marcados ou texto preenchido.
@@ -128,4 +136,6 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 - **Feat**: Indicadores visuais de variação de orçamento (↑, ↓, -) no ReviewStage.
 - **Fix**: Permissões de Admin para salvar dados de mentoria em nome do cliente via RPCs dedicadas.
 - **Fix**: Correção de visualização de cards de mentoria e lógica de desbloqueio para Admins.
+- **Refactor**: Overhaul estético na Proposta de Valor (Tons positivos, % de redução e efeitos de conquista).
+- **Infra**: Auditoria técnica completa do banco de dados (Segurança RLS e integridade de tipos JSONB validada).
 
