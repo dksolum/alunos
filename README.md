@@ -24,6 +24,8 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
 - **Reunião 3 (Plano de Quitação)**:
   - **Estratégia "Turning Point"**: Foco em dívidas não pagas para liberação definitiva de fluxo de caixa.
   - **Plano de Quitação**: Visualização estratégica da ordem de pagamento e impacto financeiro futuro.
+  - **Refinamento de Margens**: Comparativo individual de propostas (SERASA vs Canal Oficial) e feedback de amortização com indicação de sobra/falta de fluxo.
+  - **Data de Previsão**: Rastreamento da data prevista para retirada do nome dos órgãos de proteção ao crédito.
 - **Controle Administrativo**:
   - **Bloqueio/Desbloqueio (Lock/Unlock)**: Admins e Secretários podem liberar reuniões futuras ou bloquear reuniões em andamento.
 - **Persistência e Segurança**: Dados salvos via Supabase com trava de segurança (RLS) e acesso administrativo via RPCs.

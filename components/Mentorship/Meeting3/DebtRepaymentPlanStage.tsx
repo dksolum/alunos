@@ -13,7 +13,9 @@ interface RepaymentSubStep {
     options?: string[];
     selectedOption?: string;
     status?: 'done' | 'not_applicable' | 'pending';
-    type?: 'checkbox' | 'simple' | 'conditional_offer' | 'margin_check';
+    type?: 'checkbox' | 'simple' | 'conditional_offer' | 'margin_check' | 'portability_check' | 'amortization_check';
+    surplusValue?: number;
+    predictedDate?: string;
 }
 
 interface RepaymentStep {
@@ -91,14 +93,14 @@ export const DebtRepaymentPlanStage: React.FC<DebtRepaymentPlanStageProps> = ({
                     id: 'paid-2',
                     title: '2. Avaliar portabilidade',
                     subSteps: [
-                        { id: '2.1', title: 'Existe outra instituição que oferece juros menores?', type: 'simple' }
+                        { id: '2.1', title: 'Existe outra instituição que oferece juros menores?', type: 'portability_check', isChecked: false }
                     ]
                 },
                 {
                     id: 'paid-3',
                     title: '3. Revisar orçamento',
                     subSteps: [
-                        { id: '3.1', title: 'Verificar margem mensal para amortização (sem usar 100% da sobra)', type: 'simple' },
+                        { id: '3.1', title: 'Verificar margem mensal para amortização (sem usar 100% da sobra)', type: 'amortization_check', isChecked: false },
                         { id: '3.2', title: `Criar conta bancária: Quitar a dívida ${debtName}`, type: 'simple' },
                         { id: '3.3', title: 'Verificar possibilidade de corte temporário de gastos para acelerar', type: 'simple' }
                     ]
@@ -259,7 +261,7 @@ export const DebtRepaymentPlanStage: React.FC<DebtRepaymentPlanStageProps> = ({
                     </div>
                     <h2 className="text-3xl font-black uppercase tracking-tight mb-4">Plano de Quitação e Crescimento</h2>
                     <p className="text-purple-100 font-medium leading-relaxed italic">
-                        "O primeiro passo para sair do buraco é parar de cavar." - Defina a estratégia de ataque.
+                        Apartir daqui vamos parar de só olhar para os problemas, pois vamos definir soluções e iniciar o crescimento de patrimônio.
                     </p>
                 </div>
             </div>
@@ -341,6 +343,10 @@ export const DebtRepaymentPlanStage: React.FC<DebtRepaymentPlanStageProps> = ({
                                 <div className="flex justify-between">
                                     <span className="text-[10px] text-slate-500 uppercase font-black">Meses Restantes</span>
                                     <span className="text-sm font-black text-sky-400">{selectedDebt.newQuantity}x</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-[10px] text-slate-500 uppercase font-black">Total da Dívida</span>
+                                    <span className="text-sm font-black text-white">R$ {(selectedDebt.newInstallment * selectedDebt.newQuantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                                 </div>
                                 <div className="pt-4 border-t border-slate-800">
                                     <p className="text-[10px] text-slate-500 uppercase font-black mb-1">Previsão Fim</p>
@@ -425,8 +431,21 @@ export const DebtRepaymentPlanStage: React.FC<DebtRepaymentPlanStageProps> = ({
                                                             onChange={(e) => handleUpdateSubStep(step.id, ss.id, { title: e.target.value })}
                                                             readOnly={readOnly}
                                                             placeholder="Título do item..."
-                                                            className={`w-full bg-transparent text-sm font-bold transition-all outline-none focus:text-sky-400 border-b border-transparent focus:border-sky-500/30 pb-0.5 ${ss.status === 'done' ? 'text-emerald-400' : ss.status === 'not_applicable' ? 'text-slate-500 line-through' : 'text-slate-200'}`}
+                                                            className={`w-full bg-transparent text-sm font-bold transition-all outline-none focus:text-sky-400 border-b border-transparent focus:border-sky-500/30 pb-0.5 ${ss.status === 'done' ? 'text-emerald-400' : ss.status === 'not_applicable' ? 'text-amber-500 line-through' : 'text-slate-200'}`}
                                                         />
+
+                                                        {/* PREDICTED DATE FOR NAME REMOVAL */}
+                                                        {ss.id === '4.2' && (ss.isChecked || ss.status === 'done') && (
+                                                            <div className="mt-3 space-y-2 animate-in slide-in-from-top-2 duration-300">
+                                                                <p className="text-[10px] text-slate-500 uppercase font-black">Data de Previsão (Retirada do Nome)</p>
+                                                                <input
+                                                                    type="date"
+                                                                    value={ss.predictedDate || ''}
+                                                                    onChange={(e) => handleUpdateSubStep(step.id, ss.id, { predictedDate: e.target.value })}
+                                                                    className="w-full sm:w-auto bg-slate-900 border border-slate-800 rounded-xl p-2 text-sm font-black text-white outline-none focus:border-sky-500"
+                                                                />
+                                                            </div>
+                                                        )}
 
                                                         {/* CONDITIONAL CONTENT */}
                                                         {ss.isChecked && ss.type === 'checkbox' && (
@@ -461,74 +480,279 @@ export const DebtRepaymentPlanStage: React.FC<DebtRepaymentPlanStageProps> = ({
                                                             </div>
                                                         )}
 
-                                                        {ss.isChecked && ss.type === 'conditional_offer' && (
-                                                            <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
-                                                                <div className="flex items-center gap-6">
-                                                                    <p className="text-xs font-black text-slate-400 uppercase">Conseguiu proposta melhor?</p>
-                                                                    <div className="flex gap-2">
-                                                                        {['Sim', 'Não'].map(opt => (
+                                                        {ss.isChecked && ss.type === 'conditional_offer' && (() => {
+                                                            const q1 = step.subSteps.find(s => s.id === '1.1');
+                                                            const q1Total = (q1?.monthlyValue || 0) * (q1?.installments || 0);
+                                                            const q2Total = (ss.monthlyValue || 0) * (ss.installments || 0);
+                                                            const isBetter = q2Total > 0 && q1Total > 0 && q2Total < q1Total;
+                                                            const isWorse = q2Total > 0 && q1Total > 0 && q2Total > q1Total;
+
+                                                            return (
+                                                                <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                                                                    <div className="flex items-center gap-6">
+                                                                        <p className="text-xs font-black text-slate-400 uppercase">Conseguiu proposta melhor?</p>
+                                                                        <div className="flex gap-2">
+                                                                            {['Sim', 'Não'].map(opt => (
+                                                                                <button
+                                                                                    key={opt}
+                                                                                    onClick={() => handleUpdateSubStep(step.id, ss.id, { hasBetterOffer: opt === 'Sim' })}
+                                                                                    className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${ss.hasBetterOffer === (opt === 'Sim') ? 'bg-emerald-500 border-emerald-500 text-slate-950' : 'border-slate-800 text-slate-500 hover:text-white'}`}
+                                                                                >
+                                                                                    {opt}
+                                                                                </button>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {ss.hasBetterOffer && (
+                                                                        <div className="space-y-4">
+                                                                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                                                                <div className="space-y-2">
+                                                                                    <p className="text-[10px] text-slate-500 uppercase font-black">Novo Valor Mensal</p>
+                                                                                    <div className="relative">
+                                                                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-600">R$</span>
+                                                                                        <input
+                                                                                            type="number"
+                                                                                            value={ss.monthlyValue || 0}
+                                                                                            onChange={(e) => handleUpdateSubStep(step.id, ss.id, { monthlyValue: Number(e.target.value) })}
+                                                                                            className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 pl-8 text-sm font-black text-white outline-none focus:border-emerald-500"
+                                                                                        />
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div className="space-y-2">
+                                                                                    <p className="text-[10px] text-slate-500 uppercase font-black">Novo Parcelamento</p>
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        value={ss.installments || 0}
+                                                                                        onChange={(e) => handleUpdateSubStep(step.id, ss.id, { installments: Number(e.target.value) })}
+                                                                                        className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-sm font-black text-white outline-none focus:border-emerald-500"
+                                                                                    />
+                                                                                </div>
+                                                                                <div className="space-y-2">
+                                                                                    <p className="text-[10px] text-slate-500 uppercase font-black">Total Acordo (Oficial)</p>
+                                                                                    <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-2 text-sm font-black text-emerald-400 text-center">
+                                                                                        R$ {q2Total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            {q2Total > 0 && q1Total > 0 && (
+                                                                                <div className={`p-3 rounded-xl border flex items-center gap-3 ${isBetter ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : isWorse ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
+                                                                                    <Info size={16} />
+                                                                                    <p className="text-[10px] font-black uppercase tracking-wider">
+                                                                                        {isBetter ? 'A proposta do Canal Oficial é MELHOR que a do Serasa!' : isWorse ? 'A proposta do Canal Oficial é PIOR que a do Serasa!' : 'As propostas são equivalentes.'}
+                                                                                    </p>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+
+                                                                    <div className="space-y-2">
+                                                                        <p className="text-[10px] text-slate-500 uppercase font-black">Observações Canal Oficial</p>
+                                                                        <textarea
+                                                                            value={ss.observation || ''}
+                                                                            onChange={(e) => handleUpdateSubStep(step.id, ss.id, { observation: e.target.value })}
+                                                                            placeholder="O que foi negociado ou qual foi a justificativa para não baixar?"
+                                                                            className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-300 outline-none h-20 resize-none"
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })()}
+
+                                                        {ss.isChecked && ss.type === 'margin_check' && (() => {
+                                                            const step1 = currentPlan.find(s => s.id === 'unpaid-1');
+                                                            const q1 = step1?.subSteps.find(s => s.id === '1.1');
+                                                            const q2 = step1?.subSteps.find(s => s.id === '1.2');
+
+                                                            const q1Val = (q1?.monthlyValue || 0);
+                                                            const q2Val = (q2?.monthlyValue || 0);
+
+                                                            const surplus = ss.surplusValue || 0;
+
+                                                            return (
+                                                                <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                                                                    <div className="space-y-2">
+                                                                        <p className="text-[10px] text-slate-500 uppercase font-black">Valor mensal sobrando (Média para baixo)</p>
+                                                                        <div className="relative">
+                                                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-600">R$</span>
+                                                                            <input
+                                                                                type="number"
+                                                                                value={ss.surplusValue || 0}
+                                                                                onChange={(e) => handleUpdateSubStep(step.id, ss.id, { surplusValue: Number(e.target.value) })}
+                                                                                className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 pl-8 text-sm font-black text-white outline-none focus:border-purple-500"
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {surplus > 0 && (
+                                                                        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 space-y-4">
+                                                                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider">
+                                                                                <span className="text-slate-500">Sobra Informada</span>
+                                                                                <span className="text-white">R$ {surplus.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                                                            </div>
+
+                                                                            {/* COMPARISON WITH Q1 */}
+                                                                            {q1Val > 0 && (
+                                                                                <div className="pt-3 border-t border-slate-800/50 space-y-2">
+                                                                                    <div className="flex justify-between items-center text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                                                                        <span>Proposta Serasa (Q1)</span>
+                                                                                        <span>R$ {q1Val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                                                                    </div>
+                                                                                    <div className="flex justify-between items-center font-black uppercase tracking-wider">
+                                                                                        <span className="text-[10px] text-slate-500">Paga com folga?</span>
+                                                                                        <span className={`text-xs ${surplus >= q1Val ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                                                            {surplus >= q1Val ? `SIM (Sobra R$ ${(surplus - q1Val).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})` : `NÃO (Falta R$ ${(q1Val - surplus).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+
+                                                                            {/* COMPARISON WITH Q2 */}
+                                                                            {q2Val > 0 && (
+                                                                                <div className="pt-3 border-t border-slate-800/50 space-y-2">
+                                                                                    <div className="flex justify-between items-center text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                                                                        <span>Proposta Canal Oficial (Q2)</span>
+                                                                                        <span>R$ {q2Val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                                                                                    </div>
+                                                                                    <div className="flex justify-between items-center font-black uppercase tracking-wider">
+                                                                                        <span className="text-[10px] text-slate-500">Paga com folga?</span>
+                                                                                        <span className={`text-xs ${surplus >= q2Val ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                                                            {surplus >= q2Val ? `SIM (Sobra R$ ${(surplus - q2Val).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})` : `NÃO (Falta R$ ${(q2Val - surplus).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+
+                                                                    <p className="text-xs font-black text-purple-400 uppercase italic">Recomendação Estratégica:</p>
+                                                                    <div className="grid gap-2">
+                                                                        {(ss.options || []).map(opt => (
                                                                             <button
                                                                                 key={opt}
-                                                                                onClick={() => handleUpdateSubStep(step.id, ss.id, { hasBetterOffer: opt === 'Sim' })}
-                                                                                className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${ss.hasBetterOffer === (opt === 'Sim') ? 'bg-emerald-500 border-emerald-500 text-slate-950' : 'border-slate-800 text-slate-500 hover:text-white'}`}
+                                                                                onClick={() => handleUpdateSubStep(step.id, ss.id, { selectedOption: opt })}
+                                                                                className={`w-full text-left p-3 rounded-xl border transition-all text-[11px] font-bold ${ss.selectedOption === opt ? 'bg-sky-500/20 border-sky-500/50 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
                                                                             >
                                                                                 {opt}
                                                                             </button>
                                                                         ))}
                                                                     </div>
                                                                 </div>
+                                                            );
+                                                        })()}
 
-                                                                {ss.hasBetterOffer && (
-                                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                        {ss.isChecked && ss.type === 'portability_check' && (() => {
+                                                            const currentMonthly = selectedDebt.newInstallment;
+                                                            const currentQuantity = selectedDebt.newQuantity;
+                                                            const currentTotal = currentMonthly * currentQuantity;
+
+                                                            const newMonthly = ss.monthlyValue || 0;
+                                                            const newQuantity = ss.installments || 0;
+                                                            const newTotal = newMonthly * newQuantity;
+
+                                                            const betterMonthly = newMonthly > 0 && newMonthly < currentMonthly;
+                                                            const betterTotal = newTotal > 0 && newTotal < currentTotal;
+
+                                                            return (
+                                                                <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                                                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                                                         <div className="space-y-2">
                                                                             <p className="text-[10px] text-slate-500 uppercase font-black">Novo Valor Mensal</p>
-                                                                            <input
-                                                                                type="number"
-                                                                                value={ss.monthlyValue || 0}
-                                                                                onChange={(e) => handleUpdateSubStep(step.id, ss.id, { monthlyValue: Number(e.target.value) })}
-                                                                                className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-sm font-black text-white outline-none"
-                                                                            />
+                                                                            <div className="relative">
+                                                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-600">R$</span>
+                                                                                <input
+                                                                                    type="number"
+                                                                                    value={ss.monthlyValue || 0}
+                                                                                    onChange={(e) => handleUpdateSubStep(step.id, ss.id, { monthlyValue: Number(e.target.value) })}
+                                                                                    className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 pl-8 text-sm font-black text-white outline-none focus:border-sky-500"
+                                                                                />
+                                                                            </div>
                                                                         </div>
                                                                         <div className="space-y-2">
-                                                                            <p className="text-[10px] text-slate-500 uppercase font-black">Novo Parcelamento</p>
+                                                                            <p className="text-[10px] text-slate-500 uppercase font-black">Nova Qtd de Parcelas</p>
                                                                             <input
                                                                                 type="number"
                                                                                 value={ss.installments || 0}
                                                                                 onChange={(e) => handleUpdateSubStep(step.id, ss.id, { installments: Number(e.target.value) })}
-                                                                                className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-sm font-black text-white outline-none"
+                                                                                className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 text-sm font-black text-white outline-none focus:border-sky-500"
+                                                                            />
+                                                                        </div>
+                                                                        <div className="space-y-2">
+                                                                            <p className="text-[10px] text-slate-500 uppercase font-black">Total Portabilidade</p>
+                                                                            <div className="bg-sky-500/10 border border-sky-500/20 rounded-xl p-2 text-sm font-black text-sky-400 text-center">
+                                                                                R$ {newTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {(newMonthly > 0 || newQuantity > 0) && (
+                                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                                            <div className={`p-3 rounded-xl border flex items-center gap-3 ${betterMonthly ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400'}`}>
+                                                                                {betterMonthly ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+                                                                                <p className="text-[10px] font-black uppercase tracking-wider">
+                                                                                    {betterMonthly ? 'Melhora o Fluxo Mensal' : 'Piora o Fluxo Mensal'}
+                                                                                </p>
+                                                                            </div>
+                                                                            <div className={`p-3 rounded-xl border flex items-center gap-3 ${betterTotal ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400'}`}>
+                                                                                <Target size={14} />
+                                                                                <p className="text-[10px] font-black uppercase tracking-wider">
+                                                                                    {betterTotal ? 'Ganha no Total da Dívida' : 'Dívida Total Fica Mais Cara'}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })()}
+
+                                                        {ss.isChecked && ss.type === 'amortization_check' && (() => {
+                                                            const portabilityStep = currentPlan.find(s => s.id === 'paid-2');
+                                                            const portabilitySub = portabilityStep?.subSteps.find(sub => sub.id === '2.1');
+
+                                                            const isPorted = portabilitySub?.isChecked && (portabilitySub?.monthlyValue || 0) > 0;
+                                                            const targetMonthly = isPorted ? (portabilitySub?.monthlyValue || 0) : selectedDebt.newInstallment;
+                                                            const surplus = ss.surplusValue || 0;
+                                                            const canCoverFixed = surplus >= targetMonthly && targetMonthly > 0;
+
+                                                            return (
+                                                                <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                                                                    <div className="space-y-2">
+                                                                        <p className="text-[10px] text-slate-500 uppercase font-black">Valor mensal da sobra (Aporte Extra)</p>
+                                                                        <div className="relative">
+                                                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-600">R$</span>
+                                                                            <input
+                                                                                type="number"
+                                                                                value={ss.surplusValue || 0}
+                                                                                onChange={(e) => handleUpdateSubStep(step.id, ss.id, { surplusValue: Number(e.target.value) })}
+                                                                                className="w-full bg-slate-900 border border-slate-800 rounded-xl p-2 pl-8 text-sm font-black text-white outline-none focus:border-emerald-500"
                                                                             />
                                                                         </div>
                                                                     </div>
-                                                                )}
 
-                                                                <div className="space-y-2">
-                                                                    <p className="text-[10px] text-slate-500 uppercase font-black">Observações Canal Oficial</p>
-                                                                    <textarea
-                                                                        value={ss.observation || ''}
-                                                                        onChange={(e) => handleUpdateSubStep(step.id, ss.id, { observation: e.target.value })}
-                                                                        placeholder="O que foi negociado ou qual foi a justificativa para não baixar?"
-                                                                        className="w-full bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-300 outline-none h-20 resize-none"
-                                                                    />
+                                                                    {surplus > 0 && (
+                                                                        <div className={`p-4 rounded-xl border flex items-center gap-4 ${canCoverFixed ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-rose-500/10 border-rose-500/30 text-rose-400 font-black'}`}>
+                                                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${canCoverFixed ? 'bg-emerald-500/20' : 'bg-rose-500/20'}`}>
+                                                                                {canCoverFixed ? <CheckCircle2 size={20} /> : <Info size={20} />}
+                                                                            </div>
+                                                                            <div>
+                                                                                <p className="text-xs font-black uppercase tracking-tight">
+                                                                                    {canCoverFixed
+                                                                                        ? `SIM (Sobra R$ ${(surplus - targetMonthly).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`
+                                                                                        : `NÃO (Falta R$ ${(targetMonthly - surplus).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`}
+                                                                                </p>
+                                                                                <p className="text-[10px] font-bold opacity-70">
+                                                                                    {canCoverFixed ? 'Paga uma parcela extra totalmente!' : 'Não paga uma parcela extra inteira'}
+                                                                                </p>
+                                                                                <p className="text-[9px] font-medium opacity-50 mt-1">
+                                                                                    {isPorted ? `Referência: Parcela da Portabilidade (R$ ${targetMonthly.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})` : `Referência: Parcela Atual (R$ ${targetMonthly.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
                                                                 </div>
-                                                            </div>
-                                                        )}
-
-                                                        {ss.isChecked && ss.type === 'margin_check' && (
-                                                            <div className="mt-4 space-y-3 animate-in slide-in-from-top-2 duration-300">
-                                                                <p className="text-xs font-black text-purple-400 uppercase italic">Recomendação Estratégica:</p>
-                                                                <div className="grid gap-2">
-                                                                    {(ss.options || []).map(opt => (
-                                                                        <button
-                                                                            key={opt}
-                                                                            onClick={() => handleUpdateSubStep(step.id, ss.id, { selectedOption: opt })}
-                                                                            className={`w-full text-left p-3 rounded-xl border transition-all text-[11px] font-bold ${ss.selectedOption === opt ? 'bg-sky-500/20 border-sky-500/50 text-white' : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300'}`}
-                                                                        >
-                                                                            {opt}
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
+                                                            );
+                                                        })()}
                                                     </div>
 
                                                     <button
@@ -543,7 +767,7 @@ export const DebtRepaymentPlanStage: React.FC<DebtRepaymentPlanStageProps> = ({
                                                 <div className="flex gap-2 pt-2 border-t border-slate-800/30">
                                                     {[
                                                         { id: 'done', label: 'Feito', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' },
-                                                        { id: 'not_applicable', label: 'Não se aplica', color: 'bg-slate-800/50 text-slate-400 border-slate-700 hover:bg-slate-800' }
+                                                        { id: 'not_applicable', label: 'Não se aplica', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/20' }
                                                     ].map(opt => (
                                                         <button
                                                             key={opt.id}

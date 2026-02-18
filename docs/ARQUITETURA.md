@@ -113,10 +113,15 @@ A `DebtUpdateStage` na Reunião 2 é responsável por consolidar o status das ne
 4.  **Impressão Otimizada**: Utiliza classes `print:` para forçar fundo branco, texto preto e remover backgrounds escuros dos inputs.
 
 ### Módulo de Plano de Quitação (Reunião 3)
-A etapa `DebtRepaymentPlanStage` introduz a visão estratégica de longo prazo:
+A etapa `DebtRepaymentPlanStage` introduz a visão estratégica de longo prazo e foi refinada para maior precisão:
 1.  **Estratégia "Turning Point"**: Diferente das etapas anteriores, esta foca apenas em dívidas que **ainda não foram pagas** (amortizadas).
 2.  **Filtragem Automática**: O sistema identifica dívidas com `isPaid: false` em reuniões anteriores e as traz para o primeiro plano.
 3.  **Visualização de Futuro**: Calcula e exibe quando cada dívida terminará, permitindo que o mentor e o aluno visualize a liberação de fluxo de caixa para investimentos.
+4.  **Refinamentos de Margem (v2.2)**:
+    *   **Dívidas não pagas**: Comparação individual de cada proposta (SERASA vs Canal Oficial) contra o superávit mensal, removendo a visão de comprometimento total (que era ilógica).
+    *   **Dívidas pagas (Amortização)**: Feedback detalhado informando exatamente quanto sobra ("Sobra R$") ou falta ("Falta R$") para cobrir uma parcela extra, facilitando a decisão de aceleração.
+    *   **Rastreamento de Prazos**: Inclusão de campo de data (`predictedDate`) para o prazo de retirada do nome, permitindo o acompanhamento de metas de regularização.
+5.  **Persistência JSONB**: Todos os novos campos (`surplusValue`, `predictedDate`, `monthlyValue`, `installments`) são persistidos dinamicamente dentro do objeto `repaymentPlans` na tabela `mentorship_meetings`.
 
 ### Padronização e Estabilização de Sincronização
 Para evitar inconsistências e redundâncias, implementamos:
