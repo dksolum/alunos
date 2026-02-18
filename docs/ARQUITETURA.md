@@ -28,6 +28,15 @@ Devido à necessidade de o Admin ler e escrever dados *em nome do usuário*, uti
     *   Admins têm políticas de `select` e `update` amplas, mas para operações complexas, usamos RPCs.
 
 *   **RPCs (Stored Procedures)**:
+    *   `save_user_intake`: Permite salvar a Ficha Individual. O parâmetro `p_details` (JSONB) inclui o objeto `personal_info` com a seguinte estrutura:
+        ```json
+        {
+          "profession": "string",
+          "has_dependents": "boolean",
+          "dependents_count": "number",
+          "income_range": "string"
+        }
+        ```
     *   `upsert_mentorship_meeting_by_admin`: Permite que o Admin salve dados na tabela `mentorship_meetings` de qualquer usuário, contornando limitações de RLS no client-side. Usa `ON CONFLICT` e merge de JSONB (`data || EXCLUDED.data`) para evitar perda de dados entre abas.
     *   `get_mentorship_state_by_admin`: Agrega dados de múltiplas tabelas para o painel do Admin.
 
@@ -114,6 +123,12 @@ A `DebtUpdateStage` na Reunião 2 é responsável por consolidar o status das ne
 5.  **Rastreamento de Origem (v2.3)**:
     *   **Propriedade `origin`**: Introduzida no `DebtUpdateItem` para controlar a proveniência (`mapping` | `meeting2` | `meeting3`).
     *   **Persistência**: O campo é salvo no JSONB da reunião e utilizado para renderizar badges coloridos (**Sky** para mapping, **Amber** para M2, **Purple** para M3).
+
+### Módulo de Ficha Individual (User Intake)
+O preenchimento da ficha é uma etapa crítica para o diagnóstico:
+1.  **Persistência Híbrida**: Combina colunas relacionais (`main_problem`, `resolution_attempts`) com um bucket semi-estruturado (`details` JSONB).
+2.  **Lógica de Carregamento**: O `UserIntakeModal` realiza um merge profundo entre o estado inicial do frontend e os dados salvos no banco, garantindo que novos campos (como `personal_info`) não causem erros de `undefined`.
+3.  **Impacto no Dashboard**: A completitude da ficha (`main_problem` preenchido) altera o status do usuário de "Pendente" para "Aguardando Mentoria".
 
 ### Módulo de Plano de Quitação (Reunião 3)
 A etapa `DebtRepaymentPlanStage` introduz a visão estratégica de longo prazo e foi refinada para maior precisão:

@@ -641,7 +641,6 @@ export const authService = {
             throw error;
         }
     },
-
     // --- User Intake Form (Ficha Individual) ---
     getUserIntake: async (userId: string) => {
         const { data, error } = await supabase.rpc('get_user_intake', { target_user_id: userId });
@@ -652,12 +651,15 @@ export const authService = {
         return data as any;
     },
 
-    saveUserIntake: async (userId: string, intakeData: { main_problem: string; resolution_attempts: string; details?: any }) => {
+    saveUserIntake: async (userId: string, intakeData: { main_problem: string; resolution_attempts: string; details?: any; personal_info?: any }) => {
         const { data, error } = await supabase.rpc('save_user_intake', {
             target_user_id: userId,
             p_main_problem: intakeData.main_problem,
             p_resolution_attempts: intakeData.resolution_attempts,
-            p_details: intakeData.details || {}
+            p_details: {
+                ...(intakeData.details || {}),
+                personal_info: intakeData.personal_info
+            }
         });
 
         if (error) {
@@ -668,7 +670,6 @@ export const authService = {
     },
 
     // --- Mentorship Module ---
-
     getMentorshipState: async (userId: string): Promise<MentorshipState> => {
         const currentUser = await authService.getCurrentUser();
         let meetings: any[] = [];

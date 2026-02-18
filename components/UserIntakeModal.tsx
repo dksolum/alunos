@@ -13,10 +13,15 @@ interface UserIntakeModalProps {
 }
 
 export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, onClose }) => {
-    // ... existing state ... 
     const [formData, setFormData] = useState({
         main_problem: '',
         resolution_attempts: '',
+        personal_info: {
+            profession: '',
+            has_dependents: false,
+            dependents_count: 0,
+            income_range: '' as any
+        },
         details: {
             financial_view: {
                 surviving: { selected: false, details: '' },
@@ -39,7 +44,6 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
         }
     });
 
-    // ... existing loading/saving logic ...
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
@@ -51,7 +55,6 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
     }, [isOpen, user]);
 
     const loadIntakeData = async () => {
-        // ... same implementation ...
         setLoading(true);
         setError('');
         try {
@@ -59,9 +62,15 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
             if (data) {
                 setFormData(prev => {
                     const dbDetails = data.details || {};
-                    const mergedData = {
+                    return {
                         main_problem: data.main_problem || '',
                         resolution_attempts: data.resolution_attempts || '',
+                        personal_info: dbDetails.personal_info || {
+                            profession: '',
+                            has_dependents: false,
+                            dependents_count: 0,
+                            income_range: ''
+                        },
                         details: {
                             ...prev.details,
                             ...dbDetails,
@@ -84,29 +93,6 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                             goals: { ...prev.details.goals, ...(dbDetails.goals || {}) }
                         }
                     };
-                    return mergedData;
-                });
-            } else {
-                setFormData({
-                    main_problem: '',
-                    resolution_attempts: '',
-                    details: {
-                        financial_view: {
-                            surviving: { selected: false, details: '' },
-                            spending_more: { selected: false, details: '' },
-                            saving: { selected: false, details: '' },
-                            emergency_fund: { selected: false, details: '' },
-                            others: { selected: false, details: '' }
-                        },
-                        problems: {
-                            impediment_saving: { has: false, details: '' },
-                            debt_difficulty: { has: false, details: '' },
-                            others: { has: false, details: '' }
-                        },
-                        satisfaction: '',
-                        goals: { has_goals: false, importance: '' },
-                        future_outlook: ''
-                    }
                 });
             }
         } catch (err) {
@@ -137,25 +123,19 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
 
     const handlePrint = () => {
         window.print();
-    }
+    };
 
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
-
-            {/* Always Render Print Version via Portal */}
             <PrintPortal>
                 <UserIntakePrint user={user} data={formData} />
             </PrintPortal>
 
             <div className="absolute inset-0 bg-[#0f172a]/90 backdrop-blur-sm animate-in fade-in" onClick={onClose}></div>
 
-            {/* Main Modal Container */}
             <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-[2rem] shadow-2xl animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-
-
-                {/* Screen Header (Hidden in print) */}
                 <div className="flex items-center justify-between p-8 pb-4 print:hidden">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-sky-500/10 rounded-2xl flex items-center justify-center text-sky-400 border border-sky-500/20">
@@ -171,9 +151,7 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                     </button>
                 </div>
 
-                {/* Content */}
                 <div className="flex-1 overflow-y-auto p-8 pt-0 custom-scrollbar print:overflow-visible print:p-8 print:pt-0 print:block">
-
                     {error && (
                         <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm flex items-center gap-2 print:hidden">
                             <AlertTriangle size={16} />
@@ -187,8 +165,6 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                         </div>
                     ) : (
                         <div className="space-y-8 print:space-y-4 text-slate-200 print:text-black">
-
-                            {/* 1. Problema Principal */}
                             <section className="print:break-inside-avoid print:mb-8">
                                 <label className="flex items-center gap-2 text-sm font-black text-sky-400 uppercase tracking-wide mb-3 print:text-black print:text-base">
                                     <AlertTriangle size={16} className="print:hidden" />
@@ -203,7 +179,6 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                 <PrintText content={formData.main_problem} />
                             </section>
 
-                            {/* 2. Tentativas Anteriores */}
                             <section className="print:break-inside-avoid print:mb-8">
                                 <label className="flex items-center gap-2 text-sm font-black text-emerald-400 uppercase tracking-wide mb-3 print:text-black print:text-base">
                                     <Target size={16} className="print:hidden" />
@@ -218,11 +193,88 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                 <PrintText content={formData.resolution_attempts} />
                             </section>
 
-                            {/* 3. Visão Financeira (Checklist) */}
                             <section className="print:break-inside-avoid print:mb-8">
-                                <label className="flex items-center gap-2 text-sm font-black text-amber-400 uppercase tracking-wide mb-4 print:text-black print:text-base">
+                                <label className="flex items-center gap-2 text-sm font-black text-sky-400 uppercase tracking-wide mb-3 print:text-black print:text-base">
+                                    <FileText size={16} className="print:hidden" />
+                                    3. Qual a sua profissão?
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.personal_info.profession}
+                                    onChange={e => setFormData({ ...formData, personal_info: { ...formData.personal_info, profession: e.target.value } })}
+                                    className="w-full bg-slate-800/50 border border-slate-700 rounded-2xl p-4 text-sm outline-none focus:border-sky-500 transition-all placeholder:text-slate-600 print:hidden"
+                                    placeholder="Digite sua profissão..."
+                                />
+                                <PrintText content={formData.personal_info.profession} />
+                            </section>
+
+                            <section className="print:break-inside-avoid print:mb-8">
+                                <div className="flex items-center gap-4 mb-3">
+                                    <label className="flex items-center gap-2 text-sm font-black text-emerald-400 uppercase tracking-wide print:text-black print:text-base">
+                                        <Target size={16} className="print:hidden" />
+                                        4. Possui dependentes?
+                                    </label>
+                                    <div className="flex gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="has_dependents"
+                                                checked={formData.personal_info.has_dependents}
+                                                onChange={() => setFormData({ ...formData, personal_info: { ...formData.personal_info, has_dependents: true } })}
+                                                className="hidden"
+                                            />
+                                            <div className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${formData.personal_info.has_dependents ? 'bg-emerald-500 text-white print:bg-black print:text-white print:border-2 print:border-black' : 'bg-slate-800 text-slate-400 hover:text-white print:bg-white print:text-gray-300 print:border print:border-gray-300'}`}>SIM</div>
+                                        </label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name="has_dependents"
+                                                checked={!formData.personal_info.has_dependents}
+                                                onChange={() => setFormData({ ...formData, personal_info: { ...formData.personal_info, has_dependents: false, dependents_count: 0 } })}
+                                                className="hidden"
+                                            />
+                                            <div className={`px-3 py-1 rounded-lg text-xs font-bold transition-colors ${!formData.personal_info.has_dependents ? 'bg-slate-500 text-white print:bg-black print:text-white print:border-2 print:border-black' : 'bg-slate-800 text-slate-400 hover:text-white print:bg-white print:text-gray-300 print:border print:border-gray-300'}`}>NÃO</div>
+                                        </label>
+                                    </div>
+                                </div>
+                                {formData.personal_info.has_dependents && (
+                                    <div className="animate-in slide-in-from-top-2">
+                                        <label className="text-xs text-slate-400 mb-2 block print:text-black">Quantos dependentes?</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={formData.personal_info.dependents_count}
+                                            onChange={e => setFormData({ ...formData, personal_info: { ...formData.personal_info, dependents_count: parseInt(e.target.value) || 0 } })}
+                                            className="w-32 bg-slate-800/50 border border-slate-700 rounded-xl p-3 text-sm outline-none focus:border-emerald-500 transition-all print:hidden"
+                                        />
+                                        <PrintText content={formData.personal_info.dependents_count.toString()} label="Quantidade:" />
+                                    </div>
+                                )}
+                            </section>
+
+                            <section className="print:break-inside-avoid print:mb-8">
+                                <label className="flex items-center gap-2 text-sm font-black text-amber-400 uppercase tracking-wide mb-3 print:text-black print:text-base">
                                     <TrendingUp size={16} className="print:hidden" />
-                                    3. Como acredita que está a sua vida financeira?
+                                    5. Qual sua faixa de renda?
+                                </label>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 print:hidden">
+                                    {['até 5mil', '5 a 6 mil', '6 a 8 mil', '8 a 10 mil', 'acima de 10 mil'].map(range => (
+                                        <button
+                                            key={range}
+                                            onClick={() => setFormData({ ...formData, personal_info: { ...formData.personal_info, income_range: range as any } })}
+                                            className={`px-4 py-3 rounded-xl border text-xs font-bold transition-all ${formData.personal_info.income_range === range ? 'bg-amber-500 border-amber-500 text-slate-900 shadow-lg shadow-amber-500/20' : 'bg-slate-800/30 border-slate-700 text-slate-400 hover:border-amber-500/50'}`}
+                                        >
+                                            {range}
+                                        </button>
+                                    ))}
+                                </div>
+                                <PrintText content={formData.personal_info.income_range} />
+                            </section>
+
+                            <section className="print:break-inside-avoid print:mb-8">
+                                <label className="flex items-center gap-2 text-sm font-black text-rose-400 uppercase tracking-wide mb-4 print:text-black print:text-base">
+                                    <TrendingUp size={16} className="print:hidden" />
+                                    6. Como acredita que está a sua vida financeira?
                                 </label>
                                 <div className="space-y-4">
                                     {[
@@ -251,7 +303,7 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                                                 }
                                                             }
                                                         })}
-                                                        className="w-4 h-4 rounded border-slate-600 text-amber-500 focus:ring-amber-500 bg-slate-700"
+                                                        className="w-4 h-4 rounded border-slate-600 text-rose-500 focus:ring-rose-500 bg-slate-700"
                                                     />
                                                     <span className="text-sm font-medium text-white print:text-black">{item.label}</span>
                                                 </label>
@@ -274,7 +326,7 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                                             })}
                                                             placeholder={item.key === 'others' ? "Descreva outros..." : "Observação..."}
                                                             rows={2}
-                                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:border-amber-500 outline-none animate-in slide-in-from-top-2 resize-none print:hidden"
+                                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-sm focus:border-rose-500 outline-none animate-in slide-in-from-top-2 resize-none print:hidden"
                                                         />
                                                         <PrintText content={formData.details.financial_view[item.key as keyof typeof formData.details.financial_view]?.details || ''} />
                                                     </>
@@ -285,14 +337,12 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                 </div>
                             </section>
 
-                            {/* 4. Outros Problemas */}
                             <section className="print:break-inside-avoid print:mb-8">
                                 <label className="flex items-center gap-2 text-sm font-black text-rose-400 uppercase tracking-wide mb-4 print:text-black print:text-base">
                                     <AlertTriangle size={16} className="print:hidden" />
-                                    4. Possui mais algum problema além do principal?
+                                    7. Possui mais algum problema além do principal?
                                 </label>
                                 <div className="space-y-4">
-                                    {/* Impedimento Guardar */}
                                     <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-800 print:bg-transparent print:border-gray-300 print:p-2">
                                         <div className="flex flex-col gap-3">
                                             <label className="flex items-center gap-3 cursor-pointer">
@@ -337,7 +387,6 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                         </div>
                                     </div>
 
-                                    {/* Dívidas */}
                                     <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-800 print:bg-transparent print:border-gray-300 print:p-2">
                                         <div className="flex flex-col gap-3">
                                             <label className="flex items-center gap-3 cursor-pointer">
@@ -382,7 +431,6 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                         </div>
                                     </div>
 
-                                    {/* Outros Problemas */}
                                     <div className="p-4 bg-slate-800/30 rounded-xl border border-slate-800 print:bg-transparent print:border-gray-300 print:p-2">
                                         <div className="flex flex-col gap-3">
                                             <label className="flex items-center gap-3 cursor-pointer">
@@ -429,11 +477,10 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                 </div>
                             </section>
 
-                            {/* 5. Satisfação */}
                             <section className="print:break-inside-avoid print:mb-8">
                                 <label className="flex items-center gap-2 text-sm font-black text-purple-400 uppercase tracking-wide mb-3 print:text-black print:text-base">
                                     <HelpCircle size={16} className="print:hidden" />
-                                    5. O que te deixaria satisfeito hoje?
+                                    8. O que te deixaria satisfeito hoje?
                                 </label>
                                 <p className="text-xs text-slate-400 mb-2 print:hidden">Só resolver esse problema principal ou tem mais alguma coisa?</p>
                                 <textarea
@@ -445,12 +492,11 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                 <PrintText content={formData.details.satisfaction} />
                             </section>
 
-                            {/* 6. Metas */}
                             <section className="print:break-inside-avoid print:mb-8">
                                 <div className="flex items-center gap-4 mb-3">
                                     <label className="flex items-center gap-2 text-sm font-black text-blue-400 uppercase tracking-wide print:text-black print:text-base">
                                         <Target size={16} className="print:hidden" />
-                                        6. Possui metas?
+                                        9. Possui metas?
                                     </label>
                                     <div className="flex gap-4">
                                         <label className="flex items-center gap-2 cursor-pointer">
@@ -490,11 +536,10 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                 )}
                             </section>
 
-                            {/* 7. Futuro (6 meses) */}
                             <section className="print:break-inside-avoid print:mb-8">
                                 <label className="flex items-center gap-2 text-sm font-black text-teal-400 uppercase tracking-wide mb-3 print:text-black print:text-base">
                                     <Calendar size={16} className="print:hidden" />
-                                    7. Visão de Futuro (6 Meses)
+                                    10. Visão de Futuro (6 Meses)
                                 </label>
                                 <p className="text-xs text-slate-400 mb-2 print:hidden">Não fazendo nada agora, como imagina sua vida financeira em 6 meses?</p>
                                 <textarea
@@ -505,12 +550,10 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                                 />
                                 <PrintText content={formData.details.future_outlook} />
                             </section>
-
                         </div>
                     )}
                 </div>
 
-                {/* Footer Actions (Hidden in print) */}
                 <div className="mt-8 pt-6 border-t border-slate-800/50 flex justify-end gap-3 px-8 pb-8 print:hidden">
                     <button
                         onClick={onClose}
@@ -540,7 +583,6 @@ export const UserIntakeModal: React.FC<UserIntakeModalProps> = ({ user, isOpen, 
                         )}
                     </button>
                 </div>
-
             </div>
         </div>
     );

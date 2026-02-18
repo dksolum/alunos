@@ -4,7 +4,7 @@
 Este documento visa transparência sobre o estado atual do software e limitações identificadas.
 
 ## 1. Módulos em Desenvolvimento
-*   **Mentoria (Reuniões 3-6)**: O conteúdo das reuniões 3 a 6 ainda está em fase de planejamento. Atualmente, apenas as reuniões 1 e 2 possuem fluxos completos de dados e relatórios.
+*   **Mentoria (Reuniões 4-6)**: O conteúdo das reuniões 4 a 6 ainda está em fase de planejamento. Atualmente, as reuniões 1, 2 e 3 possuem fluxos completos de dados, estratégias de quitação e relatórios.
 *   **Dashboard de Métricas**: O painel administrativo de conversão de leads e retenção de alunos ainda não foi implementado.
 
 ## 2. Interface e UX

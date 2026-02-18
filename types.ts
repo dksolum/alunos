@@ -184,6 +184,18 @@ export interface DiagnosticRecord {
   updatedAt: string;
 }
 
+export interface UserIntakeData {
+  main_problem: string;
+  resolution_attempts: string;
+  personal_info?: {
+    profession: string;
+    has_dependents: boolean;
+    dependents_count: number;
+    income_range: 'até 5mil' | '5 a 6 mil' | '6 a 8 mil' | '8 a 10 mil' | 'acima de 10 mil';
+  };
+  details: any;
+}
+
 // --- MENTORSHIP ---
 
 export interface MentorshipMeeting {

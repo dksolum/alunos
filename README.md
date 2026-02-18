@@ -48,8 +48,9 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
   - **SECRETARY**: Acesso administrativo restrito para criar usuários e preencher fichas.
 
 ### 4. Painel Administrativo & CRM
-- **Ficha Individual (User Intake)**: Modal exclusivo para Admins/Secretários registrarem "Problema Principal" e histórico do cliente.
-- **Gestão de Status**: Controle visual de funil (Novo > Consultoria > Mentoria > Acompanhamento).
+- **Ficha Individual (User Intake)**: Modal exclusivo para Admins/Secretários registrarem "Problema Principal", histórico do cliente e informações pessoais.
+- **Persistência de Ficha**: Lógica robusta de salvamento e recuperação de dados (Profissão, Dependentes, Faixa de Renda) via Supabase RPC.
+- **Gestão de Status Inteligente**: Dashboard reflete automaticamente o progresso do usuário e cargo (Admin vs standard).
 - **Ações Rápidas**: Editar perfil, alterar status, visualizar dashboard do cliente.
 
 ### 5. Checklist Destruidor de Sanhaço (v2.1 - Multi-Fase)
@@ -136,5 +137,5 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 - **Feat**: Suporte a taxa de juros na criação de novas dívidas (M2 e M3).
 - **DX**: Refinamento de tipos e interfaces para rastreamento de `origin` em `DebtUpdateItem`.
 - **UI**: Padronização de símbolos `R$` e `%` na visualização de dívidas.
-- **Feat**: Implementação completa da **Reunião 3** (Plano de Quitação).
-
+- **Feat**: Implementação completa da **Reunião 3** (Plano de Quitação) com estratégia "Turning Point".
+- **Fix**: Persistência robusta da Ficha Individual (User Intake) e refinamento de status no Dashboard Admin.

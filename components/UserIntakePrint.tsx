@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { User } from '../types';
-import { AlertTriangle, Target, TrendingUp, HelpCircle, Calendar } from 'lucide-react';
+import { AlertTriangle, Target, TrendingUp, HelpCircle, Calendar, FileText } from 'lucide-react';
 
 interface UserIntakePrintProps {
     user: User;
@@ -20,7 +20,7 @@ export const UserIntakePrint: React.FC<UserIntakePrintProps> = ({ user, data }) 
                 <div className="grid grid-cols-2 gap-y-2 text-sm text-slate-700">
                     <p><strong className="font-bold text-slate-900">Nome:</strong> {user.name}</p>
                     <p><strong className="font-bold text-slate-900">Email:</strong> {user.email}</p>
-                    <p><strong className="font-bold text-slate-900">Telefone:</strong> {user.phone || 'Não informado'}</p>
+                    <p><strong className="font-bold text-slate-900">Telefone:</strong> {user.whatsapp || user.phone || 'Não informado'}</p>
                     <p><strong className="font-bold text-slate-900">Data de Impressão:</strong> {new Date().toLocaleDateString()}</p>
                 </div>
             </div>
@@ -48,11 +48,52 @@ export const UserIntakePrint: React.FC<UserIntakePrintProps> = ({ user, data }) 
                     </div>
                 </section>
 
-                {/* 3. Visão Financeira */}
+                {/* 3. Profissão */}
+                <section className="break-inside-avoid">
+                    <div className="flex items-center gap-2 mb-3">
+                        <FileText className="w-5 h-5 text-slate-900" />
+                        <h3 className="font-bold text-lg uppercase text-slate-900">3. Qual a sua profissão?</h3>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-slate-800 text-sm whitespace-pre-wrap">
+                        {data.personal_info?.profession || 'Não informado.'}
+                    </div>
+                </section>
+
+                {/* 4. Dependentes */}
+                <section className="break-inside-avoid">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Target className="w-5 h-5 text-slate-900" />
+                        <h3 className="font-bold text-lg uppercase text-slate-900">4. Possui dependentes?</h3>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-slate-800 text-sm">
+                        <div className="flex items-center gap-4 mb-2">
+                            <span className="font-bold">Possui dependentes?</span>
+                            <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase border ${data.personal_info?.has_dependents ? 'bg-black text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                {data.personal_info?.has_dependents ? 'SIM' : 'NÃO'}
+                            </span>
+                        </div>
+                        {data.personal_info?.has_dependents && (
+                            <p className="mt-2"><strong className="font-bold">Quantidade:</strong> {data.personal_info?.dependents_count || 0}</p>
+                        )}
+                    </div>
+                </section>
+
+                {/* 5. Faixa de Renda */}
                 <section className="break-inside-avoid">
                     <div className="flex items-center gap-2 mb-3">
                         <TrendingUp className="w-5 h-5 text-slate-900" />
-                        <h3 className="font-bold text-lg uppercase text-slate-900">3. Visão Financeira</h3>
+                        <h3 className="font-bold text-lg uppercase text-slate-900">5. Qual sua faixa de renda?</h3>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-slate-800 text-sm">
+                        {data.personal_info?.income_range || 'Não informado.'}
+                    </div>
+                </section>
+
+                {/* 6. Visão Financeira */}
+                <section className="break-inside-avoid">
+                    <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp className="w-5 h-5 text-slate-900" />
+                        <h3 className="font-bold text-lg uppercase text-slate-900">6. Visão Financeira</h3>
                     </div>
                     <div className="grid grid-cols-1 gap-3">
                         {[
@@ -83,11 +124,11 @@ export const UserIntakePrint: React.FC<UserIntakePrintProps> = ({ user, data }) 
                     </div>
                 </section>
 
-                {/* 4. Outros Problemas */}
+                {/* 7. Outros Problemas */}
                 <section className="break-inside-avoid">
                     <div className="flex items-center gap-2 mb-3">
                         <AlertTriangle className="w-5 h-5 text-slate-900" />
-                        <h3 className="font-bold text-lg uppercase text-slate-900">4. Outros Problemas</h3>
+                        <h3 className="font-bold text-lg uppercase text-slate-900">7. Outros Problemas</h3>
                     </div>
                     <div className="space-y-3">
                         {[
@@ -109,22 +150,22 @@ export const UserIntakePrint: React.FC<UserIntakePrintProps> = ({ user, data }) 
                     </div>
                 </section>
 
-                {/* 5. Satisfação */}
+                {/* 8. Satisfação */}
                 <section className="break-inside-avoid">
                     <div className="flex items-center gap-2 mb-3">
                         <HelpCircle className="w-5 h-5 text-slate-900" />
-                        <h3 className="font-bold text-lg uppercase text-slate-900">5. O que traria satisfação?</h3>
+                        <h3 className="font-bold text-lg uppercase text-slate-900">8. O que traria satisfação?</h3>
                     </div>
                     <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-slate-800 text-sm whitespace-pre-wrap min-h-[3rem]">
                         {data.details.satisfaction || 'Não preenchido.'}
                     </div>
                 </section>
 
-                {/* 6. Metas */}
+                {/* 9. Metas */}
                 <section className="break-inside-avoid">
                     <div className="flex items-center gap-2 mb-3">
                         <Target className="w-5 h-5 text-slate-900" />
-                        <h3 className="font-bold text-lg uppercase text-slate-900">6. Metas e Importância</h3>
+                        <h3 className="font-bold text-lg uppercase text-slate-900">9. Metas e Importância</h3>
                     </div>
                     <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-slate-800 text-sm">
                         <div className="flex items-center gap-4 mb-2">
@@ -139,11 +180,11 @@ export const UserIntakePrint: React.FC<UserIntakePrintProps> = ({ user, data }) 
                     </div>
                 </section>
 
-                {/* 7. Futuro */}
+                {/* 10. Futuro */}
                 <section className="break-inside-avoid">
                     <div className="flex items-center gap-2 mb-3">
                         <Calendar className="w-5 h-5 text-slate-900" />
-                        <h3 className="font-bold text-lg uppercase text-slate-900">7. Visão de Futuro (6 meses)</h3>
+                        <h3 className="font-bold text-lg uppercase text-slate-900">10. Visão de Futuro (6 meses)</h3>
                     </div>
                     <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-slate-800 text-sm whitespace-pre-wrap min-h-[3rem]">
                         {data.details.future_outlook || 'Não preenchido.'}

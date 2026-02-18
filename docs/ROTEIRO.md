@@ -40,7 +40,7 @@ A migração para um backend real foi realizada para permitir sincronização e 
 - [x] **Relatórios Profissionais**: Layout de impressão limpo e cabeçalhos personalizados.
 - [x] **Checklist Destruidor de Sanhaço**: Guia de guerra passo-a-passo com barra de progresso.
 
-## ✅ Fase 5: Expansão (Em Andamento)
+## ✅ Fase 5: Expansão (Concluído)
 - [x] **Módulos de Mentoria**: Reunião 1, 2 e 3 100% integradas.
     - [x] Gestão de Gastos Não Recorrentes (Mapeamento Linear).
     - [x] **Etapa "Plano de Quitação" (Novo)**: Estratégia Turning Point na Reunião 3.
@@ -54,6 +54,10 @@ A migração para um backend real foi realizada para permitir sincronização e 
     - [x] **Estabilidade**: Sincronização profunda (M3) e deduplicação resiliente.
 - [x] **Interatividade v1.0**: Edição direta de títulos e sincronização de status nos sub-passos do Plano de Quitação.
 - [x] **Otimização de Impressão**: Relatórios de Revisão, Gastos e Dívidas (Alto contraste).
+- [x] **Fix: Persistência de Ficha Individual**: Salvamento e carregamento de `personal_info` 100% verificado.
+- [x] **Admin Status Refinement**: Logica condicional para exibir status correto no Dashboard.
+
+## 🚀 Fase 6: Próximos Passos (Em Planejamento)
 - [ ] **Integrações Futuras**:
     - [ ] WhatsApp API para lembretes.
 - [ ] **Próximas Reuniões**: Desenvolver Reuniões 4 a 6.
