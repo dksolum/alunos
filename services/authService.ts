@@ -387,7 +387,7 @@ export const authService = {
         return data || [];
     },
 
-    saveCostOfLiving: async (userId: string, item: { id?: string; category: string; description: string; value: number }) => {
+    saveCostOfLiving: async (userId: string, item: { id?: string; category: string; description: string; value: number; is_installment?: boolean; installments_count?: number }) => {
         const currentUser = await authService.getCurrentUser();
 
         // Se for Admin editando outro usuário
@@ -402,7 +402,9 @@ export const authService = {
                 .update({
                     category: item.category,
                     description: item.description,
-                    value: item.value
+                    value: item.value,
+                    is_installment: item.is_installment,
+                    installments_count: item.installments_count
                 })
                 .eq('id', item.id);
 
@@ -417,7 +419,9 @@ export const authService = {
                     user_id: userId,
                     category: item.category,
                     description: item.description,
-                    value: item.value
+                    value: item.value,
+                    is_installment: item.is_installment,
+                    installments_count: item.installments_count
                 });
 
             if (error) {
@@ -582,13 +586,15 @@ export const authService = {
         }
     },
 
-    saveCostOfLivingByAdmin: async (userId: string, item: { id?: string; category: string; description: string; value: number }) => {
+    saveCostOfLivingByAdmin: async (userId: string, item: { id?: string; category: string; description: string; value: number; is_installment?: boolean; installments_count?: number }) => {
         const { error } = await supabase.rpc('save_cost_of_living_by_admin', {
             target_user_id: userId,
             item_id: item.id || null, // Passar explicitamente null se undefined
             category: item.category,
             description: item.description,
-            value: item.value
+            value: item.value,
+            is_installment: item.is_installment,
+            installments_count: item.installments_count
         });
         if (error) {
             console.error('Erro ao salvar custo de vida por admin:', error);

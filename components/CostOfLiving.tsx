@@ -89,6 +89,10 @@ export const CostOfLiving: React.FC<CostOfLivingProps> = ({
     const [editingItemId, setEditingItemId] = useState<string | null>(null);
     const [isPrinting, setIsPrinting] = useState(false);
 
+    // Installment State
+    const [isInstallment, setIsInstallment] = useState(false);
+    const [installmentsCount, setInstallmentsCount] = useState('1');
+
     useEffect(() => {
         loadData();
     }, [userId]);
@@ -124,7 +128,9 @@ export const CostOfLiving: React.FC<CostOfLivingProps> = ({
             id: editingItemId || undefined,
             category: currentCategory!.id,
             description,
-            value: parseFloat(value.replace(',', '.'))
+            value: parseFloat(value.replace(',', '.')),
+            is_installment: isInstallment,
+            installments_count: isInstallment ? parseInt(installmentsCount) : 1
         };
 
         try {
@@ -136,6 +142,8 @@ export const CostOfLiving: React.FC<CostOfLivingProps> = ({
             await loadData(); // Reload to get ID and ensure sync
             setDescription('');
             setValue('');
+            setIsInstallment(false);
+            setInstallmentsCount('1');
             setEditingItemId(null);
         } catch (error) {
             console.error(error);
@@ -160,12 +168,16 @@ export const CostOfLiving: React.FC<CostOfLivingProps> = ({
     const handleEditItem = (item: CostOfLivingItem) => {
         setDescription(item.description);
         setValue(item.value.toString().replace('.', ','));
+        setIsInstallment(item.is_installment || false);
+        setInstallmentsCount(item.installments_count?.toString() || '1');
         setEditingItemId(item.id);
     };
 
     const handleCancelEdit = () => {
         setDescription('');
         setValue('');
+        setIsInstallment(false);
+        setInstallmentsCount('1');
         setEditingItemId(null);
     };
 
@@ -414,6 +426,7 @@ export const CostOfLiving: React.FC<CostOfLivingProps> = ({
                                                         <div key={item.id} className="px-4 py-3 flex justify-between items-center border-b border-slate-800/50 last:border-0 hover:bg-slate-800/30 transition-colors">
                                                             <span className="text-sm text-slate-300 pl-12">{item.description}</span>
                                                             <span className="text-sm font-bold text-slate-400">
+                                                                {item.is_installment && <span className="text-[10px] text-slate-500 mr-2 font-normal uppercase tracking-widest">{item.installments_count}x</span>}
                                                                 {item.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                                             </span>
                                                         </div>
@@ -474,6 +487,38 @@ export const CostOfLiving: React.FC<CostOfLivingProps> = ({
 
                             {/* Input Form */}
                             <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl mb-8">
+                                {/* Installment Selection Row */}
+                                <div className="mb-6 flex flex-wrap items-center gap-4">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Compra Parcelada?</span>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setIsInstallment(false)}
+                                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${!isInstallment ? 'bg-slate-700 text-white border-sky-500/50' : 'bg-slate-900 text-slate-500 border-transparent hover:bg-slate-800'} border`}
+                                        >
+                                            Não
+                                        </button>
+                                        <button
+                                            onClick={() => setIsInstallment(true)}
+                                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${isInstallment ? 'bg-sky-500/10 text-sky-400 border-sky-500/30' : 'bg-slate-900 text-slate-500 border-transparent hover:bg-slate-800'} border`}
+                                        >
+                                            Sim
+                                        </button>
+                                    </div>
+
+                                    {isInstallment && (
+                                        <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 duration-300">
+                                            <span className="text-xs font-bold text-slate-500 uppercase">Em quantas x?</span>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                value={installmentsCount}
+                                                onChange={(e) => setInstallmentsCount(e.target.value)}
+                                                className="w-20 bg-slate-900 border border-slate-700 rounded-xl py-2 px-3 text-xs text-white focus:outline-none focus:border-sky-500 transition-colors"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
                                 <div className="grid grid-cols-3 gap-4">
                                     <div className="col-span-2">
                                         <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Descrição</label>
@@ -488,11 +533,11 @@ export const CostOfLiving: React.FC<CostOfLivingProps> = ({
                                         />
                                     </div>
                                     <div className="col-span-1">
-                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Valor</label>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Valor (Parcela)</label>
                                         <div className="relative">
                                             <span className="absolute left-3 top-3 text-slate-500 text-xs font-bold">R$</span>
                                             <input
-                                                type="number"
+                                                type="text"
                                                 value={value}
                                                 onChange={(e) => setValue(e.target.value)}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleAddItem()}
@@ -502,6 +547,21 @@ export const CostOfLiving: React.FC<CostOfLivingProps> = ({
                                         </div>
                                     </div>
                                 </div>
+
+                                {isInstallment && (
+                                    <div className="mt-4 pt-4 border-t border-slate-700/50 flex justify-between items-center animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Resumo do Parcelamento</span>
+                                            <span className="text-xs font-medium text-slate-300">{installmentsCount}x de R$ {value || '0,00'}</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest block">Valor Total</span>
+                                            <span className="text-lg font-black text-white">
+                                                R$ {(parseFloat((value || '0').replace(',', '.')) * (parseInt(installmentsCount) || 1)).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="flex gap-2 mt-4">
                                     <button
                                         onClick={handleAddItem}
@@ -530,6 +590,11 @@ export const CostOfLiving: React.FC<CostOfLivingProps> = ({
                                             <span className="font-medium text-slate-200">{item.description}</span>
                                             <div className="flex items-center gap-4">
                                                 <span className="font-bold text-emerald-400">
+                                                    {item.is_installment && (
+                                                        <span className="text-[10px] text-slate-500 mr-2 font-normal uppercase tracking-widest">
+                                                            {item.installments_count}x de
+                                                        </span>
+                                                    )}
                                                     {item.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                                                 </span>
                                                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -647,7 +712,14 @@ export const CostOfLiving: React.FC<CostOfLivingProps> = ({
                                                         <tr key={item.id} className="border-b border-slate-100">
                                                             <td className="py-2">{item.description}</td>
                                                             <td className="py-2 text-right font-medium">
-                                                                {item.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                                                {item.is_installment ? (
+                                                                    <div className="flex flex-col items-end">
+                                                                        <span>{item.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <span className="text-[10px] text-slate-400 uppercase">({item.installments_count}x)</span></span>
+                                                                        <span className="text-[10px] text-slate-400 uppercase font-normal">Total: {(item.value * (item.installments_count || 1)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    item.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                                                                )}
                                                             </td>
                                                         </tr>
                                                     ))}

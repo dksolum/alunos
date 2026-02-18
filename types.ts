@@ -55,6 +55,8 @@ export interface CostOfLivingItem {
   category: string;
   description: string;
   value: number;
+  is_installment?: boolean;
+  installments_count?: number;
   createdAt?: string;
 }
 
