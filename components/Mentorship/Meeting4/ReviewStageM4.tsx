@@ -3,7 +3,7 @@ import { CheckCircle2, Edit2, Save, X, AlertCircle, ArrowUp, ArrowDown, Minus, W
 import { FinancialData, ChecklistData } from '../../../types';
 import { CATEGORIES } from '../../CostOfLiving';
 
-interface ReviewStageM3Props {
+interface ReviewStageM4Props {
     financialData: FinancialData;
     checklistData: ChecklistData;
     meetingData: any;
@@ -19,12 +19,12 @@ interface ReviewItem {
     id: string;
     name: string;
     type: 'Fixa' | 'Variável';
-    reference: number; // Read-only (Meeting 2 Result)
-    defined: number;   // Editable (Checklist Snapshot)
+    reference: number; // Read-only (Meeting 3 Result)
+    defined: number;   // Editable (Target for this month)
     realized: number;  // Manual Input
 }
 
-export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
+export const ReviewStageM4: React.FC<ReviewStageM4Props> = ({
     financialData,
     checklistData,
     meetingData,
@@ -55,7 +55,7 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
     // Initialization Logic
     useEffect(() => {
         if (!meetingData?.reviewItems || meetingData.reviewItems.length === 0) {
-            // 1. Get Limits from Checklist (Phase 1, Step 6, Subitem 3)
+            // 1. Get Limits from Checklist as secondary fallback
             const limitsNode = checklistData?.[6]?.subItems?.[3];
             const budgetLimits: Record<string, string> = limitsNode?.value
                 ? JSON.parse(limitsNode.value)
@@ -66,7 +66,7 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
                 const catName = cat.id;
                 let referenceVal = parseFloat(budgetLimits[catName] || '0');
 
-                // For Meeting 3, the "Defined" value from Meeting 2 becomes our "Reference"
+                // For Meeting 4, the "Defined" value from Meeting 3 becomes our "Reference"
                 if (previousMeetingData?.reviewItems) {
                     const prevItem = previousMeetingData.reviewItems.find((i: any) => i.name === catName);
                     if (prevItem) referenceVal = prevItem.defined;
@@ -87,7 +87,7 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
         } else {
             setItems(meetingData.reviewItems);
         }
-    }, []);
+    }, [previousMeetingData]);
 
     // Sync logic for Reference values from previous meeting
     useEffect(() => {
@@ -107,7 +107,7 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
                 onUpdateMeetingData({ ...meetingData, reviewItems: updatedItems });
             }
         }
-    }, [previousMeetingData, items.length]);
+    }, [previousMeetingData]);
 
     const handleToggleBankCheck = () => {
         if (readOnly) return;
@@ -179,7 +179,7 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
         const refreshedItems = items.map(item => {
             let newReference = item.reference;
 
-            // Use M2's Defined as Reference for M3
+            // Use M3's Defined as Reference for M4
             if (previousMeetingData?.reviewItems) {
                 const prevItem = previousMeetingData.reviewItems.find((i: any) => i.name === item.name);
                 if (prevItem) newReference = prevItem.defined;
@@ -211,7 +211,6 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
                 <button
                     onClick={() => onPrint ? onPrint() : window.print()}
                     className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-                    title="Imprimir visualização"
                 >
                     <div className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2-2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
@@ -259,7 +258,7 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
                 </label>
             </div>
 
-            {/* 3. Reserva Quebra Galho (NEW) */}
+            {/* 3. Reserva Quebra Galho */}
             <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 print:bg-white print:border-gray-200 print:text-black">
                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 print:text-black">
                     3. Reserva Quebra Galho
@@ -331,7 +330,7 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
                         <thead>
                             <tr className="border-b border-slate-700 text-slate-400 text-xs uppercase print:text-gray-500 print:border-gray-300">
                                 <th className="p-3">Categoria</th>
-                                <th className="p-3 text-right bg-slate-900/40 print:bg-gray-50">Ref (M2)</th>
+                                <th className="p-3 text-right bg-slate-900/40 print:bg-gray-50">Ref (M3)</th>
                                 <th className="p-3 text-right">Definido</th>
                                 <th className="p-3 text-right">Realizado</th>
                                 <th className="p-3 text-center">%</th>

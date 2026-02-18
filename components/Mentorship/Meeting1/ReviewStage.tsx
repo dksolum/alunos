@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle2, Edit2, Save, X, AlertCircle, ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { CheckCircle2, Edit2, Save, X, AlertCircle, ArrowUp, ArrowDown, Minus, RefreshCcw } from 'lucide-react';
 import { FinancialData, ChecklistData } from '../../../types';
 import { CATEGORIES } from '../../CostOfLiving';
 
@@ -146,6 +146,40 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
         setTimeout(() => setShowSuccess(false), 2000);
     };
 
+    const handleRefresh = () => {
+        if (readOnly) return;
+
+        // 1. Get Updated Limits from Checklist
+        const limitsNode = checklistData?.[6]?.subItems?.[3];
+        const budgetLimits: Record<string, string> = limitsNode?.value
+            ? JSON.parse(limitsNode.value)
+            : {};
+
+        const refreshedItems = items.map(item => {
+            let newReference = parseFloat(budgetLimits[item.name] || '0');
+
+            // If Meeting 2 (has previous), use M1's Defined as Reference
+            if (previousMeetingData?.reviewItems) {
+                const prevItem = previousMeetingData.reviewItems.find((i: any) => i.name === item.name);
+                if (prevItem) newReference = prevItem.defined;
+            }
+
+            return {
+                ...item,
+                reference: newReference,
+                defined: newReference // Pre-fill defined with reference as per request
+            };
+        });
+
+        setItems(refreshedItems);
+        onUpdateMeetingData({
+            ...meetingData,
+            reviewItems: refreshedItems,
+            bankChecked,
+            feedback: feedbackValue
+        });
+    };
+
     return (
         <div className="space-y-8 animate-fade-in relative pb-20 print:space-y-4 print:p-10 print:max-w-[210mm] print:mx-auto">
             {/* Header Actions - Print */}
@@ -222,10 +256,23 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
 
             {/* 2 or 3. Orçamento vs Realizado */}
             <div className="space-y-4">
-                <h3 className="text-lg font-bold text-white flex items-center gap-2 print:text-black">
-                    {feedbackQuestion ? '3' : '2'}. Orçamento vs Realizado
-                    {readOnly && <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700 uppercase">Somente Leitura</span>}
-                </h3>
+                <div className="flex items-center justify-between gap-4 mb-4">
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2 print:text-black">
+                        {feedbackQuestion ? '3' : '2'}. Orçamento vs Realizado
+                        {readOnly && <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700 uppercase">Somente Leitura</span>}
+                    </h3>
+
+                    {!readOnly && (
+                        <button
+                            onClick={handleRefresh}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg border border-slate-700 transition-all text-xs font-bold group"
+                            title="Sincronizar com etapa anterior"
+                        >
+                            <RefreshCcw size={14} className="group-active:rotate-180 transition-transform duration-500" />
+                            Sincronizar Dados
+                        </button>
+                    )}
+                </div>
 
                 <div className="overflow-x-auto print:overflow-visible">
                     <table className="w-full text-left border-collapse">

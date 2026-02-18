@@ -28,6 +28,7 @@ import { MeetingModal } from './Mentorship/MeetingModal';
 import { Meeting1Content } from './Mentorship/Meeting1/Meeting1Content';
 import { Meeting2Content } from './Mentorship/Meeting2/Meeting2Content';
 import { Meeting3Content } from './Mentorship/Meeting3/Meeting3Content';
+import { Meeting4Content } from './Mentorship/Meeting4/Meeting4Content';
 import { ConsultingValueCard } from './ConsultingValueCard';
 
 interface DashboardProps {
@@ -636,6 +637,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                     const state = await authService.getMentorshipState(user.id);
                                     setMentorshipState(state);
                                 }}
+                            />
+                        ) : selectedMeeting === 4 ? (
+                            <Meeting4Content
+                                userId={user.id}
+                                currentUser={currentUser}
+                                financialData={financialData}
+                                checklistData={user.checklistData || {}}
+                                meeting={getMeeting(4)}
                             />
                         ) : (
                             <div className="flex flex-col items-center justify-center h-64 text-slate-500">
