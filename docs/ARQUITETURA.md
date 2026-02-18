@@ -111,6 +111,9 @@ A `DebtUpdateStage` na Reunião 2 é responsável por consolidar o status das ne
 2.  **Inclusão Manual**: Permite que o mentor adicione "Dívidas Descobertas" que não estavam no mapeamento original, garantindo que o plano financeiro seja completo.
 3.  **Persistência**: Salva um snapshot das dívidas dentro do objeto `data` da reunião para histórico e impressão.
 4.  **Impressão Otimizada**: Utiliza classes `print:` para forçar fundo branco, texto preto e remover backgrounds escuros dos inputs.
+5.  **Rastreamento de Origem (v2.3)**:
+    *   **Propriedade `origin`**: Introduzida no `DebtUpdateItem` para controlar a proveniência (`mapping` | `meeting2` | `meeting3`).
+    *   **Persistência**: O campo é salvo no JSONB da reunião e utilizado para renderizar badges coloridos (**Sky** para mapping, **Amber** para M2, **Purple** para M3).
 
 ### Módulo de Plano de Quitação (Reunião 3)
 A etapa `DebtRepaymentPlanStage` introduz a visão estratégica de longo prazo e foi refinada para maior precisão:
@@ -128,6 +131,7 @@ Para evitar inconsistências e redundâncias, implementamos:
 1.  **Deduplicação por ID**: No processo de `fetchAndMergeDebts`, o sistema usa um `Set` de IDs já existentes para garantir que dívidas manuais ou sincronizadas não sejam duplicadas na interface.
 2.  **Herança de Referência Prioritária**: A Reunião 3 prioriza dados da Reunião 2 (`previousMeetingData`) para sincronização de Gastos Não Recorrentes, garantindo que o planejamento evolua linearmente.
 3.  **Feedback de Estado Transitório**: Botões de sincronização agora disparam estados de `loading`/`refreshing` com indicadores visuais (spinners e rótulos dinâmicos), melhorando a percepção de interatividade da aplicação.
+4.  **Sincronização Profunda (M3)**: O botão "Atualizar" na Reunião 3 foi refatorado para realizar um `fetch` direto do `mentorship_state` no Supabase, garantindo que mudanças manuais em dívidas ou no Checklist da Fase 2 sejam capturadas sem depender de caches de props.
 
 ### Regras de Negócio e Segurança
 *   **Acesso Administrativo**: Apenas Admins podem alterar a Fase do Checklist de um aluno através do Dashboard.

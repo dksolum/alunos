@@ -24,7 +24,9 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
 - **Reunião 3 (Plano de Quitação)**:
   - **Estratégia "Turning Point"**: Foco em dívidas não pagas para liberação definitiva de fluxo de caixa.
   - **Plano de Quitação**: Visualização estratégica da ordem de pagamento e impacto financeiro futuro.
+  - **Rastreamento de Origem**: Identificação visual de dívidas (Mapeamento vs Reunião 2 vs Reunião 3) com etiquetas coloridas.
   - **Refinamento de Margens**: Comparativo individual de propostas (SERASA vs Canal Oficial) e feedback de amortização com indicação de sobra/falta de fluxo.
+  - **Interatividade no Plano**: Edição direta de títulos de sub-passos e sincronização de status ("Feito" / "Não se aplica").
   - **Data de Previsão**: Rastreamento da data prevista para retirada do nome dos órgãos de proteção ao crédito.
 - **Controle Administrativo**:
   - **Bloqueio/Desbloqueio (Lock/Unlock)**: Admins e Secretários podem liberar reuniões futuras ou bloquear reuniões em andamento.
@@ -71,6 +73,10 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
   - **Pendente (Cinza)**: Não iniciado.
   - **Em Progresso (Amarelo/Azul)**: Sub-itens marcados ou texto preenchido.
   - **Concluído (Verde)**: Etapa finalizada.
+- **Gestão de Dívidas e Estética**:
+  - **Origem Visual**: Etiquetas coloridas para diferenciar a origem da dívida (**Azul** para Mapeamento, **Laranja** para Reunião 2, **Roxo** para Reunião 3).
+  - **Suporte a Juros**: Inclusão de taxa de juros no cadastro de novas dívidas.
+  - **Formatação Financeira**: Padronização de prefixos (`R$`) e sufixos (`%`) em toda a interface de mentoria.
 - **Controle de Acesso Hierárquico**:
   - **Admins** selecionam a fase do aluno via Dashboard.
   - **Admins/Secretários**: Podem editar qualquer checklist.
@@ -126,9 +132,9 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 
 ## 📝 Histórico de Atualizações Recentes
 
+- **UI**: Cores distintas para etiquetas de origem de dívida (Sky/Amber/Purple).
+- **Feat**: Suporte a taxa de juros na criação de novas dívidas (M2 e M3).
+- **DX**: Refinamento de tipos e interfaces para rastreamento de `origin` em `DebtUpdateItem`.
+- **UI**: Padronização de símbolos `R$` e `%` na visualização de dívidas.
 - **Feat**: Implementação completa da **Reunião 3** (Plano de Quitação).
-- **Fix**: Prevenção de loop de duplicação infinita na sincronização de dívidas (Deduplicação por ID).
-- **UI**: Feedback visual (loading/spin) no botão de sincronização "Sincronizar M2".
-- **Refactor**: Sincronização de Gastos Não Recorrentes agora prioriza dados da reunião anterior para consistência.
-- **Feat**: Nova etapa "Atualização de Dívidas" na Reunião 2 da Mentoria com preenchimento via Checklist.
 

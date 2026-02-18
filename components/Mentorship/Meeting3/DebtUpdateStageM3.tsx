@@ -96,7 +96,9 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                     newInstallment: Number(d.installmentValue) || 0,
                     newQuantity: Number(d.remainingInstallments) || Number(d.totalInstallments) || 0,
                     newInterest: d.interestRate || '0%',
-                    isNegotiated: false
+                    isNegotiated: false,
+                    origin: 'mapping',
+                    createdAt: d.createdAt
                 }));
             }
 
@@ -462,7 +464,7 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                                                 <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider">{debt.creditor}</p>
                                             </>
                                         )}
-                                        <div className="flex flex-col text-[8px] text-slate-500 uppercase font-black gap-0.5 mt-2">
+                                        <div className="flex flex-col text-[8px] text-slate-500 uppercase font-black gap-0.5 mt-2 print:text-gray-400">
                                             <span>Registrado: {debt.createdAt ? new Date(debt.createdAt).toLocaleDateString('pt-BR') : '---'}</span>
                                             <span>Atualizado: {debt.updatedAt ? new Date(debt.updatedAt).toLocaleDateString('pt-BR') : '---'}</span>
                                         </div>
@@ -488,7 +490,7 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                                             <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Anterior (M2)</p>
                                             <p className="text-xs font-bold text-slate-400">R$ {debt.originalInstallment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                                         </div>
-                                        <div className="p-2 rounded-lg border transition-all ${hasReduction ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-slate-800 border-slate-700'}">
+                                        <div className={`p-2 rounded-lg border transition-all ${hasReduction ? 'bg-emerald-500/5 border-emerald-500/20 print:bg-emerald-50 print:border-emerald-200' : 'bg-slate-800 border-slate-700 print:bg-white print:border-gray-200'}`}>
                                             <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Atual</p>
                                             <div className="relative">
                                                 <span className={`absolute left-0 top-1/2 -translate-y-1/2 text-[10px] font-black ${hasReduction ? 'text-emerald-400' : 'text-slate-500'}`}>R$</span>

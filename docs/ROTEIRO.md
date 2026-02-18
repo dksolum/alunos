@@ -46,11 +46,13 @@ A migração para um backend real foi realizada para permitir sincronização e 
     - [x] **Etapa "Plano de Quitação" (Novo)**: Estratégia Turning Point na Reunião 3.
     - [x] Sincronização automática de metas e deduplicação de dívidas.
     - [x] Sistema de Bloqueio/Desbloqueio (Lock/Unlock) para Admins.
+- [x] **Rastreamento de Origem (v2.3)**: Identificação visual de dívidas (Azul/Sky para Mapeamento, Laranja/Amber para M2, Roxo/Purple para M3).
 - [x] **Checklist v2.2 (Refinamento de Negociação & Estética)**:
     - [x] Integração bidirecional com Mapeamento de Dívidas.
     - [x] Lógica de fallback para parcelas não negociadas.
     - [x] **Card de Proposta de Valor Premium**: Overhaul estético e brilho de conquista.
-    - [x] **Estabilização de Dados**: Prevenção de loops de duplicação e feedback de UI.
+    - [x] **Estabilidade**: Sincronização profunda (M3) e deduplicação resiliente.
+- [x] **Interatividade v1.0**: Edição direta de títulos e sincronização de status nos sub-passos do Plano de Quitação.
 - [x] **Otimização de Impressão**: Relatórios de Revisão, Gastos e Dívidas (Alto contraste).
 - [ ] **Integrações Futuras**:
     - [ ] WhatsApp API para lembretes.

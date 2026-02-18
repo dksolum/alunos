@@ -113,7 +113,7 @@ export const DebtUpdateStage: React.FC<DebtUpdateStageProps> = ({
                     newInterest: hasNegotiatedValue ? (neg.interest || d.interestRate) : d.interestRate,
                     isNegotiated: !!hasNegotiatedValue,
                     origin: 'mapping',
-                    createdAt: neg?.createdAt || now,
+                    createdAt: d.createdAt || neg?.createdAt || now,
                     updatedAt: neg?.updatedAt || now,
                     endDate: calculateEndDate(newQty)
                 };

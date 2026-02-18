@@ -252,37 +252,44 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                                                     </div>
                                                 </td>
                                                 <td className="p-4">
-                                                    <div className="flex flex-col items-start gap-1">
-                                                        <div className={`px-2 py-1 rounded-md border flex items-center gap-1.5 ${status.color} border-current/20`}>
-                                                            {status.icon}
-                                                            <span className="text-[10px] font-black uppercase tracking-tight">{status.label}</span>
-                                                        </div>
-
-                                                        {/* SELECT FOR STATUS CHANGE */}
-                                                        <div className="relative group/edit">
-                                                            <div className="flex items-center gap-1 text-[9px] text-slate-500 font-bold uppercase cursor-pointer hover:text-sky-400 transition-colors bg-slate-800/50 px-2 py-1 rounded border border-slate-700 hover:border-sky-500/50">
-                                                                <Edit2 size={8} /> Alterar Status
+                                                    {user.role === 'USER' ? (
+                                                        <div className="flex flex-col items-start gap-1">
+                                                            <div className={`px-2 py-1 rounded-md border flex items-center gap-1.5 ${status.color} border-current/20`}>
+                                                                {status.icon}
+                                                                <span className="text-[10px] font-black uppercase tracking-tight">{status.label}</span>
                                                             </div>
-                                                            <select
-                                                                value={user.status}
-                                                                onChange={(e) => handleStatusChange(user.id, e.target.value as UserStatus)}
-                                                                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                                                                title="Alterar status do usuário"
-                                                            >
-                                                                <option className="bg-slate-800 text-slate-300" value="NEW">Pré-cadastro (Bloqueado)</option>
-                                                                <option className="bg-slate-800 text-slate-300" value="ACTIVE">Consultoria (Módulos 1-4)</option>
-                                                                <option className="bg-slate-800 text-slate-300" value="CONVERTED">Mentoria (Módulos 5-10)</option>
-                                                                <option className="bg-slate-800 text-slate-300" value="CONTACTED">Acompanhamento (Todos)</option>
-                                                                <option className="bg-slate-800 text-slate-300" value="LOST">Perdido</option>
-                                                            </select>
-                                                        </div>
 
-                                                        {user.lastContactedBy && user.status !== 'NEW' && (
-                                                            <span className="text-[8px] text-slate-600 font-bold uppercase">
-                                                                Atualizado por: {user.lastContactedBy}
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                            {/* SELECT FOR STATUS CHANGE */}
+                                                            <div className="relative group/edit">
+                                                                <div className="flex items-center gap-1 text-[9px] text-slate-500 font-bold uppercase cursor-pointer hover:text-sky-400 transition-colors bg-slate-800/50 px-2 py-1 rounded border border-slate-700 hover:border-sky-500/50">
+                                                                    <Edit2 size={8} /> Alterar Status
+                                                                </div>
+                                                                <select
+                                                                    value={user.status}
+                                                                    onChange={(e) => handleStatusChange(user.id, e.target.value as UserStatus)}
+                                                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                                                    title="Alterar status do usuário"
+                                                                >
+                                                                    <option className="bg-slate-800 text-slate-300" value="NEW">Pré-cadastro (Bloqueado)</option>
+                                                                    <option className="bg-slate-800 text-slate-300" value="ACTIVE">Consultoria (Módulos 1-4)</option>
+                                                                    <option className="bg-slate-800 text-slate-300" value="CONVERTED">Mentoria (Módulos 5-10)</option>
+                                                                    <option className="bg-slate-800 text-slate-300" value="CONTACTED">Acompanhamento (Todos)</option>
+                                                                    <option className="bg-slate-800 text-slate-300" value="LOST">Perdido</option>
+                                                                </select>
+                                                            </div>
+
+                                                            {user.lastContactedBy && user.status !== 'NEW' && (
+                                                                <span className="text-[8px] text-slate-600 font-bold uppercase">
+                                                                    Atualizado por: {user.lastContactedBy}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-800/50 text-slate-500 border border-slate-700/50 rounded-md">
+                                                            <Shield size={12} />
+                                                            <span className="text-[9px] font-black uppercase tracking-widest">Acesso Total</span>
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="p-4">
                                                     <span className={`px-2 py-1 rounded text-[9px] font-black uppercase ${user.role === 'ADMIN' ? 'bg-rose-500/10 text-rose-400' :
