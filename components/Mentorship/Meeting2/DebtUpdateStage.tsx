@@ -15,6 +15,7 @@ interface DebtUpdateItem {
     newInterest: string;
     isNegotiated: boolean;
     isManual?: boolean;
+    origin?: 'mapping' | 'meeting2' | 'meeting3';
     updatedAt?: string;
     createdAt?: string;
     endDate?: string;
@@ -39,6 +40,16 @@ export const DebtUpdateStage: React.FC<DebtUpdateStageProps> = ({
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [isAddingDebt, setIsAddingDebt] = useState(false);
+    const [newDebtData, setNewDebtData] = useState({
+        name: '',
+        creditor: '',
+        installment: 0,
+        quantity: 12,
+        interest: '0%'
+    });
+
+    const existingCreditors = Array.from(new Set(debts.map(d => d.creditor))).filter(Boolean);
 
     const calculateEndDate = (months: number) => {
         if (!months || months <= 0) return '---';
@@ -101,6 +112,7 @@ export const DebtUpdateStage: React.FC<DebtUpdateStageProps> = ({
                     originalInterest: d.interestRate || '0%',
                     newInterest: hasNegotiatedValue ? (neg.interest || d.interestRate) : d.interestRate,
                     isNegotiated: !!hasNegotiatedValue,
+                    origin: 'mapping',
                     createdAt: neg?.createdAt || now,
                     updatedAt: neg?.updatedAt || now,
                     endDate: calculateEndDate(newQty)
@@ -152,24 +164,42 @@ export const DebtUpdateStage: React.FC<DebtUpdateStageProps> = ({
 
     const handleAddManualDebt = () => {
         if (readOnly) return;
+        setNewDebtData({
+            name: '',
+            creditor: '',
+            installment: 0,
+            quantity: 12,
+            interest: '0%'
+        });
+        setIsAddingDebt(true);
+    };
+
+    const confirmAddManualDebt = () => {
+        if (!newDebtData.name || !newDebtData.creditor) {
+            alert("Nome da dívida e credor são obrigatórios");
+            return;
+        }
+
         const now = new Date().toISOString();
         const newDebt: DebtUpdateItem = {
             id: `manual-${crypto.randomUUID()}`,
-            name: 'Nova Dívida Discoverta',
-            creditor: 'Credor Desconhecido',
+            name: newDebtData.name,
+            creditor: newDebtData.creditor,
             originalInstallment: 0,
-            newInstallment: 0,
+            newInstallment: newDebtData.installment,
             originalQuantity: 0,
-            newQuantity: 12,
+            newQuantity: newDebtData.quantity,
             originalInterest: '0%',
-            newInterest: '0%',
+            newInterest: newDebtData.interest.includes('%') ? newDebtData.interest : `${newDebtData.interest}%`,
             isNegotiated: false,
             isManual: true,
+            origin: 'meeting2',
             createdAt: now,
             updatedAt: now,
-            endDate: calculateEndDate(12)
+            endDate: calculateEndDate(newDebtData.quantity)
         };
         setDebts([...debts, newDebt]);
+        setIsAddingDebt(false);
     };
 
     const handleRemoveDebt = (id: string) => {
@@ -224,6 +254,103 @@ export const DebtUpdateStage: React.FC<DebtUpdateStageProps> = ({
                 {readOnly && <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-1 rounded border border-slate-700 uppercase font-bold print:hidden">Modo Visualização</span>}
             </div>
 
+            {isAddingDebt && (
+                <div className="bg-purple-500/5 border border-purple-500/20 rounded-[2rem] p-8 animate-in slide-in-from-top-4 duration-300">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-purple-500/20 text-purple-400 rounded-xl flex items-center justify-center">
+                            <Plus size={24} />
+                        </div>
+                        <div>
+                            <h4 className="text-lg font-black text-white uppercase tracking-tight">Nova Dívida Descoberta</h4>
+                            <p className="text-[10px] text-purple-400 font-bold uppercase tracking-widest">Preencha os dados básicos para adicionar</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] text-slate-500 uppercase font-black">Nome da Dívida</label>
+                            <input
+                                type="text"
+                                value={newDebtData.name}
+                                onChange={(e) => setNewDebtData({ ...newDebtData, name: e.target.value })}
+                                placeholder="Ex: Cartão Nubank"
+                                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-purple-500 transition-all"
+                            />
+                        </div>
+
+                        <div className="space-y-2 relative">
+                            <label className="text-[10px] text-slate-500 uppercase font-black">Credor</label>
+                            <input
+                                type="text"
+                                list="creditors-list"
+                                value={newDebtData.creditor}
+                                onChange={(e) => setNewDebtData({ ...newDebtData, creditor: e.target.value })}
+                                placeholder="Ex: Banco Itau"
+                                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-purple-500 transition-all"
+                            />
+                            <datalist id="creditors-list">
+                                {existingCreditors.map(c => <option key={c} value={c} />)}
+                            </datalist>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] text-slate-500 uppercase font-black">Valor Parcela</label>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">R$</span>
+                                <input
+                                    type="text"
+                                    value={newDebtData.installment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    onChange={(e) => {
+                                        const val = parseFloat(e.target.value.replace(/[^\d]/g, '')) / 100;
+                                        setNewDebtData({ ...newDebtData, installment: val || 0 });
+                                    }}
+                                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 pl-10 text-sm font-bold text-white outline-none focus:border-purple-500 transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] text-slate-500 uppercase font-black">Qtd Parcelas Restantes</label>
+                            <input
+                                type="number"
+                                value={newDebtData.quantity}
+                                onChange={(e) => setNewDebtData({ ...newDebtData, quantity: parseInt(e.target.value) || 0 })}
+                                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-purple-500 transition-all"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] text-slate-500 uppercase font-black">Taxa de Juros (%)</label>
+                            <div className="relative">
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">%</span>
+                                <input
+                                    type="text"
+                                    value={newDebtData.interest.replace('%', '')}
+                                    onChange={(e) => setNewDebtData({ ...newDebtData, interest: `${e.target.value}%` })}
+                                    placeholder="0,00"
+                                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 pr-8 text-sm font-bold text-white outline-none focus:border-purple-500 transition-all"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-purple-500/10">
+                        <button
+                            onClick={() => setIsAddingDebt(false)}
+                            className="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={confirmAddManualDebt}
+                            className="bg-purple-500 hover:bg-purple-600 text-white px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-purple-500/20"
+                        >
+                            Confirmar Adição
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <div className="grid gap-4">
                 {debts.length === 0 ? (
                     <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-12 text-center">
@@ -269,9 +396,14 @@ export const DebtUpdateStage: React.FC<DebtUpdateStageProps> = ({
                                                     Negociado no Checklist
                                                 </span>
                                             )}
-                                            {debt.isManual && (
-                                                <span className="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded text-[9px] font-bold uppercase print:bg-purple-50 print:text-purple-700 print:border-purple-200">
-                                                    Nova (Manual)
+                                            {debt.origin === 'mapping' && (
+                                                <span className="px-2 py-0.5 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded text-[9px] font-bold uppercase print:bg-sky-50 print:text-sky-700 print:border-sky-200">
+                                                    Mapeado no Diagnóstico
+                                                </span>
+                                            )}
+                                            {debt.origin === 'meeting2' && (
+                                                <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[9px] font-bold uppercase print:bg-amber-50 print:text-amber-700 print:border-amber-200">
+                                                    Cadastrado na Reunião 2
                                                 </span>
                                             )}
                                             {debt.isManual && !readOnly && (
@@ -305,16 +437,19 @@ export const DebtUpdateStage: React.FC<DebtUpdateStageProps> = ({
                                             </div>
                                             <div className={`p-2 rounded-lg border transition-all ${hasReduction ? 'bg-emerald-500/5 border-emerald-500/20 print:bg-emerald-50 print:border-emerald-200' : 'bg-slate-800/80 border-slate-700 print:bg-white print:border-gray-200'}`}>
                                                 <p className="text-[8px] text-slate-500 uppercase font-bold mb-1 print:text-gray-500">Atual</p>
-                                                <input
-                                                    type="text"
-                                                    disabled={readOnly}
-                                                    value={debt.newInstallment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                                    onChange={(e) => {
-                                                        const val = parseFloat(e.target.value.replace(/[^\d]/g, '')) / 100;
-                                                        handleUpdateDebt(debt.id, 'newInstallment', val || 0);
-                                                    }}
-                                                    className={`w-full bg-transparent text-xs font-black outline-none focus:text-purple-400 print:text-black ${hasReduction ? 'print:text-emerald-700' : ''}`}
-                                                />
+                                                <div className="relative">
+                                                    <span className={`absolute left-0 top-1/2 -translate-y-1/2 text-[10px] font-black ${hasReduction ? 'text-emerald-400' : 'text-slate-500'}`}>R$</span>
+                                                    <input
+                                                        type="text"
+                                                        disabled={readOnly}
+                                                        value={debt.newInstallment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                        onChange={(e) => {
+                                                            const val = parseFloat(e.target.value.replace(/[^\d]/g, '')) / 100;
+                                                            handleUpdateDebt(debt.id, 'newInstallment', val || 0);
+                                                        }}
+                                                        className={`w-full bg-transparent text-xs font-black outline-none focus:text-purple-400 pl-5 print:text-black ${hasReduction ? 'print:text-emerald-700' : ''}`}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -362,13 +497,19 @@ export const DebtUpdateStage: React.FC<DebtUpdateStageProps> = ({
                                             </div>
                                             <div className="p-2 bg-slate-800/80 border border-slate-700 rounded-lg print:bg-white print:border-gray-200">
                                                 <p className="text-[8px] text-slate-500 uppercase font-bold mb-1 print:text-gray-500">Atual</p>
-                                                <input
-                                                    type="text"
-                                                    disabled={readOnly}
-                                                    value={debt.newInterest}
-                                                    onChange={(e) => handleUpdateDebt(debt.id, 'newInterest', e.target.value)}
-                                                    className="w-full bg-transparent text-xs font-black text-white outline-none focus:text-purple-400 print:text-black"
-                                                />
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        disabled={readOnly}
+                                                        value={debt.newInterest.includes('%') ? debt.newInterest : `${debt.newInterest}%`}
+                                                        onChange={(e) => {
+                                                            let val = e.target.value;
+                                                            if (val && !val.includes('%')) val = `${val}%`;
+                                                            handleUpdateDebt(debt.id, 'newInterest', val);
+                                                        }}
+                                                        className="w-full bg-transparent text-xs font-black text-white outline-none focus:text-purple-400 print:text-black"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

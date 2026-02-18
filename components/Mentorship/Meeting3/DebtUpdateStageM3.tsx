@@ -15,8 +15,9 @@ interface DebtUpdateItem {
     newInterest: string;
     isNegotiated: boolean;
     isManual?: boolean;
-    isPaid?: boolean; // NEW: Is this debt being paid?
-    amortizationConfirmed?: boolean; // NEW: User confirmed -1 installment
+    isPaid?: boolean;
+    amortizationConfirmed?: boolean;
+    origin?: 'mapping' | 'meeting2' | 'meeting3';
     updatedAt?: string;
     createdAt?: string;
     endDate?: string;
@@ -43,6 +44,16 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [isAddingDebt, setIsAddingDebt] = useState(false);
+    const [newDebtData, setNewDebtData] = useState({
+        name: '',
+        creditor: '',
+        installment: 0,
+        quantity: 12,
+        interest: '0%'
+    });
+
+    const existingCreditors = Array.from(new Set(debts.map(d => d.creditor))).filter(Boolean);
 
     const calculateEndDate = (months: number) => {
         if (!months || months <= 0) return '---';
@@ -63,8 +74,17 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
         else setLoading(true);
 
         try {
+            let m2Data = previousMeetingData;
+
+            // If manual refresh, fetch the LATEST mentorship state from DB to get updated Meeting 2 data
+            if (isManualRefresh) {
+                const state = await authService.getMentorshipState(userId);
+                const m2 = state.meetings.find(m => m.meetingId === 2);
+                if (m2) m2Data = m2.data;
+            }
+
             // Priority 1: Meeting 2 Data
-            let meeting2Debts: any[] = previousMeetingData?.debtUpdates || [];
+            let meeting2Debts: any[] = m2Data?.debtUpdates || [];
 
             // Priority 2: Global Mapping (if M2 is somehow empty)
             if (meeting2Debts.length === 0) {
@@ -89,6 +109,11 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                 const existingM3 = debts.find(m => m.id === d.id);
                 const useLocalM3 = !isManualRefresh && existingM3;
 
+                // Sync negotiated status with latest checklist
+                const isNegotiated = checklistData?.p2_debts_to_renegotiate?.some((item: any) =>
+                    item.description.toLowerCase() === d.name.toLowerCase() && item.status === 'Feito'
+                ) || d.isNegotiated;
+
                 return {
                     id: d.id,
                     name: d.name,
@@ -99,20 +124,23 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                     newQuantity: useLocalM3 ? (existingM3?.newQuantity ?? (d.newQuantity || d.originalQuantity || 0)) : (d.newQuantity || d.originalQuantity || 0),
                     originalInterest: d.newInterest || d.originalInterest || '0%',
                     newInterest: useLocalM3 ? (existingM3?.newInterest ?? (d.newInterest || d.originalInterest || '0%')) : (d.newInterest || d.originalInterest || '0%'),
-                    isNegotiated: d.isNegotiated,
+                    isNegotiated,
                     isManual: false, // Everything from the past is non-manual in M3
-                    isPaid: useLocalM3 ? (existingM3?.isPaid !== undefined ? existingM3.isPaid : true) : true, // Reset to paid if refresh
+                    isPaid: useLocalM3 ? (existingM3?.isPaid !== undefined ? existingM3.isPaid : true) : true,
                     amortizationConfirmed: useLocalM3 ? (existingM3?.amortizationConfirmed || false) : false,
+                    origin: d.origin || 'mapping', // Preserve origin from M2
                     createdAt: d.createdAt || now,
                     updatedAt: now,
                     endDate: calculateEndDate(useLocalM3 ? (existingM3?.newQuantity || d.newQuantity || d.originalQuantity || 0) : (d.newQuantity || d.originalQuantity || 0))
                 };
             });
 
-            // Keep only the manual debts that were added SPECIFICALLY in Meeting 3
-            // AND ensure they aren't already represented in syncedDebts (ID check)
             const syncedIds = new Set(syncedDebts.map(d => d.id));
             const meeting3ManualDebts = debts.filter(d => d.isManual && !syncedIds.has(d.id));
+
+            // MERGE Logic for Refresh:
+            // We want to keep M3 manual debts, but update existing debts with latest from M2
+            // If it's a manual refresh, we ALREADY updated syncedDebts above (using useLocalM3 logic)
 
             const finalDebts = [...syncedDebts, ...meeting3ManualDebts];
 
@@ -121,10 +149,10 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
 
             if (isManualRefresh) {
                 setShowSuccess(true);
-                setTimeout(() => setShowSuccess(false), 2000);
+                setTimeout(() => setShowSuccess(false), 3000);
             }
         } catch (error) {
-            console.error("Error fetching/merging Debt Update Stage M3:", error);
+            console.error('Error fetching/merging debts in M3:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -176,25 +204,43 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
 
     const handleAddManualDebt = () => {
         if (readOnly) return;
+        setNewDebtData({
+            name: '',
+            creditor: '',
+            installment: 0,
+            quantity: 12,
+            interest: '0%'
+        });
+        setIsAddingDebt(true);
+    };
+
+    const confirmAddManualDebt = () => {
+        if (!newDebtData.name || !newDebtData.creditor) {
+            alert("Nome da dívida e credor são obrigatórios");
+            return;
+        }
+
         const now = new Date().toISOString();
         const newDebt: DebtUpdateItem = {
             id: `manual-${crypto.randomUUID()}`,
-            name: 'Nova Dívida Descoberta',
-            creditor: 'Credor Desconhecido',
+            name: newDebtData.name,
+            creditor: newDebtData.creditor,
             originalInstallment: 0,
-            newInstallment: 0,
+            newInstallment: newDebtData.installment,
             originalQuantity: 0,
-            newQuantity: 12,
+            newQuantity: newDebtData.quantity,
             originalInterest: '0%',
-            newInterest: '0%',
+            newInterest: newDebtData.interest.includes('%') ? newDebtData.interest : `${newDebtData.interest}%`,
             isNegotiated: false,
             isManual: true,
             isPaid: true,
+            origin: 'meeting3',
             createdAt: now,
             updatedAt: now,
-            endDate: calculateEndDate(12)
+            endDate: calculateEndDate(newDebtData.quantity)
         };
         setDebts([...debts, newDebt]);
+        setIsAddingDebt(false);
     };
 
     const handleRemoveDebt = (id: string) => {
@@ -233,7 +279,7 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                             ${(loading || refreshing || readOnly) ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-                        {refreshing ? 'Sincronizando...' : 'Sincronizar M2'}
+                        {refreshing ? 'Atualizando...' : 'Atualizar'}
                     </button>
                     <button
                         onClick={handleAddManualDebt}
@@ -244,6 +290,103 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                     </button>
                 </div>
             </div>
+
+            {isAddingDebt && (
+                <div className="bg-sky-500/5 border border-sky-500/20 rounded-[2rem] p-8 animate-in slide-in-from-top-4 duration-300">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-sky-500/20 text-sky-400 rounded-xl flex items-center justify-center">
+                            <Plus size={24} />
+                        </div>
+                        <div>
+                            <h4 className="text-lg font-black text-white uppercase tracking-tight">Nova Dívida Descoberta</h4>
+                            <p className="text-[10px] text-sky-400 font-bold uppercase tracking-widest">Preencha os dados da dívida encontrada no Replanejamento</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="space-y-2">
+                            <label className="text-[10px] text-slate-500 uppercase font-black">Nome da Dívida</label>
+                            <input
+                                type="text"
+                                value={newDebtData.name}
+                                onChange={(e) => setNewDebtData({ ...newDebtData, name: e.target.value })}
+                                placeholder="Ex: Cartão Nubank"
+                                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-sky-500 transition-all"
+                            />
+                        </div>
+
+                        <div className="space-y-2 relative">
+                            <label className="text-[10px] text-slate-500 uppercase font-black">Credor</label>
+                            <input
+                                type="text"
+                                list="creditors-list-m3"
+                                value={newDebtData.creditor}
+                                onChange={(e) => setNewDebtData({ ...newDebtData, creditor: e.target.value })}
+                                placeholder="Ex: Banco Itau"
+                                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-sky-500 transition-all"
+                            />
+                            <datalist id="creditors-list-m3">
+                                {existingCreditors.map(c => <option key={c} value={c} />)}
+                            </datalist>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] text-slate-500 uppercase font-black">Valor Parcela</label>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">R$</span>
+                                <input
+                                    type="text"
+                                    value={newDebtData.installment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    onChange={(e) => {
+                                        const val = parseFloat(e.target.value.replace(/[^\d]/g, '')) / 100;
+                                        setNewDebtData({ ...newDebtData, installment: val || 0 });
+                                    }}
+                                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 pl-10 text-sm font-bold text-white outline-none focus:border-sky-500 transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] text-slate-500 uppercase font-black">Qtd Parcelas Restantes</label>
+                            <input
+                                type="number"
+                                value={newDebtData.quantity}
+                                onChange={(e) => setNewDebtData({ ...newDebtData, quantity: parseInt(e.target.value) || 0 })}
+                                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-sky-500 transition-all"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[10px] text-slate-500 uppercase font-black">Taxa de Juros (%)</label>
+                            <div className="relative">
+                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">%</span>
+                                <input
+                                    type="text"
+                                    value={newDebtData.interest.replace('%', '')}
+                                    onChange={(e) => setNewDebtData({ ...newDebtData, interest: `${e.target.value}%` })}
+                                    placeholder="0,00"
+                                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 pr-8 text-sm font-bold text-white outline-none focus:border-sky-500 transition-all"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end gap-3 mt-8 pt-6 border-t border-sky-500/10">
+                        <button
+                            onClick={() => setIsAddingDebt(false)}
+                            className="px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-white transition-all"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={confirmAddManualDebt}
+                            className="bg-sky-500 hover:bg-sky-600 text-white px-8 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-sky-500/20"
+                        >
+                            Confirmar Adição
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="grid gap-4">
                 {debts.map(debt => {
@@ -271,19 +414,58 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                                                 Marcar como Amortizada (-1 parcela)
                                             </button>
                                         )}
+
+                                        <div className="flex items-center gap-2">
+                                            {debt.isNegotiated && (
+                                                <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[9px] font-bold uppercase">
+                                                    Negociado no Checklist
+                                                </span>
+                                            )}
+                                            {debt.origin === 'mapping' && (
+                                                <span className="px-2 py-0.5 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded text-[9px] font-bold uppercase">
+                                                    Mapeado no Diagnóstico
+                                                </span>
+                                            )}
+                                            {debt.origin === 'meeting2' && (
+                                                <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[9px] font-bold uppercase">
+                                                    Cadastrado na Reunião 2
+                                                </span>
+                                            )}
+                                            {debt.origin === 'meeting3' && (
+                                                <span className="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded text-[9px] font-bold uppercase">
+                                                    Nova (Reunião 3)
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="mt-3">
                                         {debt.isManual ? (
-                                            <input
-                                                type="text"
-                                                value={debt.name}
-                                                onChange={(e) => handleUpdateDebt(debt.id, 'name', e.target.value)}
-                                                className="bg-transparent border-none p-0 font-bold text-white text-lg outline-none focus:text-sky-400"
-                                            />
+                                            <div className="space-y-1 max-w-md">
+                                                <input
+                                                    type="text"
+                                                    value={debt.name}
+                                                    placeholder="Nome da Dívida"
+                                                    onChange={(e) => handleUpdateDebt(debt.id, 'name', e.target.value)}
+                                                    className="w-full bg-slate-800/80 border border-slate-700 rounded px-2 py-1 text-xs font-bold text-white outline-none focus:border-sky-500"
+                                                />
+                                                <input
+                                                    type="text"
+                                                    value={debt.creditor}
+                                                    placeholder="Nome do Credor"
+                                                    onChange={(e) => handleUpdateDebt(debt.id, 'creditor', e.target.value)}
+                                                    className="w-full bg-transparent border-none px-2 text-[9px] text-slate-500 uppercase font-black tracking-wider outline-none"
+                                                />
+                                            </div>
                                         ) : (
-                                            <h4 className="font-bold text-white text-lg">{debt.name}</h4>
+                                            <>
+                                                <h4 className="font-bold text-white text-lg">{debt.name}</h4>
+                                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider">{debt.creditor}</p>
+                                            </>
                                         )}
-                                        <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider">{debt.creditor}</p>
+                                        <div className="flex flex-col text-[8px] text-slate-500 uppercase font-black gap-0.5 mt-2">
+                                            <span>Registrado: {debt.createdAt ? new Date(debt.createdAt).toLocaleDateString('pt-BR') : '---'}</span>
+                                            <span>Atualizado: {debt.updatedAt ? new Date(debt.updatedAt).toLocaleDateString('pt-BR') : '---'}</span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -306,18 +488,21 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                                             <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Anterior (M2)</p>
                                             <p className="text-xs font-bold text-slate-400">R$ {debt.originalInstallment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                                         </div>
-                                        <div className={`p-2 rounded-lg border ${hasReduction ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-slate-800 border-slate-700'}`}>
+                                        <div className="p-2 rounded-lg border transition-all ${hasReduction ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-slate-800 border-slate-700'}">
                                             <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Atual</p>
-                                            <input
-                                                type="text"
-                                                disabled={readOnly}
-                                                value={debt.newInstallment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                                onChange={(e) => {
-                                                    const val = parseFloat(e.target.value.replace(/[^\d]/g, '')) / 100;
-                                                    handleUpdateDebt(debt.id, 'newInstallment', val || 0);
-                                                }}
-                                                className={`w-full bg-transparent text-xs font-black outline-none ${hasReduction ? 'text-emerald-400' : 'text-white'}`}
-                                            />
+                                            <div className="relative">
+                                                <span className={`absolute left-0 top-1/2 -translate-y-1/2 text-[10px] font-black ${hasReduction ? 'text-emerald-400' : 'text-slate-500'}`}>R$</span>
+                                                <input
+                                                    type="text"
+                                                    disabled={readOnly}
+                                                    value={debt.newInstallment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                    onChange={(e) => {
+                                                        const val = parseFloat(e.target.value.replace(/[^\d]/g, '')) / 100;
+                                                        handleUpdateDebt(debt.id, 'newInstallment', val || 0);
+                                                    }}
+                                                    className={`w-full bg-transparent text-xs font-black outline-none pl-5 ${hasReduction ? 'text-emerald-400' : 'text-white'}`}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -360,13 +545,19 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                                         </div>
                                         <div className="p-2 bg-slate-800 border border-slate-700 rounded-lg">
                                             <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Atual</p>
-                                            <input
-                                                type="text"
-                                                disabled={readOnly}
-                                                value={debt.newInterest}
-                                                onChange={(e) => handleUpdateDebt(debt.id, 'newInterest', e.target.value)}
-                                                className="w-full bg-transparent text-xs font-black text-white outline-none"
-                                            />
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    disabled={readOnly}
+                                                    value={debt.newInterest.includes('%') ? debt.newInterest : `${debt.newInterest}%`}
+                                                    onChange={(e) => {
+                                                        let val = e.target.value;
+                                                        if (val && !val.includes('%')) val = `${val}%`;
+                                                        handleUpdateDebt(debt.id, 'newInterest', val);
+                                                    }}
+                                                    className="w-full bg-transparent text-xs font-black text-white outline-none"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
