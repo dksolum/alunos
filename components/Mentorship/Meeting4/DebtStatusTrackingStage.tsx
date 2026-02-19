@@ -128,14 +128,14 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
     };
 
     return (
-        <div className="space-y-6 animate-fade-in relative pb-10">
+        <div className="space-y-6 animate-fade-in relative pb-10 print:pb-0">
             <div className="flex items-center justify-between">
                 <div>
-                    <h3 className="text-xl font-black text-white flex items-center gap-3">
-                        <ListTodo className="text-purple-400" size={24} />
+                    <h3 className="text-xl font-black text-white flex items-center gap-3 print:text-black">
+                        <ListTodo className="text-purple-400 print:text-purple-600" size={24} />
                         Acompanhamento do Plano de Quitação
                     </h3>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">
+                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1 print:text-gray-500">
                         Acompanhe o status das dívidas selecionadas para prioridade na Reunião 3
                     </p>
                 </div>
@@ -169,11 +169,11 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
             ) : (
                 <div className="grid gap-4">
                     {statusItems.map((item) => (
-                        <div key={item.id} className="bg-slate-900/40 border border-slate-800 rounded-[1.5rem] p-6 hover:border-slate-700 transition-all group">
+                        <div key={item.id} className="bg-slate-900/40 border border-slate-800 rounded-[1.5rem] p-6 hover:border-slate-700 transition-all group print:bg-white print:border-gray-200 print:break-inside-avoid">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-1">
-                                        <h4 className="font-bold text-white text-lg">{item.name}</h4>
+                                        <h4 className="font-bold text-white text-lg print:text-black">{item.name}</h4>
                                         <span className={`px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase tracking-tight transition-all ${getStatusColor(item.status)}`}>
                                             {item.status}
                                         </span>
@@ -190,7 +190,7 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
                                                 value={item.status}
                                                 disabled={readOnly}
                                                 onChange={(e) => handleUpdateStatus(item.id, 'status', e.target.value)}
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-300 appearance-none focus:border-purple-500 outline-none transition-all cursor-pointer"
+                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-300 appearance-none focus:border-purple-500 outline-none transition-all cursor-pointer print:bg-white print:border-gray-300 print:text-black print:appearance-none"
                                             >
                                                 <option value="Não Iniciado">Não Iniciado</option>
                                                 <option value="Em Andamento">Em Andamento</option>
@@ -210,7 +210,7 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
                                                 value={item.date}
                                                 disabled={readOnly}
                                                 onChange={(e) => handleUpdateStatus(item.id, 'date', e.target.value)}
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 pl-10 text-xs font-bold text-slate-300 focus:border-purple-500 outline-none transition-all"
+                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 pl-10 text-xs font-bold text-slate-300 focus:border-purple-500 outline-none transition-all print:bg-white print:border-gray-300 print:text-black"
                                             />
                                         </div>
                                     </div>
@@ -238,7 +238,7 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
             )}
 
             {!readOnly && statusItems.length > 0 && (
-                <div className="flex justify-end pt-8 border-t border-slate-800">
+                <div className="flex justify-end pt-8 border-t border-slate-800 print:hidden">
                     <button onClick={handleSave} className="bg-purple-500 hover:bg-purple-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-purple-500/20 uppercase text-xs tracking-widest">
                         {showSuccess ? <><CheckCircle size={18} /> Salvo!</> : <><Save size={18} /> Salvar Status</>}
                     </button>

@@ -1,10 +1,9 @@
-
 # Erros Conhecidos e Limitações Técnicas
 
 Este documento visa transparência sobre o estado atual do software e limitações identificadas.
 
 ## 1. Módulos em Desenvolvimento
-*   **Mentoria (Reuniões 4-6)**: O conteúdo das reuniões 4 a 6 ainda está em fase de planejamento. Atualmente, as reuniões 1, 2 e 3 possuem fluxos completos de dados, estratégias de quitação e relatórios.
+*   **Mentoria (Reuniões 5-6)**: O conteúdo das reuniões 5 e 6 ainda está em fase de planejamento. Atualmente, as reuniões 1, 2, 3 e 4 possuem fluxos completos de dados, estratégias de quitação, priorização de sonhos e relatórios.
 *   **Dashboard de Métricas**: O painel administrativo de conversão de leads e retenção de alunos ainda não foi implementado.
 
 ## 2. Interface e UX

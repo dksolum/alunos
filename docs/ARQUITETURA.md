@@ -46,20 +46,34 @@ Devido à necessidade de o Admin ler e escrever dados *em nome do usuário*, uti
 
 *   **`MentorshipCard`**: Exibe o status (Cadeado/Check) e controla abertura do modal.
 *   **`MeetingModal`**: Gerenciador de contexto da reunião.
-*   **`Meeting1Content` / `Meeting2Content` / `Meeting3Content`**: Orquestradores das reuniões. Gerenciam os passos:
+*   **`Meeting1Content` / `Meeting2Content` / `Meeting3Content` / `Meeting4Content`**: Orquestradores das reuniões. Gerenciam os passos:
     1.  `ReviewStage`: Tabela de Orçamento com suporte a herança de dados.
-    2.  `NonRecurringExpensesStage`: CRUD de gastos anuais.
-    3.  `DebtUpdateStage` (Reunião 2 e 3): Etapa para revisão de dívidas negociadas.
+    2.  `NonRecurringExpensesStage`: CRUD de gastos anuais com sincronização em cascata.
+    3.  `DebtUpdateStage` (Reunião 2, 3 e 4): Etapa para revisão de dívidas negociadas.
     4.  `DebtRepaymentPlanStage` (Reunião 3): Estratégia "Turning Point".
-    5.  `ReportsStage`: Central de Impressão.
-    6.  `TasksStage`: Checklist de finalização.
+    5.  `DebtStatusTrackingStage` (Reunião 4): Rastreamento de dívidas prioritárias.
+    6.  `DreamsGoalsStage` (Reunião 4): Planejamento de sonhos com Torneio de Prioridades.
+    7.  `ReportsStage`: Central de Impressão exclusiva por reunião.
+    8.  `TasksStage`: Checklist de finalização com suporte a tarefas customizadas via `customTasks`.
 
 ### Sincronização de Dados entre Reuniões
 Para garantir a continuidade do planejamento financeiro, implementamos um padrão de **Herança de Metas**:
 1.  O componente `ReviewStage` recebe `previousMeetingData`.
 2.  Um `useEffect` monitora mudanças nos dados da reunião anterior.
 3.  O valor "Definido" (Meta) da Reunião N torna-se o valor "Referência" (Base) da Reunião N+1.
-4.  Isso permite que o mentor e o aluno vejam a evolução e comparem o planejado vs realizado de forma contínua.
+4.  **Sincronização em Cascata (v2.4)**: Gastos não recorrentes agora seguem a ordem cronológica estrita (M1 → M2 → M3 → M4), garantindo que o mapeamento anual evolua sem perda de itens.
+
+### Padronização de Arquitetura (MeetingContent)
+A partir da versão 2.4, todos os componentes de reunião foram padronizados para o padrão **Controlled Component**:
+*   A gestão de estado local (useState) foi movida para o pai (`Dashboard.tsx`).
+*   Dados são passados via `meetingData`.
+*   Atualizações são emitidas via `onUpdateMeetingData`, garantindo persistência imediata e evitando lag na UI.
+
+### Módulo de Priorização de Sonhos (Torneio)
+A Reunião 4 introduz uma interface de comparação par-a-par para priorizar sonhos:
+1.  **Algoritmo**: Implementação de *Binary Insertion Sort* interativo.
+2.  **Otimização**: Reduz o número de interações necessárias ao realizar comparações lógicas em vez de ordenação manual.
+3.  **Persistência**: O array resultante é salvo no JSONB da reunião, mantendo a ordem definida pelo "torneio".
 
 ### Controle Administrativo de Acesso
 Adicionamos a funcionalidade de **Lock/Unlock Manual**:
@@ -71,7 +85,7 @@ Adicionamos a funcionalidade de **Lock/Unlock Manual**:
 Para resolver problemas de layout ao imprimir de dentro de um Modal, implementamos uma estratégia de **Portal CSS**:
 
 1.  **Ocultação Global**: `@media print { body * { visibility: hidden; } }` esconde toda a aplicação.
-2.  **Hoisting de Conteúdo**: O container a ser impresso recebe a classe `.print-content`.
+2.  **Hoisting de Conteúdo**: O container a ser impresso recebe a classe `.print-content` através de um Portal React que o renderiza na raiz do DOM.
     *   `visibility: visible`
     *   `position: absolute` (remove do fluxo do modal)
     *   `left: 0, top: 0, width: 100%` (ocupa a página inteira)
@@ -119,8 +133,7 @@ A `DebtUpdateStage` na Reunião 2 é responsável por consolidar o status das ne
 1.  **Sincronização**: Consome dados do `debt_mapping` global e do `checklistData` (Passo 11).
 2.  **Inclusão Manual**: Permite que o mentor adicione "Dívidas Descobertas" que não estavam no mapeamento original, garantindo que o plano financeiro seja completo.
 3.  **Persistência**: Salva um snapshot das dívidas dentro do objeto `data` da reunião para histórico e impressão.
-4.  **Impressão Otimizada**: Utiliza classes `print:` para forçar fundo branco, texto preto e remover backgrounds escuros dos inputs.
-5.  **Rastreamento de Origem (v2.3)**:
+4.  **Rastreamento de Origem (v2.3)**:
     *   **Propriedade `origin`**: Introduzida no `DebtUpdateItem` para controlar a proveniência (`mapping` | `meeting2` | `meeting3`).
     *   **Persistência**: O campo é salvo no JSONB da reunião e utilizado para renderizar badges coloridos (**Sky** para mapping, **Amber** para M2, **Purple** para M3).
 
@@ -135,18 +148,12 @@ A etapa `DebtRepaymentPlanStage` introduz a visão estratégica de longo prazo e
 1.  **Estratégia "Turning Point"**: Diferente das etapas anteriores, esta foca apenas em dívidas que **ainda não foram pagas** (amortizadas).
 2.  **Filtragem Automática**: O sistema identifica dívidas com `isPaid: false` em reuniões anteriores e as traz para o primeiro plano.
 3.  **Visualização de Futuro**: Calcula e exibe quando cada dívida terminará, permitindo que o mentor e o aluno visualize a liberação de fluxo de caixa para investimentos.
-4.  **Refinamentos de Margem (v2.2)**:
-    *   **Dívidas não pagas**: Comparação individual de cada proposta (SERASA vs Canal Oficial) contra o superávit mensal, removendo a visão de comprometimento total (que era ilógica).
-    *   **Dívidas pagas (Amortização)**: Feedback detalhado informando exatamente quanto sobra ("Sobra R$") ou falta ("Falta R$") para cobrir uma parcela extra, facilitando a decisão de aceleração.
-    *   **Rastreamento de Prazos**: Inclusão de campo de data (`predictedDate`) para o prazo de retirada do nome, permitindo o acompanhamento de metas de regularização.
-5.  **Persistência JSONB**: Todos os novos campos (`surplusValue`, `predictedDate`, `monthlyValue`, `installments`) são persistidos dinamicamente dentro do objeto `repaymentPlans` na tabela `mentorship_meetings`.
 
 ### Padronização e Estabilização de Sincronização
 Para evitar inconsistências e redundâncias, implementamos:
 1.  **Deduplicação por ID**: No processo de `fetchAndMergeDebts`, o sistema usa um `Set` de IDs já existentes para garantir que dívidas manuais ou sincronizadas não sejam duplicadas na interface.
 2.  **Herança de Referência Prioritária**: A Reunião 3 prioriza dados da Reunião 2 (`previousMeetingData`) para sincronização de Gastos Não Recorrentes, garantindo que o planejamento evolua linearmente.
 3.  **Feedback de Estado Transitório**: Botões de sincronização agora disparam estados de `loading`/`refreshing` com indicadores visuais (spinners e rótulos dinâmicos), melhorando a percepção de interatividade da aplicação.
-4.  **Sincronização Profunda (M3)**: O botão "Atualizar" na Reunião 3 foi refatorado para realizar um `fetch` direto do `mentorship_state` no Supabase, garantindo que mudanças manuais em dívidas ou no Checklist da Fase 2 sejam capturadas sem depender de caches de props.
 
 ### Regras de Negócio e Segurança
 *   **Acesso Administrativo**: Apenas Admins podem alterar a Fase do Checklist de um aluno através do Dashboard.

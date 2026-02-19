@@ -644,7 +644,33 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 currentUser={currentUser}
                                 financialData={financialData}
                                 checklistData={user.checklistData || {}}
-                                meeting={getMeeting(4)}
+                                meetingData={getMeeting(4).data}
+                                meetingStatus={getMeeting(4).status}
+                                onUpdateMeetingData={async (data) => {
+                                    const updatedMeetings = mentorshipState.meetings.map(m =>
+                                        m.meetingId === 4 ? { ...m, data } : m
+                                    );
+                                    if (!mentorshipState.meetings.find(m => m.meetingId === 4)) {
+                                        updatedMeetings.push({ ...getMeeting(4), data });
+                                    }
+                                    setMentorshipState(prev => ({ ...prev, meetings: updatedMeetings }));
+                                    await authService.saveMeetingData(user.id, 4, data);
+                                }}
+                                onUpdateFinancialData={async (data) => {
+                                    onUpdateFinancialData(data);
+                                    await authService.saveDiagnostic(user.id, data);
+                                }}
+                                onComplete={async () => {
+                                    await authService.updateMeetingStatus(user.id, 4, 'completed');
+                                    setSelectedMeeting(null);
+                                    const state = await authService.getMentorshipState(user.id);
+                                    setMentorshipState(state);
+                                }}
+                                onUnlock={async () => {
+                                    await authService.updateMeetingStatus(user.id, 4, 'unlocked');
+                                    const state = await authService.getMentorshipState(user.id);
+                                    setMentorshipState(state);
+                                }}
                             />
                         ) : (
                             <div className="flex flex-col items-center justify-center h-64 text-slate-500">

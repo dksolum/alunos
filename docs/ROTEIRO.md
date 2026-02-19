@@ -40,28 +40,24 @@ A migração para um backend real foi realizada para permitir sincronização e 
 - [x] **Relatórios Profissionais**: Layout de impressão limpo e cabeçalhos personalizados.
 - [x] **Checklist Destruidor de Sanhaço**: Guia de guerra passo-a-passo com barra de progresso.
 
-## ✅ Fase 5: Expansão (Concluído)
-- [x] **Módulos de Mentoria**: Reunião 1, 2 e 3 100% integradas.
-    - [x] Gestão de Gastos Não Recorrentes (Mapeamento Linear).
-    - [x] **Etapa "Plano de Quitação" (Novo)**: Estratégia Turning Point na Reunião 3.
-    - [x] Sincronização automática de metas e deduplicação de dívidas.
-    - [x] Sistema de Bloqueio/Desbloqueio (Lock/Unlock) para Admins.
-- [x] **Rastreamento de Origem (v2.3)**: Identificação visual de dívidas (Azul/Sky para Mapeamento, Laranja/Amber para M2, Roxo/Purple para M3).
+## ✅ Fase 5: Expansão & Consolidação (Concluído)
+- [x] **Módulos de Mentoria**: Reunião 1, 2, 3 e 4 100% integradas.
+    - [x] **Reunião 4**: Consolidação, Rastreamento de Dívida Prioritária e Planejamento de Sonhos.
+    - [x] **Torneio de Prioridades**: Algoritmo interativo para ordenação de sonhos/objetivos.
+    - [x] **Sincronização em Cascata**: Fluxo resiliente entre M1 → M2 → M3 → M4.
+    - [x] **Padronização de Arquitetura**: Migração de todas as reuniões para o padrão *controlled props*.
+    - [x] **Relatórios M4**: Impressão de 4 modalidades específicas.
 - [x] **Checklist v2.2 (Refinamento de Negociação & Estética)**:
     - [x] Integração bidirecional com Mapeamento de Dívidas.
     - [x] Lógica de fallback para parcelas não negociadas.
     - [x] **Card de Proposta de Valor Premium**: Overhaul estético e brilho de conquista.
     - [x] **Estabilidade**: Sincronização profunda (M3) e deduplicação resiliente.
-- [x] **Interatividade v1.0**: Edição direta de títulos e sincronização de status nos sub-passos do Plano de Quitação.
-- [x] **Otimização de Impressão**: Relatórios de Revisão, Gastos e Dívidas (Alto contraste).
+- [x] **Otimização de Impressão**: Relatórios de Revisão, Gastos, Dívidas, Plano e Sonhos (Alto contraste e PDF).
 - [x] **Fix: Persistência de Ficha Individual**: Salvamento e carregamento de `personal_info` 100% verificado.
-- [x] **Admin Status Refinement**: Logica condicional para exibir status correto no Dashboard.
 
 ## 🚀 Fase 6: Próximos Passos (Em Planejamento)
 - [ ] **Integrações Futuras**:
-    - [ ] WhatsApp API para lembretes.
-- [ ] **Próximas Reuniões**: Desenvolver Reuniões 4 a 6.
-- [ ] **Dashboard de Métricas**: Gráficos para o Admin.
-
-## 📥 Idea Inbox
-- **Histórico**: Permitir que o usuário salve "versões" do diagnóstico (ex: Janeiro, Fevereiro).
+    - [ ] WhatsApp API para lembretes automáticos.
+- [ ] **Próximas Reuniões**: Desenvolver Reuniões 5 a 6.
+- [ ] **Dashboard de Métricas**: Gráficos analíticos consolidados para o Admin.
+- [ ] **Idea Inbox**: Permitir que o usuário salve "versões" do diagnóstico (ex: Mensal).

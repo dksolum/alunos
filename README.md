@@ -18,16 +18,14 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
   - **Revisão Financeira**: Comparativo entre Orçado x Realizado do diagnóstico.
   - **Gastos Não Recorrentes**: Cadastro de despesas anuais/semestrais (IPVA, IPTU, etc.) com cálculo automático de reserva mensal.
   - **Sistema de Relatórios**: Impressão seletiva de etapas com cabeçalho personalizado.
-- **Reunião 2 (Ajuste de Rota)**:
-  - **Sincronização de Dados**: Herança automática do "Definido" da reunião anterior como "Referência" na atual.
-  - **Etapa "Atualização de Dívidas"**: Acompanhamento de negociações e inserção de novas dívidas.
-- **Reunião 3 (Plano de Quitação)**:
-  - **Estratégia "Turning Point"**: Foco em dívidas não pagas para liberação definitiva de fluxo de caixa.
-  - **Plano de Quitação**: Visualização estratégica da ordem de pagamento e impacto financeiro futuro.
-  - **Rastreamento de Origem**: Identificação visual de dívidas (Mapeamento vs Reunião 2 vs Reunião 3) com etiquetas coloridas.
-  - **Refinamento de Margens**: Comparativo individual de propostas (SERASA vs Canal Oficial) e feedback de amortização com indicação de sobra/falta de fluxo.
-  - **Interatividade no Plano**: Edição direta de títulos de sub-passos e sincronização de status ("Feito" / "Não se aplica").
-  - **Data de Previsão**: Rastreamento da data prevista para retirada do nome dos órgãos de proteção ao crédito.
+- **Reunião 4 (Consolidação e Futuro)**:
+  - **Status do Plano**: Rastreamento específico da dívida prioritária definida na Reunião 3.
+  - **Sonhos e Objetivos**: Sistema de priorização comparativa (Torneio) para organizar metas de vida.
+  - **Relatórios Customizados**: 4 modalidades de impressão (Revisão, Gastos, Dívidas, Sonhos).
+  - **Padronização de Tarefas**: Gestão de tarefas mandatórias para conclusão da mentoria.
+- **Sincronização em Cascata**:
+  - Fluxo contínuo de dados (M1 → M2 → M3 → M4) para Gastos Não Recorrentes e Itens de Revisão.
+  - Inteligência de Merge: Preserva itens locais enquanto herda a evolução das reuniões anteriores.
 - **Controle Administrativo**:
   - **Bloqueio/Desbloqueio (Lock/Unlock)**: Admins e Secretários podem liberar reuniões futuras ou bloquear reuniões em andamento.
 - **Persistência e Segurança**: Dados salvos via Supabase com trava de segurança (RLS) e acesso administrativo via RPCs.
@@ -39,6 +37,7 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
   - Layout otimizado para impressão (`@media print`) em todos os módulos.
   - Cabeçalhos personalizados com nome e contato do usuário.
   - Isolamento de conteúdo (remove menus e fundos escuros).
+  - **Print Portal**: Estratégia de hoisting de conteúdo para garantir fidelidade visual e suporte a múltiplas páginas.
 
 ### 3. Sistema de Usuários e Perfis (Supabase Auth)
 - **Autenticação Segura**: Integração completa com Supabase Auth e RLS (Row Level Security).
@@ -51,7 +50,6 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
 - **Ficha Individual (User Intake)**: Modal exclusivo para Admins/Secretários registrarem "Problema Principal", histórico do cliente e informações pessoais.
 - **Persistência de Ficha**: Lógica robusta de salvamento e recuperação de dados (Profissão, Dependentes, Faixa de Renda) via Supabase RPC.
 - **Gestão de Status Inteligente**: Dashboard reflete automaticamente o progresso do usuário e cargo (Admin vs standard).
-- **Ações Rápidas**: Editar perfil, alterar status, visualizar dashboard do cliente.
 
 ### 5. Checklist Destruidor de Sanhaço (v2.1 - Multi-Fase)
 - **Sistema de Fases**:
@@ -61,27 +59,6 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
   - **Sub-itens e Inputs**: Etapas com sub-tarefas e campos de texto condicionais.
   - **Negociação de Dívidas (Passo 11)**: Interface dedicada para listar dívidas do mapeamento, com campos para nova parcela, quantidade e juros.
   - **Comparação em Tempo Real**: Exibição da parcela original ("Parc. Atual") vs negociada, com indicadores coloridos de economia.
-  - **Tetos de Gastos**: Usuário define metas para categorias ofensoras (ex: "Mercado", "Lazer").
-- **Card Proposta de Valor da Consultoria (Premium)**:
-  - **Estética Positiva**: Substituição de tons de alerta (vermelho) por **Índigo e Azul** para promover calma e foco em resultados.
-  - **Destaques de Realização**: Brilho verde pulsante (glow) e texto riscado (strikethrough) em valores reduzidos nos cards de **Dívidas** e **Custo de Vida**.
-  - **Impacto na Vida**: Exibição da porcentagem exata de redução nas parcelas mensais de dívidas.
-  - **Persistência Inteligente**: Se uma dívida não for negociada, o sistema mantém e soma o valor original no cenário "Depois".
-  - **Gestão de Dívidas Avançada (Reunião 3)**:
-  - **Sincronização Inteligente**: Deduplicação por ID e feedback visual (loading state) na sincronização com reuniões anteriores.
-  - **Estratégia de Quitação**: Filtro automático de dívidas pendentes para priorização de pagamento.
-- **Estados Visuais**:
-  - **Pendente (Cinza)**: Não iniciado.
-  - **Em Progresso (Amarelo/Azul)**: Sub-itens marcados ou texto preenchido.
-  - **Concluído (Verde)**: Etapa finalizada.
-- **Gestão de Dívidas e Estética**:
-  - **Origem Visual**: Etiquetas coloridas para diferenciar a origem da dívida (**Azul** para Mapeamento, **Laranja** para Reunião 2, **Roxo** para Reunião 3).
-  - **Suporte a Juros**: Inclusão de taxa de juros no cadastro de novas dívidas.
-  - **Formatação Financeira**: Padronização de prefixos (`R$`) e sufixos (`%`) em toda a interface de mentoria.
-- **Controle de Acesso Hierárquico**:
-  - **Admins** selecionam a fase do aluno via Dashboard.
-  - **Admins/Secretários**: Podem editar qualquer checklist.
-  - **Usuários**: Modo "Somente Leitura" (podem expandir para ver detalhes).
 
 ### 6. Painel Administrativo Otimizado
 - **Hierarquia Visual**: Lista de usuários ordenada por cargo (Admin > Secretário > Usuário) e data de criação.
@@ -133,9 +110,10 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 
 ## 📝 Histórico de Atualizações Recentes
 
-- **UI**: Cores distintas para etiquetas de origem de dívida (Sky/Amber/Purple).
-- **Feat**: Suporte a taxa de juros na criação de novas dívidas (M2 e M3).
-- **DX**: Refinamento de tipos e interfaces para rastreamento de `origin` em `DebtUpdateItem`.
-- **UI**: Padronização de símbolos `R$` e `%` na visualização de dívidas.
+- **Feat**: Implementação completa da **Reunião 4** com Torneio de Priorização de Sonhos e Relatórios Customizados.
+- **Fix**: Padronização da arquitetura de reuniões (M1-M4) para consistência de estado e persistência.
+- **Fix**: Correção crítica no sistema de tarefas da Reunião 4 e sincronização de status de dívidas (`isPaid`).
+- **Feat**: Sincronização em cascata de Gastos Não Recorrentes entre todas as reuniões.
 - **Feat**: Implementação completa da **Reunião 3** (Plano de Quitação) com estratégia "Turning Point".
 - **Fix**: Persistência robusta da Ficha Individual (User Intake) e refinamento de status no Dashboard Admin.
+- **UI**: Rastreamento visual de origem de dívidas com etiquetas coloridas (Mapeamento/M2/M3).

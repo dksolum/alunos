@@ -7,7 +7,7 @@ import { DebtUpdateStageM4 } from './DebtUpdateStageM4';
 import { DebtStatusTrackingStage } from './DebtStatusTrackingStage';
 import { DreamsGoalsStage } from './DreamsGoalsStage';
 import { NonRecurringExpensesStage } from '../Meeting1/NonRecurringExpensesStage';
-import { ReportsStage } from '../Meeting1/ReportsStage';
+import { ReportsStageM4 } from './ReportsStageM4';
 import { TasksStage } from '../Meeting1/TasksStage';
 import { PrintPortal } from '../../PrintPortal';
 import { PrintHeader } from '../Meeting1/PrintHeader';
@@ -17,7 +17,12 @@ interface Meeting4ContentProps {
     currentUser: { id: string; role: 'ADMIN' | 'USER' };
     financialData: FinancialData;
     checklistData: ChecklistData;
-    meeting: MentorshipMeeting;
+    meetingData: any;
+    meetingStatus: 'locked' | 'unlocked' | 'completed';
+    onUpdateMeetingData: (data: any) => void;
+    onUpdateFinancialData: (data: any) => void;
+    onComplete: () => void;
+    onUnlock?: () => void;
 }
 
 const STEPS = [
@@ -35,10 +40,14 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
     currentUser,
     financialData,
     checklistData,
-    meeting
+    meetingData,
+    meetingStatus,
+    onUpdateMeetingData,
+    onUpdateFinancialData,
+    onComplete,
+    onUnlock
 }) => {
     const [activeStep, setActiveStep] = useState(0);
-    const [meetingData, setMeetingData] = useState<any>(meeting.data || {});
     const [previousMeetingData, setPreviousMeetingData] = useState<any>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [printMode, setPrintMode] = useState<'review' | 'plan' | 'dreams' | null>(null);
@@ -90,14 +99,13 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
 
     const handleUpdateMeetingData = async (newData: any) => {
         if (isUser) return;
-        setMeetingData(newData);
         setIsSaving(true);
         try {
-            await authService.saveMeetingData(userId, 4, newData);
+            await onUpdateMeetingData(newData);
         } catch (error) {
             console.error('Error updating meeting 4 data:', error);
         } finally {
-            setIsSaving(false);
+            setTimeout(() => setIsSaving(false), 500);
         }
     };
 
@@ -136,10 +144,11 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
 
     const handleUpdateFinancialData = async (newData: FinancialData) => {
         if (isUser) return;
+        await onUpdateFinancialData(newData);
     };
 
-    const handlePrint = (mode: 'review' | 'plan' | 'dreams' | 'expenses', data?: any) => {
-        setPrintMode(mode === 'expenses' ? 'review' : mode);
+    const handlePrint = (mode: 'review' | 'expenses' | 'debts' | 'dreams' | 'status', data?: any) => {
+        setPrintMode(mode);
         setTimeout(() => {
             window.print();
             setPrintMode(null);
@@ -241,35 +250,31 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                     {/* REPORTS STAGE */}
                     {activeStep === 5 && (
                         <div>
-                            <ReportsStage
-                                meetingData={meetingData}
-                                onUpdateMeetingData={handleUpdateMeetingData}
-                                readOnly={isUser}
+                            <ReportsStageM4
+                                onPrintReview={() => handlePrint('review')}
+                                onPrintExpenses={() => handlePrint('expenses')}
+                                onPrintDebts={() => handlePrint('debts')}
+                                onPrintStatus={() => handlePrint('status')}
+                                onPrintDreams={() => handlePrint('dreams')}
                             />
-                            <div className="mt-4 flex justify-center">
-                                <button
-                                    onClick={() => handlePrint('plan')}
-                                    className="px-6 py-3 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-xl font-bold uppercase text-xs hover:bg-purple-500 hover:text-white transition-all"
-                                >
-                                    Imprimir Relatório de Progresso
-                                </button>
-                            </div>
                         </div>
                     )}
 
                     {/* TASKS STAGE */}
                     {activeStep === 6 && (
                         <TasksStage
-                            meetingData={{
-                                ...meetingData,
-                                tasks: meetingData.tasks || [
-                                    { id: '1', description: 'Manter o acompanhamento mensal de gastos', completed: false },
-                                    { id: '2', description: 'Executar o plano de quitação de dívidas', completed: false },
-                                    { id: '3', description: 'Revisar metas de sonhos trimestralmente', completed: false }
-                                ]
-                            }}
+                            meetingData={meetingData}
+                            meetingStatus={meetingStatus}
                             onUpdateMeetingData={handleUpdateMeetingData}
+                            onComplete={onComplete}
+                            onUnlock={onUnlock}
                             readOnly={isUser}
+                            customTasks={[
+                                { id: 'm4_task1', label: 'Continuar registrando entradas, saídas e transferências' },
+                                { id: 'm4_task2', label: 'Dar continuidade ao plano de quitação de dívida definido na reunião 3' },
+                                { id: 'm4_task3', label: 'Manter foco na reserva quebra galho para evitar novos imprevistos' },
+                                { id: 'm4_task4', label: 'Criar uma carteira com o nome da primeira meta em alguma instituição bancária, guardando o que sobrar no mês nela. (caso a reserva quebra galho não esteja em R$ 500,00 , não guardar todo o valor que sobrar aqui e dividir o saldo com ela)' }
+                            ]}
                         />
                     )}
                 </div>
@@ -292,10 +297,74 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                             onUpdateMeetingData={() => { }}
                             onUpdateFinancialData={() => { }}
                             readOnly={true}
+                            feedbackQuestion="Passados estes meses de mentoria, como você avalia sua evolução financeira e mental em relação ao dinheiro?"
                         />
                     </div>
                 )}
-                {/* Outros modos de impressão podem ser adicionados aqui */}
+                {printMode === 'expenses' && (
+                    <div className="print-report">
+                        <PrintHeader
+                            title="Gastos Não Recorrentes - Mentoria M4"
+                            userName={currentUser.id}
+                            date={new Date().toLocaleDateString('pt-BR')}
+                        />
+                        <NonRecurringExpensesStage
+                            userId={userId}
+                            items={meetingData.nonRecurringExpenses || []}
+                            onUpdateItems={() => { }}
+                            onReload={() => { }}
+                            onPrint={() => { }}
+                            currentMeeting="M4"
+                            readOnly={true}
+                        />
+                    </div>
+                )}
+                {printMode === 'status' && (
+                    <div className="print-report">
+                        <PrintHeader
+                            title="Status do Plano - Mentoria M4"
+                            userName={currentUser.id}
+                            date={new Date().toLocaleDateString('pt-BR')}
+                        />
+                        <DebtStatusTrackingStage
+                            meetingData={meetingData}
+                            previousMeetingData={previousMeetingData}
+                            onUpdateMeetingData={() => { }}
+                            readOnly={true}
+                        />
+                    </div>
+                )}
+                {printMode === 'debts' && (
+                    <div className="print-report">
+                        <PrintHeader
+                            title="Atualização de Dívidas - Mentoria M4"
+                            userName={currentUser.id}
+                            date={new Date().toLocaleDateString('pt-BR')}
+                        />
+                        <DebtUpdateStageM4
+                            userId={userId}
+                            checklistData={checklistData}
+                            meetingData={meetingData}
+                            previousMeetingData={previousMeetingData}
+                            onUpdateMeetingData={() => { }}
+                            readOnly={true}
+                        />
+                    </div>
+                )}
+                {printMode === 'dreams' && (
+                    <div className="print-report">
+                        <PrintHeader
+                            title="Sonhos e Objetivos - Mentoria M4"
+                            userName={currentUser.id}
+                            date={new Date().toLocaleDateString('pt-BR')}
+                        />
+                        <DreamsGoalsStage
+                            meetingData={meetingData}
+                            onUpdateMeetingData={() => { }}
+                            readOnly={true}
+                        />
+                    </div>
+                )}
             </PrintPortal>
         </div>
     );
