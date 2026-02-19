@@ -118,7 +118,7 @@ export const DebtUpdateStageM4: React.FC<DebtUpdateStageM4Props> = ({
                     newInterest: useLocalM4 ? (existingM4?.newInterest ?? (d.newInterest || d.originalInterest || '0%')) : (d.newInterest || d.originalInterest || '0%'),
                     isNegotiated: d.isNegotiated, // Inherit from M3
                     isManual: false,
-                    isPaid: useLocalM4 ? (existingM4?.isPaid !== undefined ? existingM4.isPaid : true) : true,
+                    isPaid: useLocalM4 ? (existingM4?.isPaid !== undefined ? existingM4.isPaid : (d.isPaid !== undefined ? d.isPaid : true)) : (d.isPaid !== undefined ? d.isPaid : true),
                     amortizationConfirmed: useLocalM4 ? (existingM4?.amortizationConfirmed || false) : false,
                     origin: d.origin || 'mapping',
                     createdAt: d.createdAt || now,

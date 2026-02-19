@@ -128,7 +128,7 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                     newInterest: useLocalM3 ? (existingM3?.newInterest ?? (d.newInterest || d.originalInterest || '0%')) : (d.newInterest || d.originalInterest || '0%'),
                     isNegotiated,
                     isManual: false, // Everything from the past is non-manual in M3
-                    isPaid: useLocalM3 ? (existingM3?.isPaid !== undefined ? existingM3.isPaid : true) : true,
+                    isPaid: useLocalM3 ? (existingM3?.isPaid !== undefined ? existingM3.isPaid : (d.isPaid !== undefined ? d.isPaid : true)) : (d.isPaid !== undefined ? d.isPaid : true),
                     amortizationConfirmed: useLocalM3 ? (existingM3?.amortizationConfirmed || false) : false,
                     origin: d.origin || 'mapping', // Preserve origin from M2
                     createdAt: d.createdAt || now,

@@ -110,22 +110,24 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
 
     const handleReloadExpenses = async () => {
         try {
-            // Priority: Meeting 3 data
-            if (previousMeetingData?.nonRecurringExpenses) {
-                handleUpdateMeetingData({
-                    ...meetingData,
-                    nonRecurringExpenses: previousMeetingData.nonRecurringExpenses
-                });
-                return;
-            }
+            // Sincronização em Cascata: Puxa da Reunião 3 (previousMeetingData)
+            const sourceExpenses = previousMeetingData?.nonRecurringExpenses || [];
+            const currentExpenses = meetingData.nonRecurringExpenses || [];
 
-            // Fallback: Global state
-            const state = await authService.getMentorshipState(userId);
-            const globalExpenses = state.nonRecurringExpenses || [];
+            // 1. Identificar itens locais da M4
+            const localItems = currentExpenses.filter((localItem: any) =>
+                !sourceExpenses.some((sourceItem: any) => sourceItem.id === localItem.id)
+            );
+
+            // 2. Merge: Itens da M3 + Itens Locais da M4
+            const mergedExpenses = [...sourceExpenses, ...localItems];
+
             handleUpdateMeetingData({
                 ...meetingData,
-                nonRecurringExpenses: globalExpenses
+                nonRecurringExpenses: mergedExpenses
             });
+
+            alert("Gastos sincronizados com a Reunião 3 com sucesso!");
         } catch (error) {
             console.error("Error reloading expenses:", error);
             alert("Erro ao sincronizar gastos. Tente novamente.");
@@ -200,7 +202,8 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                             items={meetingData.nonRecurringExpenses || []}
                             onUpdateItems={handleUpdateExpenses}
                             onReload={handleReloadExpenses}
-                            syncLabel="Reunião 3"
+                            currentMeeting="M4"
+                            syncLabel="Sincronizar com Reunião 3"
                         />
                     )}
 

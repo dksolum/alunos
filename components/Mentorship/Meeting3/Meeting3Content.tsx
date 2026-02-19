@@ -72,22 +72,24 @@ export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
 
     const handleReloadExpenses = async () => {
         try {
-            // Priority: Meeting 2 data (previousMeetingData)
-            if (previousMeetingData?.nonRecurringExpenses) {
-                onUpdateMeetingData({
-                    ...meetingData,
-                    nonRecurringExpenses: previousMeetingData.nonRecurringExpenses
-                });
-                return;
-            }
+            // Sincronização em Cascata: Puxa da Reunião 2 (previousMeetingData)
+            const sourceExpenses = previousMeetingData?.nonRecurringExpenses || [];
+            const currentExpenses = meetingData.nonRecurringExpenses || [];
 
-            // Fallback: Global state (usually Meeting 1)
-            const state = await authService.getMentorshipState(userId);
-            const globalExpenses = state.nonRecurringExpenses || [];
+            // 1. Identify items currently in M3 that are NOT in M2 (Source) - Local items
+            const localItems = currentExpenses.filter((localItem: NonRecurringExpenseItem) =>
+                !sourceExpenses.some((sourceItem: NonRecurringExpenseItem) => sourceItem.id === localItem.id)
+            );
+
+            // 2. Merge: Items from M2 + Preserved Local Items
+            const mergedExpenses = [...sourceExpenses, ...localItems];
+
             onUpdateMeetingData({
                 ...meetingData,
-                nonRecurringExpenses: globalExpenses
+                nonRecurringExpenses: mergedExpenses
             });
+
+            alert("Gastos sincronizados com a Reunião 2 com sucesso!");
         } catch (error) {
             console.error("Error reloading expenses:", error);
             alert("Erro ao sincronizar gastos. Tente novamente.");
@@ -179,7 +181,8 @@ export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
                             items={meetingData.nonRecurringExpenses || []}
                             onUpdateItems={handleUpdateExpenses}
                             onReload={handleReloadExpenses}
-                            syncLabel="Reunião 2"
+                            currentMeeting="M3"
+                            syncLabel="Sincronizar com Reunião 2"
                         />
                     )}
 

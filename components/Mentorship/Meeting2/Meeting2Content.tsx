@@ -73,11 +73,24 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
     const handleReloadExpenses = async () => {
         try {
             const state = await authService.getMentorshipState(userId);
-            const globalExpenses = state.nonRecurringExpenses || [];
+            const globalExpenses = state.nonRecurringExpenses || []; // Itens da Reunião 1 (Source of Truth)
+            const currentExpenses = meetingData.nonRecurringExpenses || [];
+
+            // 1. Identify items currently in M2 that are NOT in M1 (Local items)
+            // We keep items that do not share an ID with any item in globalExpenses
+            const localItems = currentExpenses.filter((localItem: NonRecurringExpenseItem) =>
+                !globalExpenses.some(globalItem => globalItem.id === localItem.id)
+            );
+
+            // 2. Merge: Attributes from M1 (global) + Preserved Local Items
+            const mergedExpenses = [...globalExpenses, ...localItems];
+
             onUpdateMeetingData({
                 ...meetingData,
-                nonRecurringExpenses: globalExpenses
+                nonRecurringExpenses: mergedExpenses
             });
+
+            alert("Gastos sincronizados com sucesso! Itens da Reunião 1 foram atualizados e itens locais foram preservados.");
         } catch (error) {
             console.error("Error reloading expenses:", error);
             alert("Erro ao sincronizar gastos. Tente novamente.");
@@ -168,6 +181,8 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
                             items={meetingData.nonRecurringExpenses || []}
                             onUpdateItems={handleUpdateExpenses}
                             onReload={handleReloadExpenses}
+                            currentMeeting="M2"
+                            syncLabel="Sincronizar com Reunião 1"
                         />
                     </div>
 

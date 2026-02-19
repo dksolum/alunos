@@ -125,6 +125,7 @@ export const Meeting1Content: React.FC<Meeting1ContentProps> = ({
                             userId={userId}
                             onPrint={() => handlePrint('expenses')}
                             showDetails={false}
+                            currentMeeting="M1"
                         />
                     </div>
 

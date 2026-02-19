@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, CheckCircle2, Clock, AlertCircle, ListTodo, Calendar, MessageSquare, ChevronDown, CheckCircle } from 'lucide-react';
+import { Save, CheckCircle2, Clock, AlertCircle, ListTodo, Calendar, MessageSquare, ChevronDown, CheckCircle, RefreshCw } from 'lucide-react';
 
 interface DebtPriorityStatus {
     id: string;
@@ -28,19 +28,82 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
 
     useEffect(() => {
         // Initialize from Meeting 3 Repayment Plan
-        if ((!meetingData?.debtPriorityStatus || meetingData.debtPriorityStatus.length === 0) && previousMeetingData?.selectedDebts) {
-            const initialItems: DebtPriorityStatus[] = previousMeetingData.selectedDebts.map((d: any) => ({
-                id: d.id,
-                name: d.name,
-                creditor: d.creditor,
-                status: 'Não Iniciado',
-                observation: '',
-                date: new Date().toISOString().split('T')[0]
-            }));
-            setStatusItems(initialItems);
-            onUpdateMeetingData({ ...meetingData, debtPriorityStatus: initialItems });
+        const hasExistingStatus = meetingData?.debtPriorityStatus && meetingData.debtPriorityStatus.length > 0;
+
+        if (!hasExistingStatus && previousMeetingData) {
+            let debtsToTrack: any[] = [];
+
+            // Case A: M3 saves 'priorityDebtId' (Current Logic)
+            if (previousMeetingData.priorityDebtId && previousMeetingData.debtUpdates) {
+                const priorityDebt = previousMeetingData.debtUpdates.find((d: any) => d.id === previousMeetingData.priorityDebtId);
+                if (priorityDebt) {
+                    debtsToTrack = [priorityDebt];
+                }
+            }
+            // Case B: Legacy fallback or if 'selectedDebts' is used
+            else if (previousMeetingData.selectedDebts) {
+                debtsToTrack = previousMeetingData.selectedDebts;
+            }
+
+            if (debtsToTrack.length > 0) {
+                const initialItems: DebtPriorityStatus[] = debtsToTrack.map((d: any) => ({
+                    id: d.id,
+                    name: d.name,
+                    creditor: d.creditor,
+                    status: 'Não Iniciado',
+                    observation: '',
+                    date: new Date().toISOString().split('T')[0]
+                }));
+                setStatusItems(initialItems);
+                onUpdateMeetingData({ ...meetingData, debtPriorityStatus: initialItems });
+            }
         }
     }, [previousMeetingData]);
+
+    const handleRefresh = () => {
+        if (!previousMeetingData?.priorityDebtId || !previousMeetingData?.debtUpdates) {
+            alert("Não há dados da Reunião 3 para sincronizar.");
+            return;
+        }
+
+        const priorityId = previousMeetingData.priorityDebtId;
+        const sourceDebt = previousMeetingData.debtUpdates.find((d: any) => d.id === priorityId);
+
+        if (!sourceDebt) {
+            alert("Dívida prioritária não encontrada na Reunião 3.");
+            return;
+        }
+
+        // Check against current items
+        // We assume single priority debt for now as per M3 logic
+        const currentItem = statusItems.find(i => i.id === sourceDebt.id);
+
+        if (currentItem) {
+            // Same debt, update details only (keep status/obs)
+            const updatedItems = statusItems.map(i =>
+                i.id === sourceDebt.id
+                    ? { ...i, name: sourceDebt.name, creditor: sourceDebt.creditor }
+                    : i
+            );
+            setStatusItems(updatedItems);
+            onUpdateMeetingData({ ...meetingData, debtPriorityStatus: updatedItems });
+            alert("Dados da dívida atualizados com sucesso!");
+        } else {
+            // Different debt
+            if (confirm("Deseja substituir o plano atual pela nova dívida selecionada na Reunião 3? O histórico da dívida atual será perdido.")) {
+                const newItem: DebtPriorityStatus = {
+                    id: sourceDebt.id,
+                    name: sourceDebt.name,
+                    creditor: sourceDebt.creditor,
+                    status: 'Não Iniciado',
+                    observation: '',
+                    date: new Date().toISOString().split('T')[0]
+                };
+                setStatusItems([newItem]);
+                onUpdateMeetingData({ ...meetingData, debtPriorityStatus: [newItem] });
+            }
+        }
+    };
 
     const handleUpdateStatus = (id: string, field: keyof DebtPriorityStatus, value: any) => {
         if (readOnly) return;
@@ -76,6 +139,16 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
                         Acompanhe o status das dívidas selecionadas para prioridade na Reunião 3
                     </p>
                 </div>
+                {!readOnly && (
+                    <button
+                        onClick={handleRefresh}
+                        className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-all text-[10px] font-bold uppercase text-slate-300 hover:text-white"
+                        title="Sincronizar com a dívida selecionada na Reunião 3"
+                    >
+                        <RefreshCw size={14} />
+                        Atualizar Plano
+                    </button>
+                )}
             </div>
 
             {statusItems.length === 0 ? (
@@ -83,6 +156,15 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
                     <AlertCircle className="w-12 h-12 text-slate-700 mx-auto mb-4" />
                     <p className="text-slate-400 font-medium">Nenhum plano de quitação herdado da Reunião 3.</p>
                     <p className="text-xs text-slate-600 mt-2 uppercase font-bold">Verifique se as dívidas foram selecionadas na etapa "Plano de Quitação" da reunião anterior.</p>
+                    {!readOnly && (
+                        <button
+                            onClick={handleRefresh}
+                            className="mt-4 flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500 hover:text-white rounded-lg transition-all text-xs font-bold uppercase mx-auto"
+                        >
+                            <RefreshCw size={14} />
+                            Tentar Sincronizar Agora
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="grid gap-4">
@@ -165,3 +247,4 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
         </div>
     );
 };
+

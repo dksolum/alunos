@@ -13,6 +13,7 @@ interface NonRecurringExpensesStageProps {
     onUpdateItems?: (items: NonRecurringExpenseItem[]) => void;
     onReload?: () => void;
     syncLabel?: string;
+    currentMeeting?: 'M1' | 'M2' | 'M3' | 'M4';
 }
 
 export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps> = ({
@@ -23,7 +24,8 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
     items: controlledItems,
     onUpdateItems,
     onReload,
-    syncLabel
+    syncLabel,
+    currentMeeting = 'M1'
 }) => {
     const [internalItems, setInternalItems] = useState<NonRecurringExpenseItem[]>(initialItems || []);
     const [loading, setLoading] = useState(!initialItems && !controlledItems);
@@ -109,6 +111,7 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                         ...newItemData,
                         id: crypto.randomUUID(),
                         userId,
+                        origin: currentMeeting,
                         createdAt: new Date().toISOString()
                     } as NonRecurringExpenseItem);
                 }
@@ -117,6 +120,7 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                 // Global mode (Meeting 1)
                 await authService.saveNonRecurringExpense(userId, {
                     id: editingId || undefined,
+                    origin: currentMeeting as 'M1' | 'M2' | 'M3' | 'M4',
                     ...newItemData
                 });
                 await fetchItems();
@@ -285,6 +289,26 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                                     <p className="text-[10px] text-slate-500 print:text-gray-500 mt-0.5 uppercase tracking-wider">{item.category}</p>
                                 </div>
                             </div>
+
+                            {/* Origin Tag */}
+                            <div className="shrink-0 print:hidden">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${item.origin === 'M1'
+                                    ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                    : item.origin === 'M2'
+                                        ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                                        : item.origin === 'M3'
+                                            ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20'
+                                            : item.origin === 'M4'
+                                                ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
+                                                : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
+                                    }`}>
+                                    {item.origin === 'M1' ? 'Reunião 1' :
+                                        item.origin === 'M2' ? 'Reunião 2' :
+                                            item.origin === 'M3' ? 'Reunião 3' :
+                                                item.origin === 'M4' ? 'Reunião 4' : 'Reunião 1'}
+                                </span>
+                            </div>
+
                             <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
                                 <div className="text-right shrink-0">
                                     <span className="text-[10px] text-slate-500 print:text-gray-500">{item.frequency}x de</span>
