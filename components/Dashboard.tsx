@@ -29,6 +29,7 @@ import { Meeting1Content } from './Mentorship/Meeting1/Meeting1Content';
 import { Meeting2Content } from './Mentorship/Meeting2/Meeting2Content';
 import { Meeting3Content } from './Mentorship/Meeting3/Meeting3Content';
 import { Meeting4Content } from './Mentorship/Meeting4/Meeting4Content';
+import { Meeting5Content } from './Mentorship/Meeting5/Meeting5Content';
 import { ConsultingValueCard } from './ConsultingValueCard';
 
 interface DashboardProps {
@@ -668,6 +669,41 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 }}
                                 onUnlock={async () => {
                                     await authService.updateMeetingStatus(user.id, 4, 'unlocked');
+                                    const state = await authService.getMentorshipState(user.id);
+                                    setMentorshipState(state);
+                                }}
+                            />
+                        ) : selectedMeeting === 5 ? (
+                            <Meeting5Content
+                                userId={user.id}
+                                currentUser={currentUser}
+                                financialData={financialData}
+                                checklistData={user.checklistData || {}}
+                                meetingData={getMeeting(5).data}
+                                previousMeetingData={getMeeting(4).data}
+                                meetingStatus={getMeeting(5).status}
+                                onUpdateMeetingData={async (data) => {
+                                    const updatedMeetings = mentorshipState.meetings.map(m =>
+                                        m.meetingId === 5 ? { ...m, data } : m
+                                    );
+                                    if (!mentorshipState.meetings.find(m => m.meetingId === 5)) {
+                                        updatedMeetings.push({ ...getMeeting(5), data });
+                                    }
+                                    setMentorshipState(prev => ({ ...prev, meetings: updatedMeetings }));
+                                    await authService.saveMeetingData(user.id, 5, data);
+                                }}
+                                onUpdateFinancialData={async (data) => {
+                                    onUpdateFinancialData(data);
+                                    await authService.saveDiagnostic(user.id, data);
+                                }}
+                                onComplete={async () => {
+                                    await authService.updateMeetingStatus(user.id, 5, 'completed');
+                                    setSelectedMeeting(null);
+                                    const state = await authService.getMentorshipState(user.id);
+                                    setMentorshipState(state);
+                                }}
+                                onUnlock={async () => {
+                                    await authService.updateMeetingStatus(user.id, 5, 'unlocked');
                                     const state = await authService.getMentorshipState(user.id);
                                     setMentorshipState(state);
                                 }}
