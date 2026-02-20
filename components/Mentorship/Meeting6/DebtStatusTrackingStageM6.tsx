@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, CheckCircle2, Clock, AlertCircle, ListTodo, Calendar, MessageSquare, ChevronDown, CheckCircle, RefreshCw } from 'lucide-react';
+import { Save, CheckCircle2, Clock, AlertCircle, ListTodo, Calendar, MessageSquare, ChevronDown, CheckCircle, RefreshCw, History } from 'lucide-react';
 
 interface DebtPriorityStatus {
     id: string;
@@ -8,18 +8,23 @@ interface DebtPriorityStatus {
     status: 'Não Iniciado' | 'Em Andamento' | 'Finalizado';
     observation: string;
     date: string;
+    previousObservation?: string; // Observação da Reunião 5
 }
 
-interface DebtStatusTrackingStageProps {
+interface DebtStatusTrackingStageM6Props {
     meetingData: any;
-    previousMeetingData: any;
+    m5Data: any;
+    m4Data: any;
+    m3Data: any;
     onUpdateMeetingData: (data: any) => void;
     readOnly?: boolean;
 }
 
-export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = ({
+export const DebtStatusTrackingStageM6: React.FC<DebtStatusTrackingStageM6Props> = ({
     meetingData,
-    previousMeetingData,
+    m5Data,
+    m4Data,
+    m3Data,
     onUpdateMeetingData,
     readOnly = false
 }) => {
@@ -27,76 +32,102 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
     const [showSuccess, setShowSuccess] = useState(false);
 
     useEffect(() => {
-        // Initialize from Meeting 3 Repayment Plan
+        // Initialize from Meeting 3 (Source of Truth for priority debt) 
+        // and Meeting 5 (Source of observations)
         const hasExistingStatus = meetingData?.debtPriorityStatus && meetingData.debtPriorityStatus.length > 0;
 
-        if (!hasExistingStatus && previousMeetingData) {
+        if (!hasExistingStatus && m3Data) {
             let debtsToTrack: any[] = [];
 
-            // Case A: M3 saves 'priorityDebtId' (Current Logic)
-            if (previousMeetingData.priorityDebtId && previousMeetingData.debtUpdates) {
-                const priorityDebt = previousMeetingData.debtUpdates.find((d: any) => d.id === previousMeetingData.priorityDebtId);
+            // Case A: M3 has 'priorityDebtId'
+            if (m3Data.priorityDebtId && m3Data.debtUpdates) {
+                const priorityDebt = m3Data.debtUpdates.find((d: any) => d.id === m3Data.priorityDebtId);
                 if (priorityDebt) {
                     debtsToTrack = [priorityDebt];
                 }
             }
-            // Case B: Legacy fallback or if 'selectedDebts' is used
-            else if (previousMeetingData.selectedDebts) {
-                debtsToTrack = previousMeetingData.selectedDebts;
+            // Case B: Fallback
+            else if (m3Data.selectedDebts) {
+                debtsToTrack = m3Data.selectedDebts;
             }
 
             if (debtsToTrack.length > 0) {
-                const initialItems: DebtPriorityStatus[] = debtsToTrack.map((d: any) => ({
-                    id: d.id,
-                    name: d.name,
-                    creditor: d.creditor,
-                    status: 'Não Iniciado',
-                    observation: '',
-                    date: new Date().toISOString().split('T')[0]
-                }));
+                const initialItems: DebtPriorityStatus[] = debtsToTrack.map((d: any) => {
+                    // Try to find previous observation and status from M5 (or M4 as fallback)
+                    const m5Status = m5Data?.debtPriorityStatus?.find((ps: any) => ps.id === d.id);
+                    const m4Status = m4Data?.debtPriorityStatus?.find((ps: any) => ps.id === d.id);
+                    const prevStatus = m5Status || m4Status;
+
+                    // Combina histórico da M4 e M5 para M6
+                    const m4Previous = m4Status?.observation ? `R4: ${m4Status.observation}` : '';
+                    const m5Previous = m5Status?.observation ? `R5: ${m5Status.observation}` : '';
+                    let combinedHistory = [m4Previous, m5Previous].filter(Boolean).join('\n\n');
+
+                    // Fallback
+                    if (!combinedHistory && (m5Status?.previousObservation || m4Status?.previousObservation)) {
+                        combinedHistory = m5Status?.previousObservation || m4Status?.previousObservation || '';
+                    }
+
+                    return {
+                        id: d.id,
+                        name: d.name,
+                        creditor: d.creditor,
+                        status: prevStatus?.status || 'Não Iniciado',
+                        observation: '', // New observation for M6
+                        previousObservation: combinedHistory, // History M4 + M5
+                        date: new Date().toISOString().split('T')[0]
+                    };
+                });
                 setStatusItems(initialItems);
                 onUpdateMeetingData((prev: any) => ({ ...prev, debtPriorityStatus: initialItems }));
             }
         }
-    }, [previousMeetingData]);
+    }, [m3Data, m4Data, m5Data]);
 
     const handleRefresh = () => {
-        if (!previousMeetingData?.priorityDebtId || !previousMeetingData?.debtUpdates) {
-            alert("Não há dados da Reunião 3 para sincronizar.");
+        if (!m3Data?.priorityDebtId || !m3Data?.debtUpdates) {
+            alert("Não há dados da Reunião 3 (Dívida Alvo) para sincronizar.");
             return;
         }
 
-        const priorityId = previousMeetingData.priorityDebtId;
-        const sourceDebt = previousMeetingData.debtUpdates.find((d: any) => d.id === priorityId);
+        const priorityId = m3Data.priorityDebtId;
+        const sourceDebt = m3Data.debtUpdates.find((d: any) => d.id === priorityId);
 
         if (!sourceDebt) {
             alert("Dívida prioritária não encontrada na Reunião 3.");
             return;
         }
 
-        // Check against current items
-        // We assume single priority debt for now as per M3 logic
+        const m5Status = m5Data?.debtPriorityStatus?.find((ps: any) => ps.id === sourceDebt.id);
+        const m4Status = m4Data?.debtPriorityStatus?.find((ps: any) => ps.id === sourceDebt.id);
+        const prevStatus = m5Status || m4Status;
+
         const currentItem = statusItems.find(i => i.id === sourceDebt.id);
 
         if (currentItem) {
-            // Same debt, update details only (keep status/obs)
+            // Update reference values and inherit from M4 if M6 is still empty
             const updatedItems = statusItems.map(i =>
                 i.id === sourceDebt.id
-                    ? { ...i, name: sourceDebt.name, creditor: sourceDebt.creditor }
+                    ? {
+                        ...i,
+                        name: sourceDebt.name,
+                        creditor: sourceDebt.creditor,
+                        previousObservation: prevStatus?.observation || i.previousObservation // could ideally use the combined here too
+                    }
                     : i
             );
             setStatusItems(updatedItems);
             onUpdateMeetingData((prev: any) => ({ ...prev, debtPriorityStatus: updatedItems }));
-            alert("Dados da dívida atualizados com sucesso!");
+            alert("Dados da Reunião 3, 4 e 5 sincronizados com sucesso!");
         } else {
-            // Different debt
-            if (confirm("Deseja substituir o plano atual pela nova dívida selecionada na Reunião 3? O histórico da dívida atual será perdido.")) {
+            if (confirm("Deseja sincronizar com a dívida prioritária da Reunião 3? O histórico atual desta etapa na M6 será substituído.")) {
                 const newItem: DebtPriorityStatus = {
                     id: sourceDebt.id,
                     name: sourceDebt.name,
                     creditor: sourceDebt.creditor,
-                    status: 'Não Iniciado',
+                    status: prevStatus?.status || 'Não Iniciado',
                     observation: '',
+                    previousObservation: prevStatus?.observation || '',
                     date: new Date().toISOString().split('T')[0]
                 };
                 setStatusItems([newItem]);
@@ -110,16 +141,12 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
 
         let finalValue = value;
 
-        // Auto-prepend date to observation if it's the first time typing today
         if (field === 'observation' && typeof value === 'string') {
-            const today = new Date().toLocaleDateString('pt-BR'); // ex: 20/02/2026
+            const today = new Date().toLocaleDateString('pt-BR');
             const datePrefix = `${today} - `;
 
-            // If user just started typing and it doesn't have the prefix yet
             if (value.length > 0 && !value.startsWith(datePrefix)) {
-                // Find current item
                 const currentItem = statusItems.find(i => i.id === id);
-                // Only prepend if the previous observation didn't already have today's date
                 if (currentItem && !currentItem.observation.startsWith(datePrefix)) {
                     finalValue = `${datePrefix}${value}`;
                 }
@@ -155,17 +182,17 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
                         Acompanhamento do Plano de Quitação
                     </h3>
                     <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1 print:text-gray-500">
-                        Acompanhe o status das dívidas selecionadas para prioridade na Reunião 3
+                        Evolução da dívida selecionada na Reunião 3 com histórico da Reunião 4 e 5
                     </p>
                 </div>
                 {!readOnly && (
                     <button
                         onClick={handleRefresh}
                         className="flex items-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg transition-all text-[10px] font-bold uppercase text-slate-300 hover:text-white"
-                        title="Sincronizar com a dívida selecionada na Reunião 3"
+                        title="Sincronizar com Reunião 3, 4 e 5"
                     >
                         <RefreshCw size={14} />
-                        Atualizar Plano
+                        Sincronizar Dados
                     </button>
                 )}
             </div>
@@ -173,17 +200,8 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
             {statusItems.length === 0 ? (
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-12 text-center">
                     <AlertCircle className="w-12 h-12 text-slate-700 mx-auto mb-4" />
-                    <p className="text-slate-400 font-medium">Nenhum plano de quitação herdado da Reunião 3.</p>
-                    <p className="text-xs text-slate-600 mt-2 uppercase font-bold">Verifique se as dívidas foram selecionadas na etapa "Plano de Quitação" da reunião anterior.</p>
-                    {!readOnly && (
-                        <button
-                            onClick={handleRefresh}
-                            className="mt-4 flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 text-purple-400 hover:bg-purple-500 hover:text-white rounded-lg transition-all text-xs font-bold uppercase mx-auto"
-                        >
-                            <RefreshCw size={14} />
-                            Tentar Sincronizar Agora
-                        </button>
-                    )}
+                    <p className="text-slate-400 font-medium">Nenhum dado de quitação herdado.</p>
+                    <p className="text-xs text-slate-600 mt-2 uppercase font-bold">Inicie o plano na Reunião 3 e acompanhe na Reunião 5 para visualizar aqui.</p>
                 </div>
             ) : (
                 <div className="grid gap-4">
@@ -203,13 +221,13 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
                                 <div className="flex flex-wrap items-center gap-6">
                                     {/* Status Selector */}
                                     <div className="space-y-1.5 min-w-[160px]">
-                                        <label className="text-[10px] text-slate-500 uppercase font-black px-1">Status Atual</label>
+                                        <label className="text-[10px] text-slate-500 uppercase font-black px-1">Status na R6</label>
                                         <div className="relative">
                                             <select
                                                 value={item.status}
                                                 disabled={readOnly}
                                                 onChange={(e) => handleUpdateStatus(item.id, 'status', e.target.value)}
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-300 appearance-none focus:border-purple-500 outline-none transition-all cursor-pointer print:bg-white print:border-gray-300 print:text-black print:appearance-none"
+                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-300 appearance-none focus:border-purple-500 outline-none transition-all cursor-pointer"
                                             >
                                                 <option value="Não Iniciado">Não Iniciado</option>
                                                 <option value="Em Andamento">Em Andamento</option>
@@ -221,7 +239,7 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
 
                                     {/* Date Selector */}
                                     <div className="space-y-1.5 min-w-[140px]">
-                                        <label className="text-[10px] text-slate-500 uppercase font-black px-1">Previsão / Data</label>
+                                        <label className="text-[10px] text-slate-500 uppercase font-black px-1">Data / Previsão</label>
                                         <div className="relative">
                                             <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
                                             <input
@@ -229,20 +247,34 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
                                                 value={item.date}
                                                 disabled={readOnly}
                                                 onChange={(e) => handleUpdateStatus(item.id, 'date', e.target.value)}
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 pl-10 text-xs font-bold text-slate-300 focus:border-purple-500 outline-none transition-all print:bg-white print:border-gray-300 print:text-black"
+                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 pl-10 text-xs font-bold text-slate-300 focus:border-purple-500 outline-none transition-all"
                                             />
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
+                            {/* Previous Observation from M4 */}
+                            {item.previousObservation && (
+                                <div className="mt-6 p-4 rounded-xl bg-slate-950/50 border border-slate-800/50 animate-in fade-in slide-in-from-top-2 duration-500">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <History size={12} className="text-slate-500" />
+                                        <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Histórico Anteriores (R4 e R5)</span>
+                                    </div>
+                                    <p className="text-xs text-slate-400 italic leading-relaxed whitespace-pre-wrap">
+                                        {item.previousObservation}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Current Observation for M6 */}
                             <div className="mt-6 pt-6 border-t border-slate-800/50">
                                 <div className="flex items-start gap-3">
                                     <div className="w-8 h-8 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center flex-shrink-0 text-slate-600">
                                         <MessageSquare size={16} />
                                     </div>
                                     <textarea
-                                        placeholder="Observações sobre o andamento (Ex: Negociação iniciada, aguardando boleto...)"
+                                        placeholder="Novas observações para esta Reunião 6..."
                                         value={item.observation}
                                         disabled={readOnly}
                                         onChange={(e) => handleUpdateStatus(item.id, 'observation', e.target.value)}
@@ -259,11 +291,10 @@ export const DebtStatusTrackingStage: React.FC<DebtStatusTrackingStageProps> = (
             {!readOnly && statusItems.length > 0 && (
                 <div className="flex justify-end pt-8 border-t border-slate-800 print:hidden">
                     <button onClick={handleSave} className="bg-purple-500 hover:bg-purple-600 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 transition-all shadow-lg shadow-purple-500/20 uppercase text-xs tracking-widest">
-                        {showSuccess ? <><CheckCircle size={18} /> Salvo!</> : <><Save size={18} /> Salvar Status</>}
+                        {showSuccess ? <><CheckCircle size={18} /> Salvo!</> : <><Save size={18} /> Salvar Status R6</>}
                     </button>
                 </div>
             )}
         </div>
     );
 };
-

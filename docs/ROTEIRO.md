@@ -41,12 +41,13 @@ A migração para um backend real foi realizada para permitir sincronização e 
 - [x] **Checklist Destruidor de Sanhaço**: Guia de guerra passo-a-passo com barra de progresso.
 
 ## ✅ Fase 5: Expansão & Consolidação (Concluído)
-- [x] **Módulos de Mentoria**: Reunião 1, 2, 3 e 4 100% integradas.
+- [x] **Módulos de Mentoria**: Reuniões 1 a 6 100% integradas.
     - [x] **Reunião 4**: Consolidação, Rastreamento de Dívida Prioritária e Planejamento de Sonhos.
+    - [x] **Reunião 5 e 6**: Acompanhamento mensal refinado de patrimônio (`AssetMapping`), dívidas e evolução da reserva de sonhos.
     - [x] **Torneio de Prioridades**: Algoritmo interativo para ordenação de sonhos/objetivos.
-    - [x] **Sincronização em Cascata**: Fluxo resiliente entre M1 → M2 → M3 → M4.
-    - [x] **Padronização de Arquitetura**: Migração de todas as reuniões para o padrão *controlled props*.
-    - [x] **Relatórios M4**: Impressão de 4 modalidades específicas.
+    - [x] **Sincronização em Cascata**: Fluxo resiliente entre M1 → M2 → M3 → M4 → M5 → M6.
+    - [x] **Padronização de Arquitetura**: Migração de todas as reuniões para o padrão *Functional State Updater*, resolvendo gargalos de React Stale Closure na sincronização multi-componentes.
+    - [x] **Relatórios Avançados**: Impressão modal em até 6 componentes exclusivos adaptados as reuniões 4, 5 e 6.
 - [x] **Checklist v2.2 (Refinamento de Negociação & Estética)**:
     - [x] Integração bidirecional com Mapeamento de Dívidas.
     - [x] Lógica de fallback para parcelas não negociadas.
@@ -58,6 +59,5 @@ A migração para um backend real foi realizada para permitir sincronização e 
 ## 🚀 Fase 6: Próximos Passos (Em Planejamento)
 - [ ] **Integrações Futuras**:
     - [ ] WhatsApp API para lembretes automáticos.
-- [ ] **Próximas Reuniões**: Desenvolver Reuniões 5 a 6.
 - [ ] **Dashboard de Métricas**: Gráficos analíticos consolidados para o Admin.
 - [ ] **Idea Inbox**: Permitir que o usuário salve "versões" do diagnóstico (ex: Mensal).

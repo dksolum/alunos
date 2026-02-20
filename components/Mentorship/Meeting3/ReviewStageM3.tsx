@@ -49,7 +49,7 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
     const handleFeedbackChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const val = e.target.value;
         setFeedbackValue(val);
-        onUpdateMeetingData({ ...meetingData, feedback: val });
+        onUpdateMeetingData((prev: any) => ({ ...prev, feedback: val }));
     };
 
     // Initialization Logic
@@ -83,7 +83,7 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
             });
 
             setItems(initialItems);
-            onUpdateMeetingData({ ...meetingData, reviewItems: initialItems });
+            onUpdateMeetingData((prev: any) => ({ ...prev, reviewItems: initialItems }));
         } else {
             setItems(meetingData.reviewItems);
         }
@@ -104,7 +104,7 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
 
             if (hasChanges) {
                 setItems(updatedItems);
-                onUpdateMeetingData({ ...meetingData, reviewItems: updatedItems });
+                onUpdateMeetingData((prev: any) => ({ ...prev, reviewItems: updatedItems }));
             }
         }
     }, [previousMeetingData, items.length]);
@@ -113,26 +113,26 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
         if (readOnly) return;
         const newState = !bankChecked;
         setBankChecked(newState);
-        onUpdateMeetingData({ ...meetingData, bankChecked: newState });
+        onUpdateMeetingData((prev: any) => ({ ...prev, bankChecked: newState }));
     };
 
     const handleToggleQuebraGalho = () => {
         if (readOnly) return;
         const newState = !quebraGalhoChecked;
         setQuebraGalhoChecked(newState);
-        onUpdateMeetingData({ ...meetingData, quebraGalhoChecked: newState });
+        onUpdateMeetingData((prev: any) => ({ ...prev, quebraGalhoChecked: newState }));
     };
 
     const handleQuebraGalhoValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
         setQuebraGalhoValue(val);
-        onUpdateMeetingData({ ...meetingData, quebraGalhoValue: val });
+        onUpdateMeetingData((prev: any) => ({ ...prev, quebraGalhoValue: val }));
     };
 
     const handleQuebraGalhoObservationChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const val = e.target.value;
         setQuebraGalhoObservation(val);
-        onUpdateMeetingData({ ...meetingData, quebraGalhoObservation: val });
+        onUpdateMeetingData((prev: any) => ({ ...prev, quebraGalhoObservation: val }));
     };
 
     const startEdit = (id: string, field: 'defined' | 'realized', currentValue: number) => {
@@ -154,21 +154,18 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
         });
 
         setItems(newItems);
-        onUpdateMeetingData({ ...meetingData, reviewItems: newItems });
+        onUpdateMeetingData((prev: any) => ({ ...prev, reviewItems: newItems }));
         setEditingId(null);
         setEditField(null);
     };
 
     const handleManualSave = () => {
-        onUpdateMeetingData({
-            ...meetingData,
-            reviewItems: items,
+        onUpdateMeetingData((prev: any) => ({ ...prev, reviewItems: items,
             bankChecked,
             quebraGalhoChecked,
             quebraGalhoValue,
             quebraGalhoObservation,
-            feedback: feedbackValue
-        });
+            feedback: feedbackValue }));
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
     };
@@ -193,15 +190,12 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
         });
 
         setItems(refreshedItems);
-        onUpdateMeetingData({
-            ...meetingData,
-            reviewItems: refreshedItems,
+        onUpdateMeetingData((prev: any) => ({ ...prev, reviewItems: refreshedItems,
             bankChecked,
             quebraGalhoChecked,
             quebraGalhoValue,
             quebraGalhoObservation,
-            feedback: feedbackValue
-        });
+            feedback: feedbackValue }));
     };
 
     return (

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, CheckCircle2, Home, Landmark, Coins, Plus, Trash2, DollarSign, MessageSquare, ToggleLeft, ToggleRight, ArrowUpRight } from 'lucide-react';
+import { Save, CheckCircle2, Home, Landmark, Coins, Plus, Trash2, DollarSign, MessageSquare, ToggleLeft, ToggleRight, ArrowUpRight, RefreshCw } from 'lucide-react';
 
 interface AssetMappingItem {
     id: string;
@@ -12,21 +12,60 @@ interface AssetMappingItem {
     origin?: 'M5' | 'M6';
 }
 
-interface AssetMappingStageM5Props {
+interface AssetMappingStageM6Props {
     meetingData: any;
+    m5Data?: any;
     onUpdateMeetingData: (data: any) => void;
     readOnly?: boolean;
 }
 
-export const AssetMappingStageM5: React.FC<AssetMappingStageM5Props> = ({
+export const AssetMappingStageM6: React.FC<AssetMappingStageM6Props> = ({
     meetingData,
+    m5Data,
     onUpdateMeetingData,
     readOnly = false
 }) => {
     const [assets, setAssets] = useState<AssetMappingItem[]>(meetingData?.assetMapping || []);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
 
     const categories: AssetMappingItem['category'][] = ['Imóveis', 'Investimentos', 'Outros patrimônios'];
+
+    const handleRefresh = () => {
+        if (!m5Data?.assetMapping || m5Data.assetMapping.length === 0) {
+            alert("Nenhum patrimônio cadastrado na Reunião 5 para sincronizar.");
+            return;
+        }
+
+        if (confirm("Deseja sincronizar com o Mapeamento atualizado da Reunião 5? Isso mesclará e atualizará os valores do patrimônio com base na R5.")) {
+            setRefreshing(true);
+            const m5Assets: AssetMappingItem[] = m5Data.assetMapping;
+            const updatedAssets = [...assets];
+
+            m5Assets.forEach(m5Asset => {
+                const existingIndex = updatedAssets.findIndex(a => a.id === m5Asset.id);
+                if (existingIndex >= 0) {
+                    // Update existing values with potentially newer values from M5
+                    updatedAssets[existingIndex] = {
+                        ...updatedAssets[existingIndex],
+                        currentValue: m5Asset.currentValue,
+                        generatesIncome: m5Asset.generatesIncome,
+                        incomeValue: m5Asset.incomeValue,
+                        description: m5Asset.description
+                    };
+                } else {
+                    // Add new asset from M5
+                    updatedAssets.push(m5Asset);
+                }
+            });
+
+            setAssets(updatedAssets);
+            onUpdateMeetingData((prev: any) => ({ ...prev, assetMapping: updatedAssets }));
+            setRefreshing(false);
+
+            alert("Patrimônio sincronizado com sucesso!");
+        }
+    };
 
     const handleAddAsset = (category: AssetMappingItem['category']) => {
         if (readOnly) return;
@@ -38,7 +77,7 @@ export const AssetMappingStageM5: React.FC<AssetMappingStageM5Props> = ({
             generatesIncome: false,
             incomeValue: 0,
             observation: '',
-            origin: 'M5'
+            origin: 'M6'
         };
         const newAssets = [...assets, newAsset];
         setAssets(newAssets);
@@ -94,7 +133,20 @@ export const AssetMappingStageM5: React.FC<AssetMappingStageM5Props> = ({
                     </p>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex gap-4 items-center">
+                    {!readOnly && (
+                        <button
+                            onClick={handleRefresh}
+                            disabled={refreshing}
+                            className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all
+                                ${refreshing ? 'bg-amber-500/20 border-amber-500/40 text-amber-400' : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:border-slate-600'}
+                            `}
+                            title="Sincronizar Atualizações da M5"
+                        >
+                            <RefreshCw size={16} className={`mb-1 ${refreshing ? 'animate-spin' : ''}`} />
+                            <span className="text-[8px] font-black uppercase tracking-widest leading-none">Sinc M5</span>
+                        </button>
+                    )}
                     <div className="bg-slate-900/80 border border-slate-800 rounded-2xl px-6 py-3 text-right">
                         <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Patrimônio Total</p>
                         <p className="text-lg font-black text-white">

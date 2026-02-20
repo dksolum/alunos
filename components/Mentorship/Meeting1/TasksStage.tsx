@@ -46,7 +46,7 @@ export const TasksStage: React.FC<TasksStageProps> = ({
 
         // Update data
         const tasksObj = newTasks.reduce((acc, t) => ({ ...acc, [t.id]: t.checked }), {});
-        onUpdateMeetingData({ ...meetingData, tasks: tasksObj });
+        onUpdateMeetingData((prev: any) => ({ ...prev, tasks: tasksObj }));
 
         // Logic to revert completion if unchecking a task
         const isUnchecking = tasks.find(t => t.id === id)?.checked && !newTasks.find(t => t.id === id)?.checked;

@@ -46,7 +46,7 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
     const handleFeedbackChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const val = e.target.value;
         setFeedbackValue(val);
-        onUpdateMeetingData({ ...meetingData, feedback: val });
+        onUpdateMeetingData((prev: any) => ({ ...prev, feedback: val }));
     };
 
     // Initialization Logic
@@ -80,7 +80,7 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
             });
 
             setItems(initialItems);
-            onUpdateMeetingData({ ...meetingData, reviewItems: initialItems });
+            onUpdateMeetingData((prev: any) => ({ ...prev, reviewItems: initialItems }));
         } else {
             setItems(meetingData.reviewItems);
         }
@@ -102,7 +102,7 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
             if (hasChanges) {
                 setItems(updatedItems);
                 // Also update persistent data so it's ready when saved
-                onUpdateMeetingData({ ...meetingData, reviewItems: updatedItems });
+                onUpdateMeetingData((prev: any) => ({ ...prev, reviewItems: updatedItems }));
             }
         }
     }, [previousMeetingData, items.length]);
@@ -111,7 +111,7 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
         if (readOnly) return;
         const newState = !bankChecked;
         setBankChecked(newState);
-        onUpdateMeetingData({ ...meetingData, bankChecked: newState, feedback: feedbackValue });
+        onUpdateMeetingData((prev: any) => ({ ...prev, bankChecked: newState, feedback: feedbackValue }));
     };
 
     const startEdit = (id: string, field: 'defined' | 'realized', currentValue: number) => {
@@ -133,14 +133,14 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
         });
 
         setItems(newItems);
-        onUpdateMeetingData({ ...meetingData, reviewItems: newItems, bankChecked, feedback: feedbackValue });
+        onUpdateMeetingData((prev: any) => ({ ...prev, reviewItems: newItems, bankChecked, feedback: feedbackValue }));
         setEditingId(null);
         setEditField(null);
     };
 
     const handleManualSave = () => {
         // Explicitly trigger update to ensure persistence
-        onUpdateMeetingData({ ...meetingData, reviewItems: items, bankChecked, feedback: feedbackValue });
+        onUpdateMeetingData((prev: any) => ({ ...prev, reviewItems: items, bankChecked, feedback: feedbackValue }));
 
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
@@ -172,12 +172,9 @@ export const ReviewStage: React.FC<ReviewStageProps> = ({
         });
 
         setItems(refreshedItems);
-        onUpdateMeetingData({
-            ...meetingData,
-            reviewItems: refreshedItems,
+        onUpdateMeetingData((prev: any) => ({ ...prev, reviewItems: refreshedItems,
             bankChecked,
-            feedback: feedbackValue
-        });
+            feedback: feedbackValue }));
     };
 
     return (

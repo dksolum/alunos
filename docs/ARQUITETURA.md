@@ -8,7 +8,7 @@ O módulo de mentoria foi projetado para gerenciar o ciclo de vida de reuniões 
 ### Tabelas Principais
 
 1.  **`mentorship_meetings`**
-    *   Gerencia o estado de cada uma das 6 reuniões.
+    *   Gerencia o estado de cada uma das 6 reuniões (M1 ao M6).
     *   **PK**: `(user_id, meeting_id)`
     *   **Colunas**:
         *   `status`: 'locked' | 'unlocked' | 'completed'
@@ -46,28 +46,28 @@ Devido à necessidade de o Admin ler e escrever dados *em nome do usuário*, uti
 
 *   **`MentorshipCard`**: Exibe o status (Cadeado/Check) e controla abertura do modal.
 *   **`MeetingModal`**: Gerenciador de contexto da reunião.
-*   **`Meeting1Content` / `Meeting2Content` / `Meeting3Content` / `Meeting4Content`**: Orquestradores das reuniões. Gerenciam os passos:
+*   **`Meeting1Content` a `Meeting6Content`**: Orquestradores das reuniões. Gerenciam as etapas:
     1.  `ReviewStage`: Tabela de Orçamento com suporte a herança de dados.
     2.  `NonRecurringExpensesStage`: CRUD de gastos anuais com sincronização em cascata.
-    3.  `DebtUpdateStage` (Reunião 2, 3 e 4): Etapa para revisão de dívidas negociadas.
-    4.  `DebtRepaymentPlanStage` (Reunião 3): Estratégia "Turning Point".
-    5.  `DebtStatusTrackingStage` (Reunião 4): Rastreamento de dívidas prioritárias.
-    6.  `DreamsGoalsStage` (Reunião 4): Planejamento de sonhos com Torneio de Prioridades.
-    7.  `ReportsStage`: Central de Impressão exclusiva por reunião.
-    8.  `TasksStage`: Checklist de finalização com suporte a tarefas customizadas via `customTasks`.
+    3.  `DebtUpdateStage` (Reunião 2, 3, 4, 5 e 6): Etapa para revisão de dívidas negociadas e rastreamento de amortizações inter-reuniões.
+    4.  `DebtRepaymentPlanStage` (Reunião 3): Definição da estratégia "Turning Point".
+    5.  `DebtStatusTrackingStage` (Reuniões 4, 5 e 6): Rastreamento contínuo de dívidas prioritárias com registro de histórico.
+    6.  `DreamsGoalsStage` (Reuniões 4, 5 e 6): Planejamento de sonhos. Na Reunião 4 inclui um Torneio de Prioridades; em M5 e M6 rastreia a evolução da reserva x sonhos.
+    7.  `AssetMappingStage` (Reuniões 5 e 6): Onde o usuário categoriza seu patrimônio.
+    8.  `ReportsStage`: Central de Impressão exclusiva por reunião.
+    9.  `TasksStage`: Checklist de finalização com suporte a tarefas customizadas.
 
 ### Sincronização de Dados entre Reuniões
 Para garantir a continuidade do planejamento financeiro, implementamos um padrão de **Herança de Metas**:
-1.  O componente `ReviewStage` recebe `previousMeetingData`.
-2.  Um `useEffect` monitora mudanças nos dados da reunião anterior.
-3.  O valor "Definido" (Meta) da Reunião N torna-se o valor "Referência" (Base) da Reunião N+1.
-4.  **Sincronização em Cascata (v2.4)**: Gastos não recorrentes agora seguem a ordem cronológica estrita (M1 → M2 → M3 → M4), garantindo que o mapeamento anual evolua sem perda de itens.
+1.  O componente principal consome `previousMeetingData`.
+2.  Valorizações e planejamentos são importados do mês anterior.
+3.  **Sincronização em Cascata (v2.5)**: Gastos não recorrentes e Metas de Dívidas seguem a cronologia estrita (M1 → M2 → M3 → M4 → M5 → M6).
 
-### Padronização de Arquitetura (MeetingContent)
-A partir da versão 2.4, todos os componentes de reunião foram padronizados para o padrão **Controlled Component**:
-*   A gestão de estado local (useState) foi movida para o pai (`Dashboard.tsx`).
-*   Dados são passados via `meetingData`.
-*   Atualizações são emitidas via `onUpdateMeetingData`, garantindo persistência imediata e evitando lag na UI.
+### Padronização de Arquitetura (Functional State Updaters)
+A fim de prevenir sobrescritas de estado por Condições de Corrida ("Stale Closures") durante carregamentos paralelos de dados no `Dashboard`, alteramos a via de callback do component state.
+*   A gestão de estado local (useState) foi isolada no contêiner-pai (`Dashboard.tsx`).
+*   Componentes complexos de reunião (`DebtUpdateStage`, `MeetingContent`) utilizam _State Updater Functions_: `onUpdateMeetingData((prev) => ({ ...prev, newState }))` no lugar de injetar props defasadas.
+*   Dados atualizados são renderizados com maior confiabilidade, salvando via cascata sem perda de propriedades de outras abas ou reuniões ocorrendo assincronamente.
 
 ### Módulo de Priorização de Sonhos (Torneio)
 A Reunião 4 introduz uma interface de comparação par-a-par para priorizar sonhos:

@@ -42,7 +42,7 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
     const [printData, setPrintData] = useState<any>(null);
 
     const setActiveStep = async (step: number) => {
-        onUpdateMeetingData({ ...meetingData, activeStep: step });
+        onUpdateMeetingData((prev: any) => ({ ...prev, activeStep: step }));
     };
 
     // Initialize local Non-Recurring Expenses from global list if empty
@@ -51,10 +51,7 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
             if (!meetingData.nonRecurringExpenses) {
                 try {
                     const state = await authService.getMentorshipState(userId);
-                    onUpdateMeetingData({
-                        ...meetingData,
-                        nonRecurringExpenses: state.nonRecurringExpenses || []
-                    });
+                    onUpdateMeetingData((prev: any) => ({ ...prev, nonRecurringExpenses: state.nonRecurringExpenses || [] }));
                 } catch (error) {
                     console.error("Error initializing expenses for Meeting 2:", error);
                 }
@@ -64,10 +61,7 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
     }, [userId, meetingData, onUpdateMeetingData]);
 
     const handleUpdateExpenses = (newItems: NonRecurringExpenseItem[]) => {
-        onUpdateMeetingData({
-            ...meetingData,
-            nonRecurringExpenses: newItems
-        });
+        onUpdateMeetingData((prev: any) => ({ ...prev, nonRecurringExpenses: newItems }));
     };
 
     const handleReloadExpenses = async () => {
@@ -85,10 +79,7 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
             // 2. Merge: Attributes from M1 (global) + Preserved Local Items
             const mergedExpenses = [...globalExpenses, ...localItems];
 
-            onUpdateMeetingData({
-                ...meetingData,
-                nonRecurringExpenses: mergedExpenses
-            });
+            onUpdateMeetingData((prev: any) => ({ ...prev, nonRecurringExpenses: mergedExpenses }));
 
             alert("Gastos sincronizados com sucesso! Itens da Reunião 1 foram atualizados e itens locais foram preservados.");
         } catch (error) {

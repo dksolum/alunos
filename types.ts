@@ -214,7 +214,7 @@ export interface NonRecurringExpenseItem {
   description: string;
   value: number;
   frequency: number;
-  origin?: 'M1' | 'M2' | 'M3' | 'M4';
+  origin?: 'M1' | 'M2' | 'M3' | 'M4' | 'M5' | 'M6';
   createdAt: string;
 }
 

@@ -34,7 +34,7 @@ export const DreamsGoalsStageM5: React.FC<DreamsGoalsStageM5Props> = ({
                 status: g.status || 'Não Iniciado'
             }));
             setGoals(inheritedGoals);
-            onUpdateMeetingData({ ...meetingData, dreamsGoals: inheritedGoals });
+            onUpdateMeetingData((prev: any) => ({ ...prev, dreamsGoals: inheritedGoals }));
         }
     }, [previousMeetingData]);
 
@@ -87,7 +87,7 @@ export const DreamsGoalsStageM5: React.FC<DreamsGoalsStageM5Props> = ({
     };
 
     const handleSave = () => {
-        onUpdateMeetingData({ ...meetingData, dreamsGoals: goals });
+        onUpdateMeetingData((prev: any) => ({ ...prev, dreamsGoals: goals }));
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
     };

@@ -17,13 +17,13 @@ interface DebtUpdateItem {
     isManual?: boolean;
     isPaid?: boolean;
     amortizationConfirmed?: boolean;
-    origin?: 'mapping' | 'meeting2' | 'meeting3';
+    origin?: 'mapping' | 'meeting2' | 'meeting3' | 'meeting4' | 'meeting5' | 'meeting6';
     updatedAt?: string;
     createdAt?: string;
     endDate?: string;
 }
 
-interface DebtUpdateStageM3Props {
+interface DebtUpdateStageM6Props {
     userId: string;
     checklistData: ChecklistData;
     meetingData: any;
@@ -32,7 +32,7 @@ interface DebtUpdateStageM3Props {
     readOnly?: boolean;
 }
 
-export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
+export const DebtUpdateStageM6: React.FC<DebtUpdateStageM6Props> = ({
     userId,
     checklistData,
     meetingData,
@@ -64,7 +64,6 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
     };
 
     const fetchAndMergeDebts = async (isManualRefresh = false) => {
-        // If we have data in meeting 3 and it's not a manual refresh, just use it
         if (!isManualRefresh && meetingData?.debtUpdates && meetingData.debtUpdates.length > 0) {
             setDebts(meetingData.debtUpdates);
             return;
@@ -74,22 +73,21 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
         else setLoading(true);
 
         try {
-            let m2Data = previousMeetingData;
+            let m4Data = previousMeetingData;
 
-            // If manual refresh, fetch the LATEST mentorship state from DB to get updated Meeting 2 data
             if (isManualRefresh) {
                 const state = await authService.getMentorshipState(userId);
-                const m2 = state.meetings.find(m => m.meetingId === 2);
-                if (m2) m2Data = m2.data;
+                const m5 = state.meetings.find(m => m.meetingId === 5);
+                if (m5) m4Data = m5.data; // Using m4Data variable for backwards compatibility logic
             }
 
-            // Priority 1: Meeting 2 Data
-            let meeting2Debts: any[] = m2Data?.debtUpdates || [];
+            // Priority 1: Meeting 5 Data
+            let meeting5Debts: any[] = m4Data?.debtUpdates || [];
 
-            // Priority 2: Global Mapping (if M2 is somehow empty)
-            if (meeting2Debts.length === 0) {
+            // Fallback: This should ideally not happen if M5 was done
+            if (meeting5Debts.length === 0) {
                 const mapping = await authService.getDebtMapping(userId);
-                meeting2Debts = mapping.map(d => ({
+                meeting5Debts = mapping.map(d => ({
                     id: d.id,
                     name: d.name,
                     creditor: d.creditor,
@@ -104,48 +102,35 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
 
             const now = new Date().toISOString();
 
-            // Merge M2 result as the "Reference/Original" for M3
-            const syncedDebts: DebtUpdateItem[] = meeting2Debts.map(d => {
-                // If it's a manual refresh, we WANT to overwrite Meeting 3 local values with Meeting 2's latest values
-                // If it's the initial load, we try to preserve what was already in Meeting 3
-                const existingM3 = debts.find(m => m.id === d.id);
-                const useLocalM3 = !isManualRefresh && existingM3;
-
-                // Sync negotiated status with latest checklist
-                const isNegotiated = checklistData?.p2_debts_to_renegotiate?.some((item: any) =>
-                    item.description.toLowerCase() === d.name.toLowerCase() && item.status === 'Feito'
-                ) || d.isNegotiated;
+            const syncedDebts: DebtUpdateItem[] = meeting5Debts.map(d => {
+                const existingM6 = debts.find(m => m.id === d.id);
+                const useLocalM6 = !isManualRefresh && existingM6;
 
                 return {
                     id: d.id,
                     name: d.name,
                     creditor: d.creditor,
                     originalInstallment: d.newInstallment || d.originalInstallment || 0,
-                    newInstallment: useLocalM3 ? (existingM3?.newInstallment ?? (d.newInstallment || d.originalInstallment || 0)) : (d.newInstallment || d.originalInstallment || 0),
+                    newInstallment: useLocalM6 ? (existingM6?.newInstallment ?? (d.newInstallment || d.originalInstallment || 0)) : (d.newInstallment || d.originalInstallment || 0),
                     originalQuantity: d.newQuantity || d.originalQuantity || 0,
-                    newQuantity: useLocalM3 ? (existingM3?.newQuantity ?? (d.newQuantity || d.originalQuantity || 0)) : (d.newQuantity || d.originalQuantity || 0),
+                    newQuantity: useLocalM6 ? (existingM6?.newQuantity ?? (d.newQuantity || d.originalQuantity || 0)) : (d.newQuantity || d.originalQuantity || 0),
                     originalInterest: d.newInterest || d.originalInterest || '0%',
-                    newInterest: useLocalM3 ? (existingM3?.newInterest ?? (d.newInterest || d.originalInterest || '0%')) : (d.newInterest || d.originalInterest || '0%'),
-                    isNegotiated,
-                    isManual: false, // Everything from the past is non-manual in M3
-                    isPaid: useLocalM3 ? (existingM3?.isPaid !== undefined ? existingM3.isPaid : (d.isPaid !== undefined ? d.isPaid : true)) : (d.isPaid !== undefined ? d.isPaid : true),
-                    amortizationConfirmed: useLocalM3 ? (existingM3?.amortizationConfirmed || false) : false,
-                    origin: d.origin || 'mapping', // Preserve origin from M2
+                    newInterest: useLocalM6 ? (existingM6?.newInterest ?? (d.newInterest || d.originalInterest || '0%')) : (d.newInterest || d.originalInterest || '0%'),
+                    isNegotiated: d.isNegotiated, // Inherit from M5
+                    isManual: false,
+                    isPaid: useLocalM6 ? (existingM6?.isPaid !== undefined ? existingM6.isPaid : (d.isPaid !== undefined ? d.isPaid : true)) : (d.isPaid !== undefined ? d.isPaid : true),
+                    amortizationConfirmed: useLocalM6 ? (existingM6?.amortizationConfirmed || false) : false,
+                    origin: d.origin || 'mapping',
                     createdAt: d.createdAt || now,
                     updatedAt: now,
-                    endDate: calculateEndDate(useLocalM3 ? (existingM3?.newQuantity || d.newQuantity || d.originalQuantity || 0) : (d.newQuantity || d.originalQuantity || 0))
+                    endDate: calculateEndDate(useLocalM6 ? (existingM6?.newQuantity || d.newQuantity || d.originalQuantity || 0) : (d.newQuantity || d.originalQuantity || 0))
                 };
             });
 
             const syncedIds = new Set(syncedDebts.map(d => d.id));
-            const meeting3ManualDebts = debts.filter(d => d.isManual && !syncedIds.has(d.id));
+            const meeting6ManualDebts = debts.filter(d => d.isManual && !syncedIds.has(d.id));
 
-            // MERGE Logic for Refresh:
-            // We want to keep M3 manual debts, but update existing debts with latest from M2
-            // If it's a manual refresh, we ALREADY updated syncedDebts above (using useLocalM3 logic)
-
-            const finalDebts = [...syncedDebts, ...meeting3ManualDebts];
-
+            const finalDebts = [...syncedDebts, ...meeting6ManualDebts];
             setDebts(finalDebts);
             onUpdateMeetingData((prev: any) => ({ ...prev, debtUpdates: finalDebts }));
 
@@ -154,7 +139,7 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                 setTimeout(() => setShowSuccess(false), 3000);
             }
         } catch (error) {
-            console.error('Error fetching/merging debts in M3:', error);
+            console.error('Error fetching/merging debts in M6:', error);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -176,14 +161,11 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
             if (d.id === id) {
                 const updated = { ...d, [field]: value, updatedAt: now };
 
-                // Special Logic for Payment Status and Amortization
                 if (field === 'isPaid') {
                     if (value === true) {
-                        // SUGGEST auto-reduction if marked as paid
                         updated.amortizationConfirmed = true;
                         updated.newQuantity = Math.max(0, d.originalQuantity - 1);
                     } else {
-                        // Reset if marked as NOT paid
                         updated.amortizationConfirmed = false;
                         updated.newQuantity = d.originalQuantity;
                     }
@@ -236,7 +218,7 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
             isNegotiated: false,
             isManual: true,
             isPaid: true,
-            origin: 'meeting3',
+            origin: 'meeting6',
             createdAt: now,
             updatedAt: now,
             endDate: calculateEndDate(newDebtData.quantity)
@@ -260,7 +242,7 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
         return (
             <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <div className="w-8 h-8 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
-                <p className="text-slate-400 font-medium">Sincronizando com Reunião 2...</p>
+                <p className="text-slate-400 font-medium">Sincronizando com Reunião 5...</p>
             </div>
         );
     }
@@ -321,13 +303,13 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                             <label className="text-[10px] text-slate-500 uppercase font-black">Credor</label>
                             <input
                                 type="text"
-                                list="creditors-list-m3"
+                                list="creditors-list-m5"
                                 value={newDebtData.creditor}
                                 onChange={(e) => setNewDebtData({ ...newDebtData, creditor: e.target.value })}
                                 placeholder="Ex: Banco Itau"
                                 className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-sky-500 transition-all"
                             />
-                            <datalist id="creditors-list-m3">
+                            <datalist id="creditors-list-m5">
                                 {existingCreditors.map(c => <option key={c} value={c} />)}
                             </datalist>
                         </div>
@@ -356,20 +338,6 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                                 onChange={(e) => setNewDebtData({ ...newDebtData, quantity: parseInt(e.target.value) || 0 })}
                                 className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-sky-500 transition-all"
                             />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-[10px] text-slate-500 uppercase font-black">Taxa de Juros (%)</label>
-                            <div className="relative">
-                                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">%</span>
-                                <input
-                                    type="text"
-                                    value={newDebtData.interest.replace('%', '')}
-                                    onChange={(e) => setNewDebtData({ ...newDebtData, interest: `${e.target.value}%` })}
-                                    placeholder="0,00"
-                                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 pr-8 text-sm font-bold text-white outline-none focus:border-sky-500 transition-all"
-                                />
-                            </div>
                         </div>
                     </div>
 
@@ -420,22 +388,37 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                                         <div className="flex items-center gap-2">
                                             {debt.isNegotiated && (
                                                 <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded text-[9px] font-bold uppercase">
-                                                    Negociado no Checklist
+                                                    Negociado (Histórico)
                                                 </span>
                                             )}
                                             {debt.origin === 'mapping' && (
                                                 <span className="px-2 py-0.5 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded text-[9px] font-bold uppercase">
-                                                    Mapeado no Diagnóstico
+                                                    Diagnóstico
                                                 </span>
                                             )}
                                             {debt.origin === 'meeting2' && (
                                                 <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded text-[9px] font-bold uppercase">
-                                                    Cadastrado na Reunião 2
+                                                    Reunião 2
                                                 </span>
                                             )}
                                             {debt.origin === 'meeting3' && (
                                                 <span className="px-2 py-0.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded text-[9px] font-bold uppercase">
-                                                    Nova (Reunião 3)
+                                                    Reunião 3
+                                                </span>
+                                            )}
+                                            {debt.origin === 'meeting4' && (
+                                                <span className="px-2 py-0.5 bg-pink-500/10 text-pink-400 border border-pink-500/20 rounded text-[9px] font-bold uppercase">
+                                                    Reunião 4
+                                                </span>
+                                            )}
+                                            {debt.origin === 'meeting5' && (
+                                                <span className="px-2 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded text-[9px] font-bold uppercase">
+                                                    Reunião 5
+                                                </span>
+                                            )}
+                                            {debt.origin === 'meeting6' && (
+                                                <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded text-[9px] font-bold uppercase">
+                                                    Nova (Reunião 6)
                                                 </span>
                                             )}
                                         </div>
@@ -487,7 +470,7 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                                     </div>
                                     <div className="grid grid-cols-2 gap-2">
                                         <div className="p-2 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Anterior (M2)</p>
+                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Anterior (M5)</p>
                                             <p className="text-xs font-bold text-slate-400">R$ {debt.originalInstallment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                                         </div>
                                         <div className={`p-2 rounded-lg border transition-all ${hasReduction ? 'bg-emerald-500/5 border-emerald-500/20 print:bg-emerald-50 print:border-emerald-200' : 'bg-slate-800 border-slate-700 print:bg-white print:border-gray-200'}`}>
@@ -517,7 +500,7 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                                     </div>
                                     <div className="grid grid-cols-2 gap-2">
                                         <div className="p-2 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Anterior (M2)</p>
+                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Anterior (M5)</p>
                                             <p className="text-xs font-bold text-slate-400">{debt.originalQuantity}x</p>
                                         </div>
                                         <div className={`p-2 rounded-lg border transition-all ${debt.amortizationConfirmed ? 'bg-sky-500/5 border-sky-500/20' : 'bg-slate-800 border-slate-700'}`}>
@@ -542,7 +525,7 @@ export const DebtUpdateStageM3: React.FC<DebtUpdateStageM3Props> = ({
                                     </div>
                                     <div className="grid grid-cols-2 gap-2">
                                         <div className="p-2 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Anterior (M2)</p>
+                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Anterior (M5)</p>
                                             <p className="text-xs font-bold text-slate-400">{debt.originalInterest}</p>
                                         </div>
                                         <div className="p-2 bg-slate-800 border border-slate-700 rounded-lg">

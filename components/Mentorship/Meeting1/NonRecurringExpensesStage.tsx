@@ -13,7 +13,7 @@ interface NonRecurringExpensesStageProps {
     onUpdateItems?: (items: NonRecurringExpenseItem[]) => void;
     onReload?: () => void;
     syncLabel?: string;
-    currentMeeting?: 'M1' | 'M2' | 'M3' | 'M4';
+    currentMeeting?: 'M1' | 'M2' | 'M3' | 'M4' | 'M5' | 'M6';
 }
 
 export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps> = ({
@@ -120,7 +120,7 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                 // Global mode (Meeting 1)
                 await authService.saveNonRecurringExpense(userId, {
                     id: editingId || undefined,
-                    origin: currentMeeting as 'M1' | 'M2' | 'M3' | 'M4',
+                    origin: currentMeeting as 'M1' | 'M2' | 'M3' | 'M4' | 'M5' | 'M6',
                     ...newItemData
                 });
                 await fetchItems();
@@ -290,7 +290,6 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                                 </div>
                             </div>
 
-                            {/* Origin Tag */}
                             <div className="shrink-0 print:hidden">
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${item.origin === 'M1'
                                     ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
@@ -300,12 +299,18 @@ export const NonRecurringExpensesStage: React.FC<NonRecurringExpensesStageProps>
                                             ? 'bg-pink-500/10 text-pink-400 border border-pink-500/20'
                                             : item.origin === 'M4'
                                                 ? 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
-                                                : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
+                                                : item.origin === 'M5'
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                                    : item.origin === 'M6'
+                                                        ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
+                                                        : 'bg-slate-500/10 text-slate-400 border border-slate-500/20'
                                     }`}>
                                     {item.origin === 'M1' ? 'Reunião 1' :
                                         item.origin === 'M2' ? 'Reunião 2' :
                                             item.origin === 'M3' ? 'Reunião 3' :
-                                                item.origin === 'M4' ? 'Reunião 4' : 'Reunião 1'}
+                                                item.origin === 'M4' ? 'Reunião 4' :
+                                                    item.origin === 'M5' ? 'Reunião 5' :
+                                                        item.origin === 'M6' ? 'Reunião 6' : 'Reunião 1'}
                                 </span>
                             </div>
 

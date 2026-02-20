@@ -3,7 +3,7 @@ import { CheckCircle2, Edit2, Save, X, AlertCircle, ArrowUp, ArrowDown, Minus, W
 import { FinancialData, ChecklistData } from '../../../types';
 import { CATEGORIES } from '../../CostOfLiving';
 
-interface ReviewStageM4Props {
+interface ReviewStageM6Props {
     financialData: FinancialData;
     checklistData: ChecklistData;
     meetingData: any;
@@ -19,12 +19,12 @@ interface ReviewItem {
     id: string;
     name: string;
     type: 'Fixa' | 'Variável';
-    reference: number; // Read-only (Meeting 3 Result)
+    reference: number; // Read-only (Meeting 4 Result)
     defined: number;   // Editable (Target for this month)
     realized: number;  // Manual Input
 }
 
-export const ReviewStageM4: React.FC<ReviewStageM4Props> = ({
+export const ReviewStageM6: React.FC<ReviewStageM6Props> = ({
     financialData,
     checklistData,
     meetingData,
@@ -66,7 +66,7 @@ export const ReviewStageM4: React.FC<ReviewStageM4Props> = ({
                 const catName = cat.id;
                 let referenceVal = parseFloat(budgetLimits[catName] || '0');
 
-                // For Meeting 4, the "Defined" value from Meeting 3 becomes our "Reference"
+                // For Meeting 6, the "Defined" value from Meeting 5 becomes our "Reference"
                 if (previousMeetingData?.reviewItems) {
                     const prevItem = previousMeetingData.reviewItems.find((i: any) => i.name === catName);
                     if (prevItem) referenceVal = prevItem.defined;
@@ -176,7 +176,7 @@ export const ReviewStageM4: React.FC<ReviewStageM4Props> = ({
         const refreshedItems = items.map(item => {
             let newReference = item.reference;
 
-            // Use M3's Defined as Reference for M4
+            // Use M5's Defined as Reference for M6
             if (previousMeetingData?.reviewItems) {
                 const prevItem = previousMeetingData.reviewItems.find((i: any) => i.name === item.name);
                 if (prevItem) newReference = prevItem.defined;
@@ -324,7 +324,7 @@ export const ReviewStageM4: React.FC<ReviewStageM4Props> = ({
                         <thead>
                             <tr className="border-b border-slate-700 text-slate-400 text-xs uppercase print:text-gray-500 print:border-gray-300">
                                 <th className="p-3">Categoria</th>
-                                <th className="p-3 text-right bg-slate-900/40 print:bg-gray-50">Ref (M3)</th>
+                                <th className="p-3 text-right bg-slate-900/40 print:bg-gray-50">Ref (M5)</th>
                                 <th className="p-3 text-right">Definido</th>
                                 <th className="p-3 text-right">Realizado</th>
                                 <th className="p-3 text-center">%</th>

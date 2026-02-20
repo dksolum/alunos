@@ -124,7 +124,7 @@ export const DebtUpdateStage: React.FC<DebtUpdateStageProps> = ({
             const finalDebts = [...syncedDebts, ...manualDebts];
 
             setDebts(finalDebts);
-            onUpdateMeetingData({ ...meetingData, debtUpdates: finalDebts });
+            onUpdateMeetingData((prev: any) => ({ ...prev, debtUpdates: finalDebts }));
 
             if (isManualRefresh) {
                 setShowSuccess(true);
@@ -208,7 +208,7 @@ export const DebtUpdateStage: React.FC<DebtUpdateStageProps> = ({
     };
 
     const handleSave = () => {
-        onUpdateMeetingData({ ...meetingData, debtUpdates: debts });
+        onUpdateMeetingData((prev: any) => ({ ...prev, debtUpdates: debts }));
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
     };

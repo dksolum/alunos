@@ -128,11 +128,8 @@ export const DebtRepaymentPlanStage: React.FC<DebtRepaymentPlanStageProps> = ({
                 }
             }
 
-            onUpdateMeetingData({
-                ...meetingData,
-                priorityDebtId: id,
-                repaymentPlans: updatedPlans
-            });
+            onUpdateMeetingData((prev: any) => ({ ...prev, priorityDebtId: id,
+                repaymentPlans: updatedPlans }));
         }
     };
 
@@ -144,17 +141,14 @@ export const DebtRepaymentPlanStage: React.FC<DebtRepaymentPlanStageProps> = ({
         if (confirmReset) {
             const template = getTemplates(selectedDebt.name, selectedDebt.isPaid);
             const updatedPlans = { ...plans, [selectedDebtId]: template };
-            onUpdateMeetingData({
-                ...meetingData,
-                repaymentPlans: updatedPlans
-            });
+            onUpdateMeetingData((prev: any) => ({ ...prev, repaymentPlans: updatedPlans }));
         }
     };
 
     const handleDeselectDebt = () => {
         if (readOnly) return;
         setSelectedDebtId('');
-        onUpdateMeetingData({ ...meetingData, priorityDebtId: '' });
+        onUpdateMeetingData((prev: any) => ({ ...prev, priorityDebtId: '' }));
     };
 
     const selectedDebt = debtUpdates.find((d: any) => d.id === selectedDebtId);
@@ -163,7 +157,7 @@ export const DebtRepaymentPlanStage: React.FC<DebtRepaymentPlanStageProps> = ({
     const updatePlan = (newPlan: RepaymentStep[]) => {
         if (readOnly) return;
         const updatedPlans = { ...plans, [selectedDebtId]: newPlan };
-        onUpdateMeetingData({ ...meetingData, repaymentPlans: updatedPlans });
+        onUpdateMeetingData((prev: any) => ({ ...prev, repaymentPlans: updatedPlans }));
     };
 
     const migrateLegacyPlan = (plan: any[]): RepaymentStep[] => {

@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, TrendingDown, Clock, Target, FileText, CheckCircle, ChevronRight, ChevronLeft, Printer } from 'lucide-react';
+import { LayoutDashboard, TrendingDown, Clock, Target, FileText, CheckCircle, ChevronRight, ChevronLeft, Printer, Wallet } from 'lucide-react';
 import { FinancialData, ChecklistData, MentorshipMeeting } from '../../../types';
 import { authService } from '../../../services/authService';
-import { ReviewStageM4 } from './ReviewStageM4';
-import { DebtUpdateStageM4 } from './DebtUpdateStageM4';
-import { DebtStatusTrackingStage } from './DebtStatusTrackingStage';
-import { DreamsGoalsStage } from './DreamsGoalsStage';
+import { ReviewStageM6 } from './ReviewStageM6';
+import { DebtUpdateStageM6 } from './DebtUpdateStageM6';
+import { DebtStatusTrackingStageM6 } from './DebtStatusTrackingStageM6';
+import { DreamsGoalsStageM6 } from './DreamsGoalsStageM6';
+import { AssetMappingStageM6 } from './AssetMappingStageM6';
+
 import { NonRecurringExpensesStage } from '../Meeting1/NonRecurringExpensesStage';
-import { ReportsStageM4 } from './ReportsStageM4';
+import { ReportsStageM6 } from './ReportsStageM6';
 import { TasksStage } from '../Meeting1/TasksStage';
 import { PrintPortal } from '../../PrintPortal';
 import { PrintHeader } from '../Meeting1/PrintHeader';
 
-interface Meeting4ContentProps {
+interface Meeting6ContentProps {
     userId: string;
     currentUser: { id: string; role: 'ADMIN' | 'USER' };
     financialData: FinancialData;
@@ -29,13 +31,14 @@ const STEPS = [
     { label: 'Revisão', description: 'Orçamento vs Realizado' },
     { label: 'Gastos Não Recorrentes', description: 'Mapeamento Anual' },
     { label: 'Dívidas', description: 'Status de Pagamento' },
-    { label: 'Status Plano', description: 'Rastreamento M3' },
-    { label: 'Sonhos/Objetivos', description: 'Planejamento Futuro' },
+    { label: 'Status Plano', description: 'Observações M4' },
+    { label: 'Patrimônio', description: 'Mapeamento de Bens' },
+    { label: 'Sonhos/Objetivos', description: 'Evolução de Metas' },
     { label: 'Relatórios', description: 'Impressão' },
     { label: 'Tarefas', description: 'Próximos Passos' }
 ];
 
-export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
+export const Meeting6Content: React.FC<Meeting6ContentProps> = ({
     userId,
     currentUser,
     financialData,
@@ -48,61 +51,78 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
     onUnlock
 }) => {
     const [activeStep, setActiveStep] = useState(0);
-    const [previousMeetingData, setPreviousMeetingData] = useState<any>(null);
+    const [m5Data, setM5Data] = useState<any>(null);
+    const [m4Data, setM4Data] = useState<any>(null);
+    const [m3Data, setM3Data] = useState<any>(null);
     const [isSaving, setIsSaving] = useState(false);
-    const [printMode, setPrintMode] = useState<'review' | 'plan' | 'dreams' | null>(null);
+    const [printMode, setPrintMode] = useState<'review' | 'expenses' | 'debts' | 'dreams' | 'status' | 'assets' | null>(null);
 
     const isUser = currentUser.role === 'USER';
 
-    // Fetch Meeting 3 Data
+    // Fetch Previous Meetings Data (M3 and M4)
     useEffect(() => {
-        const fetchM3Data = async () => {
+        const fetchPreviousData = async () => {
             try {
                 const state = await authService.getMentorshipState(userId);
+
+                const m5 = state.meetings.find(m => m.meetingId === 5);
+                if (m5) setM5Data(m5.data);
+
+                const m4 = state.meetings.find(m => m.meetingId === 4);
+                if (m4) setM4Data(m4.data);
+
                 const m3 = state.meetings.find(m => m.meetingId === 3);
-                if (m3) {
-                    setPreviousMeetingData(m3.data);
-                }
+                if (m3) setM3Data(m3.data);
             } catch (error) {
-                console.error('Error fetching M3 data for M4:', error);
+                console.error('Error fetching previous data for M6:', error);
             }
         };
-        fetchM3Data();
+        fetchPreviousData();
     }, [userId]);
 
-    // Initialize Non-Recurring Expenses from M3 if empty
+    // Initialize data from M4 if empty
     useEffect(() => {
-        const initExpenses = async () => {
+        const initData = async () => {
+            let updated = false;
+            const newData = { ...meetingData };
+
+            // Initialize Non-Recurring Expenses
             if (!meetingData.nonRecurringExpenses) {
-                if (previousMeetingData?.nonRecurringExpenses) {
-                    handleUpdateMeetingData((prev: any) => ({
-                        ...prev,
-                        nonRecurringExpenses: previousMeetingData.nonRecurringExpenses
-                    }));
+                if (m5Data?.nonRecurringExpenses) {
+                    newData.nonRecurringExpenses = m5Data.nonRecurringExpenses;
+                    updated = true;
                 } else {
                     try {
                         const state = await authService.getMentorshipState(userId);
-                        handleUpdateMeetingData((prev: any) => ({
-                            ...prev,
-                            nonRecurringExpenses: state.nonRecurringExpenses || []
-                        }));
+                        newData.nonRecurringExpenses = state.nonRecurringExpenses || [];
+                        updated = true;
                     } catch (error) {
-                        console.error("Error initializing expenses for Meeting 4:", error);
+                        console.error("Error initializing expenses for Meeting 6:", error);
                     }
                 }
             }
+
+            // Initialize Asset Mapping from M5 if available (useful if they return to M6 after filling it)
+            if (!meetingData.assetMapping && m5Data?.assetMapping) {
+                newData.assetMapping = m5Data.assetMapping;
+                updated = true;
+            }
+
+            if (updated) {
+                handleUpdateMeetingData((prev: any) => ({ ...prev, ...newData }));
+            }
         };
-        if (previousMeetingData) {
-            initExpenses();
+        if (m5Data) {
+            initData();
         }
-    }, [userId, previousMeetingData]);
+    }, [userId, m5Data]);
 
     const handleUpdateMeetingData = async (newData: any) => {
         setIsSaving(true);
         try {
             await onUpdateMeetingData(newData);
         } catch (error) {
-            console.error('Error updating meeting 4 data:', error);
+            console.error('Error updating meeting 5 data:', error);
         } finally {
             setTimeout(() => setIsSaving(false), 500);
         }
@@ -117,24 +137,24 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
 
     const handleReloadExpenses = async () => {
         try {
-            // Sincronização em Cascata: Puxa da Reunião 3 (previousMeetingData)
-            const sourceExpenses = previousMeetingData?.nonRecurringExpenses || [];
+            // Sincronização em Cascata: Puxa da Reunião 5 (m5Data)
+            const sourceExpenses = m5Data?.nonRecurringExpenses || [];
             const currentExpenses = meetingData.nonRecurringExpenses || [];
 
-            // 1. Identificar itens locais da M4
+            // 1. Identificar itens locais da M6
             const localItems = currentExpenses.filter((localItem: any) =>
                 !sourceExpenses.some((sourceItem: any) => sourceItem.id === localItem.id)
             );
 
-            // 2. Merge: Itens da M3 + Itens Locais da M4
+            // 2. Merge: Itens da M5 + Itens Locais da M6
             const mergedExpenses = [...sourceExpenses, ...localItems];
 
-            handleUpdateMeetingData({
-                ...meetingData,
+            handleUpdateMeetingData((prev: any) => ({
+                ...prev,
                 nonRecurringExpenses: mergedExpenses
-            });
+            }));
 
-            alert("Gastos sincronizados com a Reunião 3 com sucesso!");
+            alert("Gastos sincronizados com a Reunião 5 com sucesso!");
         } catch (error) {
             console.error("Error reloading expenses:", error);
             alert("Erro ao sincronizar gastos. Tente novamente.");
@@ -146,7 +166,7 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
         await onUpdateFinancialData(newData);
     };
 
-    const handlePrint = (mode: 'review' | 'expenses' | 'debts' | 'dreams' | 'status', data?: any) => {
+    const handlePrint = (mode: 'review' | 'expenses' | 'debts' | 'dreams' | 'status' | 'assets', data?: any) => {
         setPrintMode(mode);
         setTimeout(() => {
             window.print();
@@ -156,9 +176,9 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
 
     return (
         <div className="h-full flex flex-col">
-            {/* Progress Stepper - Aligned with Meeting 3 */}
+            {/* Progress Stepper */}
             <div className="mb-8 px-2 print:hidden overflow-x-auto pb-2">
-                <div className="flex items-center justify-between relative min-w-[600px]">
+                <div className="flex items-center justify-between relative min-w-[700px]">
                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-slate-800 -z-0" />
                     {STEPS.map((step, index) => {
                         const isActive = index === activeStep;
@@ -189,16 +209,15 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                 <div className="max-w-6xl mx-auto w-full">
                     {/* REVIEW STAGE */}
                     {activeStep === 0 && (
-                        <ReviewStageM4
+                        <ReviewStageM6
                             financialData={financialData}
                             checklistData={checklistData}
-                            meetingData={meetingData}
-                            previousMeetingData={previousMeetingData}
+                            previousMeetingData={m5Data}
                             onUpdateMeetingData={handleUpdateMeetingData}
                             onUpdateFinancialData={handleUpdateFinancialData}
                             readOnly={isUser}
                             onPrint={() => handlePrint('review')}
-                            feedbackQuestion="Passados estes meses de mentoria, como você avalia sua evolução financeira e mental em relação ao dinheiro?"
+                            feedbackQuestion="Como tem sido a manutenção do seu novo estilo de vida financeiro este mês?"
                         />
                     )}
 
@@ -210,18 +229,18 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                             items={meetingData.nonRecurringExpenses || []}
                             onUpdateItems={handleUpdateExpenses}
                             onReload={handleReloadExpenses}
-                            currentMeeting="M4"
-                            syncLabel="Sincronizar com Reunião 3"
+                            currentMeeting="M6"
+                            syncLabel="Sincronizar com Reunião 5"
                         />
                     )}
 
                     {/* DEBT UPDATE STAGE */}
                     {activeStep === 2 && (
-                        <DebtUpdateStageM4
+                        <DebtUpdateStageM6
                             userId={userId}
                             checklistData={checklistData}
                             meetingData={meetingData}
-                            previousMeetingData={previousMeetingData}
+                            previousMeetingData={m5Data}
                             onUpdateMeetingData={handleUpdateMeetingData}
                             readOnly={isUser}
                         />
@@ -229,38 +248,53 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
 
                     {/* STATUS TRACKING STAGE */}
                     {activeStep === 3 && (
-                        <DebtStatusTrackingStage
+                        <DebtStatusTrackingStageM6
                             meetingData={meetingData}
-                            previousMeetingData={previousMeetingData}
+                            m5Data={m5Data}
+                            m4Data={m4Data}
+                            m3Data={m3Data}
                             onUpdateMeetingData={handleUpdateMeetingData}
                             readOnly={isUser}
                         />
                     )}
 
-                    {/* DREAMS/GOALS STAGE */}
+                    {/* ASSET MAPPING STAGE */}
                     {activeStep === 4 && (
-                        <DreamsGoalsStage
+                        <AssetMappingStageM6
                             meetingData={meetingData}
+                            m5Data={m5Data}
+                            onUpdateMeetingData={handleUpdateMeetingData}
+                            readOnly={isUser}
+                            onPrint={() => handlePrint('assets')}
+                        />
+                    )}
+
+                    {/* DREAMS/GOALS STAGE */}
+                    {activeStep === 5 && (
+                        <DreamsGoalsStageM6
+                            meetingData={meetingData}
+                            previousMeetingData={m5Data}
                             onUpdateMeetingData={handleUpdateMeetingData}
                             readOnly={isUser}
                         />
                     )}
 
                     {/* REPORTS STAGE */}
-                    {activeStep === 5 && (
+                    {activeStep === 6 && (
                         <div>
-                            <ReportsStageM4
+                            <ReportsStageM6
                                 onPrintReview={() => handlePrint('review')}
                                 onPrintExpenses={() => handlePrint('expenses')}
                                 onPrintDebts={() => handlePrint('debts')}
                                 onPrintStatus={() => handlePrint('status')}
                                 onPrintDreams={() => handlePrint('dreams')}
+                                onPrintAssets={() => handlePrint('assets')}
                             />
                         </div>
                     )}
 
                     {/* TASKS STAGE */}
-                    {activeStep === 6 && (
+                    {activeStep === 7 && (
                         <TasksStage
                             meetingData={meetingData}
                             meetingStatus={meetingStatus}
@@ -269,10 +303,10 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                             onUnlock={onUnlock}
                             readOnly={isUser}
                             customTasks={[
-                                { id: 'm4_task1', label: 'Continuar registrando entradas, saídas e transferências, sem negligenciar nenhum e obedecendo o orçamento definido' },
-                                { id: 'm4_task2', label: 'Dar continuidade ao plano de quitação de dívida definido na reunião 3' },
-                                { id: 'm4_task3', label: 'Manter foco na reserva quebra galho para evitar novos imprevistos' },
-                                { id: 'm4_task4', label: 'Criar uma carteira com o nome da primeira meta em alguma instituição bancária, guardando o que sobrar no mês nela. (caso a reserva quebra galho não esteja em R$ 500,00 , não guardar todo o valor que sobrar aqui e dividir o saldo com ela)' }
+                                { id: 'm6_task1', label: 'Continuar registrando entradas, saídas e transferências, sem negligenciar nenhum e obedecendo o orçamento definido' },
+                                { id: 'm6_task2', label: 'Manter foco na quitação de dívidas e na construção/manutenção da reserva quebra galho' },
+                                { id: 'm6_task3', label: 'Revisar mapeamento de patrimônio e entender quais podem ajudar na conquista de metas e sonhos' },
+                                { id: 'm6_task4', label: 'Definir valor mensal para a meta em 1ª prioridade' }
                             ]}
                         />
                     )}
@@ -284,26 +318,26 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                 {printMode === 'review' && (
                     <div className="print-report">
                         <PrintHeader
-                            title="Consolidação Financeira - Mentoria M4"
-                            userName={currentUser.id} // Idealmente pegar nome real
+                            title="Consolidação Financeira - Mentoria M6"
+                            userName={currentUser.id}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
-                        <ReviewStageM4
+                        <ReviewStageM6
                             financialData={financialData}
                             checklistData={checklistData}
                             meetingData={meetingData}
-                            previousMeetingData={previousMeetingData}
+                            previousMeetingData={m5Data}
                             onUpdateMeetingData={() => { }}
                             onUpdateFinancialData={() => { }}
                             readOnly={true}
-                            feedbackQuestion="Passados estes meses de mentoria, como você avalia sua evolução financeira e mental em relação ao dinheiro?"
+                            feedbackQuestion="Como tem sido a manutenção do seu novo estilo de vida financeiro este mês?"
                         />
                     </div>
                 )}
                 {printMode === 'expenses' && (
                     <div className="print-report">
                         <PrintHeader
-                            title="Gastos Não Recorrentes - Mentoria M4"
+                            title="Gastos Não Recorrentes - Mentoria M6"
                             userName={currentUser.id}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
@@ -313,7 +347,7 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                             onUpdateItems={() => { }}
                             onReload={() => { }}
                             onPrint={() => { }}
-                            currentMeeting="M4"
+                            currentMeeting="M6"
                             readOnly={true}
                         />
                     </div>
@@ -321,13 +355,15 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                 {printMode === 'status' && (
                     <div className="print-report">
                         <PrintHeader
-                            title="Status do Plano - Mentoria M4"
+                            title="Status do Plano - Mentoria M6"
                             userName={currentUser.id}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
-                        <DebtStatusTrackingStage
+                        <DebtStatusTrackingStageM6
                             meetingData={meetingData}
-                            previousMeetingData={previousMeetingData}
+                            m5Data={m5Data}
+                            m4Data={m4Data}
+                            m3Data={m3Data}
                             onUpdateMeetingData={() => { }}
                             readOnly={true}
                         />
@@ -336,15 +372,15 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                 {printMode === 'debts' && (
                     <div className="print-report">
                         <PrintHeader
-                            title="Atualização de Dívidas - Mentoria M4"
+                            title="Atualização de Dívidas - Mentoria M6"
                             userName={currentUser.id}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
-                        <DebtUpdateStageM4
+                        <DebtUpdateStageM6
                             userId={userId}
                             checklistData={checklistData}
                             meetingData={meetingData}
-                            previousMeetingData={previousMeetingData}
+                            previousMeetingData={m5Data}
                             onUpdateMeetingData={() => { }}
                             readOnly={true}
                         />
@@ -353,12 +389,28 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                 {printMode === 'dreams' && (
                     <div className="print-report">
                         <PrintHeader
-                            title="Sonhos e Objetivos - Mentoria M4"
+                            title="Sonhos e Objetivos - Mentoria M6"
                             userName={currentUser.id}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
-                        <DreamsGoalsStage
+                        <DreamsGoalsStageM6
                             meetingData={meetingData}
+                            previousMeetingData={m5Data}
+                            onUpdateMeetingData={() => { }}
+                            readOnly={true}
+                        />
+                    </div>
+                )}
+                {printMode === 'assets' && (
+                    <div className="print-report">
+                        <PrintHeader
+                            title="Mapeamento de Patrimônio - Mentoria M6"
+                            userName={currentUser.id}
+                            date={new Date().toLocaleDateString('pt-BR')}
+                        />
+                        <AssetMappingStageM6
+                            meetingData={meetingData}
+                            m5Data={m5Data}
                             onUpdateMeetingData={() => { }}
                             readOnly={true}
                         />

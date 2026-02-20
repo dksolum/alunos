@@ -15,19 +15,21 @@ Sistema de diagnóstico financeiro automatizado com análise de IA, gerenciament
 ### 2. Módulo de Mentoria (Novo)
 - **Estrutura de Reuniões**: 6 encontros progressivos para acompanhamento do cliente.
 - **Reunião 1 (Fundação)**:
-  - **Revisão Financeira**: Comparativo entre Orçado x Realizado do diagnóstico.
-  - **Gastos Não Recorrentes**: Cadastro de despesas anuais/semestrais (IPVA, IPTU, etc.) com cálculo automático de reserva mensal.
-  - **Sistema de Relatórios**: Impressão seletiva de etapas com cabeçalho personalizado.
-- **Reunião 4 (Consolidação e Futuro)**:
-  - **Status do Plano**: Rastreamento específico da dívida prioritária definida na Reunião 3.
-  - **Sonhos e Objetivos**: Sistema de priorização comparativa (Torneio) para organizar metas de vida.
-  - **Relatórios Customizados**: 4 modalidades de impressão (Revisão, Gastos, Dívidas, Sonhos).
-  - **Padronização de Tarefas**: Gestão de tarefas mandatórias para conclusão da mentoria.
-- **Sincronização em Cascata**:
-  - Fluxo contínuo de dados (M1 → M2 → M3 → M4) para Gastos Não Recorrentes e Itens de Revisão.
-  - Inteligência de Merge: Preserva itens locais enquanto herda a evolução das reuniões anteriores.
+  - **Revisão Financeira**: Comparativo entre Orçado x Realizado.
+  - **Gastos Não Recorrentes**: Cadastro de despesas anuais/semestrais.
+- **Reunião 2 e 3 (Plano de Ação)**:
+  - **Status do Plano**: Sincronização e auditoria de checklist.
+  - **Plano "Turning Point"**: Foco em dívidas ainda não pagas.
+- **Reunião 4 (Consolidação)**:
+  - **Rastreamento de Dívida Prioritária**.
+  - **Sonhos e Objetivos**: Algoritmo de Torneio para priorização comparativa.
+- **Reunião 5 e 6 (Avançado)**:
+  - **Mapeamento de Patrimônio (Asset Mapping)**: Cadastro de ativos (Liquidez, Fixos, etc.).
+  - **Evolução Contínua**: Acompanhamento profundo da dedicação a sonhos vs reservas.
+- **Sincronização em Cascata Plena**:
+  - Fluxo estrito (M1 → M6) para Gastos Não Recorrentes e Dívidas, sem perda de edição local (Functional State Updaters).
 - **Controle Administrativo**:
-  - **Bloqueio/Desbloqueio (Lock/Unlock)**: Admins e Secretários podem liberar reuniões futuras ou bloquear reuniões em andamento.
+  - **Bloqueio/Desbloqueio**: Fechamento modular de atas.
 - **Persistência e Segurança**: Dados salvos via Supabase com trava de segurança (RLS) e acesso administrativo via RPCs.
 
 ### 2. Relatórios Avançados e Impressão
@@ -110,10 +112,9 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 
 ## 📝 Histórico de Atualizações Recentes
 
-- **Feat**: Implementação completa da **Reunião 4** com Torneio de Priorização de Sonhos e Relatórios Customizados.
+- **Feat**: Implementação completa das **Reuniões 5 e 6** com Mapeamento Patrimonial e relatórios refinados (Ativos, Sonhos, e Rastreador de Dívidas).
+- **Fix (Critical)**: Refatoração da arquitetura de estados do Dashboard via _Functional State Updaters_ para curar condições de corrida (Stale Closures) e evitar sobrescrita fantasma de dados.
+- **Feat**: Sincronização em cascata (M1 a M6) implementada 100% com dedicação à preservação do progresso local do usuário.
+- **Feat**: Lógica avançada no Módulo de Dívidas Prioritárias em M5 e M6, registrando amortizações histórico-mês com cálculos de datas estendidas.
 - **Fix**: Padronização da arquitetura de reuniões (M1-M4) para consistência de estado e persistência.
-- **Fix**: Correção crítica no sistema de tarefas da Reunião 4 e sincronização de status de dívidas (`isPaid`).
-- **Feat**: Sincronização em cascata de Gastos Não Recorrentes entre todas as reuniões.
-- **Feat**: Implementação completa da **Reunião 3** (Plano de Quitação) com estratégia "Turning Point".
-- **Fix**: Persistência robusta da Ficha Individual (User Intake) e refinamento de status no Dashboard Admin.
-- **UI**: Rastreamento visual de origem de dívidas com etiquetas coloridas (Mapeamento/M2/M3).
+- **UI**: Rastreamento visual de origem de dívidas com etiquetas coloridas (Mapeamento/M2/M3/M4/M5/M6).

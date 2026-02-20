@@ -40,7 +40,7 @@ export const Meeting1Content: React.FC<Meeting1ContentProps> = ({
     const [printData, setPrintData] = useState<any>(null);
 
     const setActiveStep = async (step: number) => {
-        onUpdateMeetingData({ ...meetingData, activeStep: step });
+        onUpdateMeetingData((prev: any) => ({ ...prev, activeStep: step }));
     };
 
     const steps = [

@@ -104,6 +104,9 @@ export const DebtUpdateStageM5: React.FC<DebtUpdateStageM5Props> = ({
 
             const syncedDebts: DebtUpdateItem[] = meeting4Debts.map(d => {
                 const existingM5 = debts.find(m => m.id === d.id);
+                // When we manually sync, we overwrite local M5 values with incoming M4 base details 
+                // but if we had already edited `newInstallment` in M5, maybe we keep it?
+                // For simplicity, manual refresh brings the base from M4 but preserves local changes if `existingM5` exists
                 const useLocalM5 = !isManualRefresh && existingM5;
 
                 return {
@@ -132,7 +135,9 @@ export const DebtUpdateStageM5: React.FC<DebtUpdateStageM5Props> = ({
 
             const finalDebts = [...syncedDebts, ...meeting5ManualDebts];
             setDebts(finalDebts);
-            onUpdateMeetingData({ ...meetingData, debtUpdates: finalDebts });
+
+            // Somente salva no banco se for refresh manual ou primeiro acesso
+            onUpdateMeetingData((prev: any) => ({ ...prev, debtUpdates: finalDebts }));
 
             if (isManualRefresh) {
                 setShowSuccess(true);
@@ -233,7 +238,7 @@ export const DebtUpdateStageM5: React.FC<DebtUpdateStageM5Props> = ({
     };
 
     const handleSave = () => {
-        onUpdateMeetingData({ ...meetingData, debtUpdates: debts });
+        onUpdateMeetingData((prev: any) => ({ ...prev, debtUpdates: debts }));
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
     };

@@ -1,26 +1,43 @@
-import React, { useState } from 'react';
-import { Save, CheckCircle2, Target, Plus, Trash2, Calendar, DollarSign, Flag, ArrowRightLeft, Trophy, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, CheckCircle2, Target, Plus, Trash2, Calendar, DollarSign, Flag, ArrowRightLeft, Trophy, ArrowRight, ChevronDown } from 'lucide-react';
 
 interface DreamGoal {
     id: string;
     description: string;
     targetValue: number;
+    savedValue?: number; // New field for M6
     targetDate: string;
-    status: 'Em Planejamento' | 'Em Andamento' | 'Concluído';
+    status: 'Não Iniciado' | 'Em Planejamento' | 'Em Andamento' | 'Concluído'; // Added 'Não Iniciado'
 }
 
-interface DreamsGoalsStageProps {
+interface DreamsGoalsStageM6Props {
     meetingData: any;
+    previousMeetingData?: any;
     onUpdateMeetingData: (data: any) => void;
     readOnly?: boolean;
 }
 
-export const DreamsGoalsStage: React.FC<DreamsGoalsStageProps> = ({
+export const DreamsGoalsStageM6: React.FC<DreamsGoalsStageM6Props> = ({
     meetingData,
+    previousMeetingData,
     onUpdateMeetingData,
     readOnly = false
 }) => {
     const [goals, setGoals] = useState<DreamGoal[]>(meetingData?.dreamsGoals || []);
+
+    // Inherit from Meeting 5 if current is empty
+    useEffect(() => {
+        if (goals.length === 0 && previousMeetingData?.dreamsGoals) {
+            const inheritedGoals = previousMeetingData.dreamsGoals.map((g: any) => ({
+                ...g,
+                savedValue: g.savedValue || 0,
+                status: g.status || 'Não Iniciado'
+            }));
+            setGoals(inheritedGoals);
+            onUpdateMeetingData((prev: any) => ({ ...prev, dreamsGoals: inheritedGoals }));
+        }
+    }, [previousMeetingData]);
+
     const [showSuccess, setShowSuccess] = useState(false);
     const [showPrioritySuggestion, setShowPrioritySuggestion] = useState(false);
 
@@ -39,7 +56,7 @@ export const DreamsGoalsStage: React.FC<DreamsGoalsStageProps> = ({
             description: '',
             targetValue: 0,
             targetDate: new Date().toISOString().split('T')[0],
-            status: 'Em Planejamento'
+            status: 'Não Iniciado'
         };
         // Add to END (Bottom) as requested
         setGoals([...goals, newGoal]);
@@ -307,8 +324,8 @@ export const DreamsGoalsStage: React.FC<DreamsGoalsStageProps> = ({
                                     />
                                 </div>
 
-                                <div className="md:col-span-6 space-y-1.5">
-                                    <label className="text-[10px] text-slate-500 uppercase font-black px-1">Valor</label>
+                                <div className="md:col-span-4 space-y-1.5">
+                                    <label className="text-[10px] text-slate-500 uppercase font-black px-1">Valor Alvo</label>
                                     <div className="relative">
                                         <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
                                         <input
@@ -324,8 +341,43 @@ export const DreamsGoalsStage: React.FC<DreamsGoalsStageProps> = ({
                                     </div>
                                 </div>
 
+                                <div className="md:col-span-4 space-y-1.5">
+                                    <label className="text-[10px] text-slate-500 uppercase font-black px-1">Valor Guardado</label>
+                                    <div className="relative">
+                                        <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                                        <input
+                                            type="text"
+                                            value={(goal.savedValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                            disabled={readOnly}
+                                            onChange={(e) => {
+                                                const val = parseFloat(e.target.value.replace(/[^\d]/g, '')) / 100;
+                                                handleUpdateGoal(goal.id, 'savedValue', val || 0);
+                                            }}
+                                            className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3.5 pl-10 text-sm font-bold text-emerald-400 outline-none focus:border-emerald-500 transition-all shadow-inner"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="md:col-span-4 space-y-1.5 min-w-[160px]">
+                                    <label className="text-[10px] text-slate-500 uppercase font-black px-1">Status</label>
+                                    <div className="relative">
+                                        <select
+                                            value={goal.status}
+                                            disabled={readOnly}
+                                            onChange={(e) => handleUpdateGoal(goal.id, 'status', e.target.value)}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3.5 text-xs font-bold text-slate-300 appearance-none focus:border-pink-500 outline-none transition-all cursor-pointer"
+                                        >
+                                            <option value="Não Iniciado">Não Iniciado</option>
+                                            <option value="Em Planejamento">Em Planejamento</option>
+                                            <option value="Em Andamento">Em Andamento</option>
+                                            <option value="Concluído">Concluído</option>
+                                        </select>
+                                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" size={14} />
+                                    </div>
+                                </div>
+
                                 <div className="md:col-span-6 space-y-1.5">
-                                    <label className="text-[10px] text-slate-500 uppercase font-black px-1">Data</label>
+                                    <label className="text-[10px] text-slate-500 uppercase font-black px-1">Data Alvo</label>
                                     <div className="relative">
                                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" size={14} />
                                         <input

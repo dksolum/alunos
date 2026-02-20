@@ -42,7 +42,7 @@ export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
     const [printData, setPrintData] = useState<any>(null);
 
     const setActiveStep = async (step: number) => {
-        onUpdateMeetingData({ ...meetingData, activeStep: step });
+        onUpdateMeetingData((prev: any) => ({ ...prev, activeStep: step }));
     };
 
     // Initialize local Non-Recurring Expenses from global list if empty
@@ -51,10 +51,7 @@ export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
             if (!meetingData.nonRecurringExpenses) {
                 try {
                     const state = await authService.getMentorshipState(userId);
-                    onUpdateMeetingData({
-                        ...meetingData,
-                        nonRecurringExpenses: state.nonRecurringExpenses || []
-                    });
+                    onUpdateMeetingData((prev: any) => ({ ...prev, nonRecurringExpenses: state.nonRecurringExpenses || [] }));
                 } catch (error) {
                     console.error("Error initializing expenses for Meeting 3:", error);
                 }
@@ -64,10 +61,7 @@ export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
     }, [userId, meetingData, onUpdateMeetingData]);
 
     const handleUpdateExpenses = (newItems: NonRecurringExpenseItem[]) => {
-        onUpdateMeetingData({
-            ...meetingData,
-            nonRecurringExpenses: newItems
-        });
+        onUpdateMeetingData((prev: any) => ({ ...prev, nonRecurringExpenses: newItems }));
     };
 
     const handleReloadExpenses = async () => {
@@ -84,10 +78,7 @@ export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
             // 2. Merge: Items from M2 + Preserved Local Items
             const mergedExpenses = [...sourceExpenses, ...localItems];
 
-            onUpdateMeetingData({
-                ...meetingData,
-                nonRecurringExpenses: mergedExpenses
-            });
+            onUpdateMeetingData((prev: any) => ({ ...prev, nonRecurringExpenses: mergedExpenses }));
 
             alert("Gastos sincronizados com a Reunião 2 com sucesso!");
         } catch (error) {

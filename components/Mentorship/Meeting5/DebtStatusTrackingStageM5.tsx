@@ -65,7 +65,7 @@ export const DebtStatusTrackingStageM5: React.FC<DebtStatusTrackingStageM5Props>
                     };
                 });
                 setStatusItems(initialItems);
-                onUpdateMeetingData({ ...meetingData, debtPriorityStatus: initialItems });
+                onUpdateMeetingData((prev: any) => ({ ...prev, debtPriorityStatus: initialItems }));
             }
         }
     }, [m3Data, m4Data]);
@@ -101,7 +101,7 @@ export const DebtStatusTrackingStageM5: React.FC<DebtStatusTrackingStageM5Props>
                     : i
             );
             setStatusItems(updatedItems);
-            onUpdateMeetingData({ ...meetingData, debtPriorityStatus: updatedItems });
+            onUpdateMeetingData((prev: any) => ({ ...prev, debtPriorityStatus: updatedItems }));
             alert("Dados da Reunião 3 e 4 sincronizados com sucesso!");
         } else {
             if (confirm("Deseja sincronizar com a dívida prioritária da Reunião 3? O histórico atual desta etapa na M5 será substituído.")) {
@@ -115,21 +115,36 @@ export const DebtStatusTrackingStageM5: React.FC<DebtStatusTrackingStageM5Props>
                     date: new Date().toISOString().split('T')[0]
                 };
                 setStatusItems([newItem]);
-                onUpdateMeetingData({ ...meetingData, debtPriorityStatus: [newItem] });
+                onUpdateMeetingData((prev: any) => ({ ...prev, debtPriorityStatus: [newItem] }));
             }
         }
     };
 
     const handleUpdateStatus = (id: string, field: keyof DebtPriorityStatus, value: any) => {
         if (readOnly) return;
+
+        let finalValue = value;
+
+        if (field === 'observation' && typeof value === 'string') {
+            const today = new Date().toLocaleDateString('pt-BR');
+            const datePrefix = `${today} - `;
+
+            if (value.length > 0 && !value.startsWith(datePrefix)) {
+                const currentItem = statusItems.find(i => i.id === id);
+                if (currentItem && !currentItem.observation.startsWith(datePrefix)) {
+                    finalValue = `${datePrefix}${value}`;
+                }
+            }
+        }
+
         const newItems = statusItems.map(item =>
-            item.id === id ? { ...item, [field]: value } : item
+            item.id === id ? { ...item, [field]: finalValue } : item
         );
         setStatusItems(newItems);
     };
 
     const handleSave = () => {
-        onUpdateMeetingData({ ...meetingData, debtPriorityStatus: statusItems });
+        onUpdateMeetingData((prev: any) => ({ ...prev, debtPriorityStatus: statusItems }));
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
     };

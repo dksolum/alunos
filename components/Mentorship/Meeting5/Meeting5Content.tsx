@@ -105,16 +105,15 @@ export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
             }
 
             if (updated) {
-                handleUpdateMeetingData(newData);
+                handleUpdateMeetingData((prev: any) => ({ ...prev, ...newData }));
             }
         };
-        if (m4Data || meetingData.nonRecurringExpenses) {
+        if (m4Data) {
             initData();
         }
-    }, [userId, m4Data, meetingData.nonRecurringExpenses]);
+    }, [userId, m4Data]);
 
     const handleUpdateMeetingData = async (newData: any) => {
-        if (isUser) return;
         setIsSaving(true);
         try {
             await onUpdateMeetingData(newData);
@@ -126,10 +125,10 @@ export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
     };
 
     const handleUpdateExpenses = (newItems: any[]) => {
-        handleUpdateMeetingData({
-            ...meetingData,
+        handleUpdateMeetingData((prev: any) => ({
+            ...prev,
             nonRecurringExpenses: newItems
-        });
+        }));
     };
 
     const handleReloadExpenses = async () => {
@@ -146,10 +145,10 @@ export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
             // 2. Merge: Itens da M4 + Itens Locais da M5
             const mergedExpenses = [...sourceExpenses, ...localItems];
 
-            handleUpdateMeetingData({
-                ...meetingData,
+            handleUpdateMeetingData((prev: any) => ({
+                ...prev,
                 nonRecurringExpenses: mergedExpenses
-            });
+            }));
 
             alert("Gastos sincronizados com a Reunião 4 com sucesso!");
         } catch (error) {
