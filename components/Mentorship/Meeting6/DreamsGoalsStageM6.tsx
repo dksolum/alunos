@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Save, CheckCircle2, Target, Plus, Trash2, Calendar, DollarSign, Flag, ArrowRightLeft, Trophy, ArrowRight, ChevronDown } from 'lucide-react';
+import { Save, CheckCircle2, Target, Plus, Trash2, Calendar, DollarSign, Flag, ArrowRightLeft, Trophy, ArrowRight, ChevronDown, RefreshCw } from 'lucide-react';
 
 interface DreamGoal {
     id: string;
@@ -8,6 +8,7 @@ interface DreamGoal {
     savedValue?: number; // New field for M6
     targetDate: string;
     status: 'Não Iniciado' | 'Em Planejamento' | 'Em Andamento' | 'Concluído'; // Added 'Não Iniciado'
+    origin?: 'M4' | 'M5' | 'M6'; // Added Origin Tag
 }
 
 interface DreamsGoalsStageM6Props {
@@ -31,7 +32,8 @@ export const DreamsGoalsStageM6: React.FC<DreamsGoalsStageM6Props> = ({
             const inheritedGoals = previousMeetingData.dreamsGoals.map((g: any) => ({
                 ...g,
                 savedValue: g.savedValue || 0,
-                status: g.status || 'Não Iniciado'
+                status: g.status || 'Não Iniciado',
+                origin: g.origin || 'M5' // Inherit or default to M5
             }));
             setGoals(inheritedGoals);
             onUpdateMeetingData((prev: any) => ({ ...prev, dreamsGoals: inheritedGoals }));
@@ -39,7 +41,60 @@ export const DreamsGoalsStageM6: React.FC<DreamsGoalsStageM6Props> = ({
     }, [previousMeetingData]);
 
     const [showSuccess, setShowSuccess] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
     const [showPrioritySuggestion, setShowPrioritySuggestion] = useState(false);
+
+    const handleSyncFromPrevious = () => {
+        if (!previousMeetingData?.dreamsGoals || readOnly) return;
+        setIsSyncing(true);
+
+        const currentGoalsMap = new Map(goals.map(g => [g.id, g]));
+        const previousGoals = previousMeetingData.dreamsGoals as DreamGoal[];
+
+        const updatedGoals = [...goals];
+        let hasChanges = false;
+
+        previousGoals.forEach(prevGoal => {
+            const existingGoalIndex = updatedGoals.findIndex(g => g.id === prevGoal.id);
+            if (existingGoalIndex !== -1) {
+                // Update description, targetValue, targetDate from previous meeting
+                // Keep savedValue, status and origin from current meeting
+                const existing = updatedGoals[existingGoalIndex];
+                if (
+                    existing.description !== prevGoal.description ||
+                    existing.targetValue !== prevGoal.targetValue ||
+                    existing.targetDate !== prevGoal.targetDate
+                ) {
+                    updatedGoals[existingGoalIndex] = {
+                        ...existing,
+                        description: prevGoal.description,
+                        targetValue: prevGoal.targetValue,
+                        targetDate: prevGoal.targetDate
+                    };
+                    hasChanges = true;
+                }
+            } else {
+                // Goal from previous meeting is not in current meeting, add it
+                updatedGoals.push({
+                    ...prevGoal,
+                    savedValue: prevGoal.savedValue || 0,
+                    status: prevGoal.status || 'Não Iniciado',
+                    origin: prevGoal.origin || 'M5'
+                });
+                hasChanges = true;
+            }
+        });
+
+        if (hasChanges) {
+            setGoals(updatedGoals);
+            // Auto save when syncing
+            onUpdateMeetingData((prev: any) => ({ ...prev, dreamsGoals: updatedGoals }));
+            setShowSuccess(true);
+            setTimeout(() => setShowSuccess(false), 2000);
+        }
+
+        setTimeout(() => setIsSyncing(false), 800);
+    };
 
     // Sorting State
     const [isSorting, setIsSorting] = useState(false);
@@ -56,7 +111,8 @@ export const DreamsGoalsStageM6: React.FC<DreamsGoalsStageM6Props> = ({
             description: '',
             targetValue: 0,
             targetDate: new Date().toISOString().split('T')[0],
-            status: 'Não Iniciado'
+            status: 'Não Iniciado',
+            origin: 'M6'
         };
         // Add to END (Bottom) as requested
         setGoals([...goals, newGoal]);
@@ -257,6 +313,17 @@ export const DreamsGoalsStageM6: React.FC<DreamsGoalsStageM6Props> = ({
                                 Nova meta adicionada! Que tal priorizar? →
                             </div>
                         )}
+                        {previousMeetingData?.dreamsGoals && previousMeetingData.dreamsGoals.length > 0 && (
+                            <button
+                                onClick={handleSyncFromPrevious}
+                                disabled={isSyncing}
+                                className="bg-sky-500/10 border border-sky-500/20 text-sky-400 hover:bg-sky-500 hover:text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="Sincronizar alterações feitas na Reunião 5"
+                            >
+                                <RefreshCw size={16} className={isSyncing ? "animate-spin" : ""} />
+                                {isSyncing ? 'Sincronizando...' : 'Sincronizar M5'}
+                            </button>
+                        )}
                         {goals.length >= 2 && (
                             <button
                                 onClick={startPrioritization}
@@ -296,10 +363,20 @@ export const DreamsGoalsStageM6: React.FC<DreamsGoalsStageM6Props> = ({
             ) : (
                 <div className="grid gap-6">
                     {goals.map((goal, index) => (
-                        <div key={goal.id} className="bg-slate-900/40 border border-slate-800 rounded-[2rem] p-8 hover:border-slate-700 transition-all group relative items-start pl-16">
-                            {/* Fixed badge position: Inside the card, top-left aligned, with more padding on parent */}
-                            <div className="absolute top-8 left-6 w-8 h-8 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center text-xs font-bold text-slate-500 shadow-xl">
-                                #{index + 1}
+                        <div key={goal.id} className="bg-slate-900/40 border border-slate-800 rounded-[2rem] p-8 hover:border-slate-700 transition-all group relative items-start pl-18 md:pl-20">
+                            {/* Fixed badge position: Inside the card */}
+                            <div className="absolute top-8 left-6 flex flex-col items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center text-xs font-bold text-slate-500 shadow-xl">
+                                    #{index + 1}
+                                </div>
+                                {goal.origin && (
+                                    <span className={`text-[9px] font-black tracking-widest px-2 py-0.5 rounded-full border ${goal.origin === 'M4' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
+                                        goal.origin === 'M5' ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20' :
+                                            'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                                        }`}>
+                                        {goal.origin}
+                                    </span>
+                                )}
                             </div>
 
                             {!readOnly && (

@@ -7,6 +7,7 @@ interface DreamGoal {
     targetValue: number;
     targetDate: string;
     status: 'Em Planejamento' | 'Em Andamento' | 'Concluído';
+    origin?: 'M4' | 'M5' | 'M6'; // Changed: Added origin tracking
 }
 
 interface DreamsGoalsStageProps {
@@ -39,7 +40,8 @@ export const DreamsGoalsStage: React.FC<DreamsGoalsStageProps> = ({
             description: '',
             targetValue: 0,
             targetDate: new Date().toISOString().split('T')[0],
-            status: 'Em Planejamento'
+            status: 'Em Planejamento',
+            origin: 'M4' // Changed: Set origin M4 for new goals
         };
         // Add to END (Bottom) as requested
         setGoals([...goals, newGoal]);
@@ -279,10 +281,20 @@ export const DreamsGoalsStage: React.FC<DreamsGoalsStageProps> = ({
             ) : (
                 <div className="grid gap-6">
                     {goals.map((goal, index) => (
-                        <div key={goal.id} className="bg-slate-900/40 border border-slate-800 rounded-[2rem] p-8 hover:border-slate-700 transition-all group relative items-start pl-16">
-                            {/* Fixed badge position: Inside the card, top-left aligned, with more padding on parent */}
-                            <div className="absolute top-8 left-6 w-8 h-8 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center text-xs font-bold text-slate-500 shadow-xl">
-                                #{index + 1}
+                        <div key={goal.id} className="bg-slate-900/40 border border-slate-800 rounded-[2rem] p-8 hover:border-slate-700 transition-all group relative items-start pl-18 md:pl-20">
+                            {/* Fixed badge position: Inside the card */}
+                            <div className="absolute top-8 left-6 flex flex-col items-center gap-2">
+                                <div className="w-8 h-8 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center text-xs font-bold text-slate-500 shadow-xl">
+                                    #{index + 1}
+                                </div>
+                                {goal.origin && (
+                                    <span className={`text-[9px] font-black tracking-widest px-2 py-0.5 rounded-full border ${goal.origin === 'M4' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
+                                        goal.origin === 'M5' ? 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20' :
+                                            'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                                        }`}>
+                                        {goal.origin}
+                                    </span>
+                                )}
                             </div>
 
                             {!readOnly && (
