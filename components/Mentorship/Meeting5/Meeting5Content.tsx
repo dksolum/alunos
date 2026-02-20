@@ -298,10 +298,10 @@ export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
                             onUnlock={onUnlock}
                             readOnly={isUser}
                             customTasks={[
-                                { id: 'm5_task1', label: 'Continuar registrando entradas, saídas e transferências' },
-                                { id: 'm5_task2', label: 'Manter foco na quitação de dívidas e reserva de emergência' },
-                                { id: 'm5_task3', label: 'Revisar mapeamento de patrimônio e rentabilidade' },
-                                { id: 'm5_task4', label: 'Acompanhar evolução dos sonhos e aportes realizados' }
+                                { id: 'm5_task1', label: 'Continuar registrando entradas, saídas e transferências, sem negligenciar nenhum e obedecendo o orçamento definido' },
+                                { id: 'm5_task2', label: 'Manter foco na quitação de dívidas e na construção/manutenção da reserva quebra galho' },
+                                { id: 'm5_task3', label: 'Revisar mapeamento de patrimônio e entender quais podem ajudar na conquista de metas e sonhos' },
+                                { id: 'm5_task4', label: 'Definir valor mensal para a meta em 1ª prioridade' }
                             ]}
                         />
                     )}

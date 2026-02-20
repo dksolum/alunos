@@ -120,7 +120,7 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
     };
 
     const meeting2Tasks = [
-        { id: 'm2_task1', label: 'Continuar registrando entradas, saídas e transferências' },
+        { id: 'm2_task1', label: 'Continuar registrando entradas, saídas e transferências, sem negligenciar nenhum e obedecendo o orçamento definido' },
         { id: 'm2_task2', label: 'Criar uma carteira com o nome Quebra Galho em alguma instituição bancária' },
         { id: 'm2_task3', label: 'Atualizar o mapeamento de dívidas (acrescentou algo ou finalizou alguma?)' }
     ];

@@ -120,7 +120,7 @@ export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
     };
 
     const meeting3Tasks = [
-        { id: 'm3_task1', label: 'Continuar registrando entradas, saídas e transferências' },
+        { id: 'm3_task1', label: 'Continuar registrando entradas, saídas e transferências, sem negligenciar nenhum e obedecendo o orçamento definido' },
         { id: 'm3_task2', label: 'Iniciar o plano de quitação de dívida definido hoje' },
         { id: 'm3_task3', label: 'Manter foco na reserva quebra galho para evitar novos imprevistos' }
     ];

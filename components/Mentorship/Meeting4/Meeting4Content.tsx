@@ -270,7 +270,7 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                             onUnlock={onUnlock}
                             readOnly={isUser}
                             customTasks={[
-                                { id: 'm4_task1', label: 'Continuar registrando entradas, saídas e transferências' },
+                                { id: 'm4_task1', label: 'Continuar registrando entradas, saídas e transferências, sem negligenciar nenhum e obedecendo o orçamento definido' },
                                 { id: 'm4_task2', label: 'Dar continuidade ao plano de quitação de dívida definido na reunião 3' },
                                 { id: 'm4_task3', label: 'Manter foco na reserva quebra galho para evitar novos imprevistos' },
                                 { id: 'm4_task4', label: 'Criar uma carteira com o nome da primeira meta em alguma instituição bancária, guardando o que sobrar no mês nela. (caso a reserva quebra galho não esteja em R$ 500,00 , não guardar todo o valor que sobrar aqui e dividir o saldo com ela)' }

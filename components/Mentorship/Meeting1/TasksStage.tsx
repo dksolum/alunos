@@ -25,7 +25,7 @@ export const TasksStage: React.FC<TasksStageProps> = ({
     customTasks
 }) => {
     const defaultTasks = [
-        { id: 'task1', label: 'Continuar registrando entradas, saídas e transferências' },
+        { id: 'task1', label: 'Continuar registrando entradas, saídas e transferências, tentando não ultrapassar os valores definidos por categoria' },
         { id: 'task2', label: 'Preencher lista de gastos não recorrentes' }
     ];
 
