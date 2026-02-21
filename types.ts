@@ -167,8 +167,41 @@ export interface User {
   checklistData?: ChecklistData;
 }
 
+export interface MonthPaymentData {
+  paid: boolean;
+  value: number; // dynamically adjustable value for the month
+}
+
+export interface MentoriaBilling {
+  payments: boolean[]; // Array fixo de 6 posições (meses) - legacy/fallback
+  monthsData?: MonthPaymentData[]; // Novo formato com valores específicos. Array de 6 posições.
+  toolOnlyActiveSince?: string; // Data (ISO string) de quando o usuário optou por "Só Ferramenta"
+}
+
+export interface AcompanhamentoBilling {
+  monthlyValue: number; // legacy
+  totalMonths: number; // legacy
+  payments: boolean[]; // legacy
+  monthsData?: MonthPaymentData[]; // Novo formato com valores específicos.
+  toolOnlyActiveSince?: string; // Data (ISO string) de quando o usuário optou por "Só Ferramenta"
+}
+
+export interface ConsultoriaBilling {
+  baseValue: number; // 497, 397 etc
+  paymentMethod: 'a_vista' | 'parcelado';
+  hasDownPayment: boolean;
+  downPaymentValue: number;
+  part1Paid: boolean;
+  part2Paid: boolean;
+}
+
 export interface ChecklistData {
   subscriptionPlanId?: string;
+  billing?: {
+    consultoria?: ConsultoriaBilling;
+    mentoria?: MentoriaBilling;
+    acompanhamento?: AcompanhamentoBilling;
+  };
   [stepId: number]: {
     subItems?: {
       [subItemId: number]: {
