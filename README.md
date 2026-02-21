@@ -113,8 +113,12 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 ## 📝 Histórico de Atualizações Recentes
 
 - **Feat**: Implementação completa das **Reuniões 5 e 6** com Mapeamento Patrimonial e relatórios refinados (Ativos, Sonhos, e Rastreador de Dívidas).
+- **Feat**: Módulo Dinâmico de **Acompanhamento (Pós-Mentoria)**: Criação do grid com 11 cards exclusivos (Milhas, Separação PJ e PF, Seguros, Planejamento de Carreira, etc.), desbloqueados estritamente na fase final (CONTACTED).
+- **Feat**: Componente **Proposta de Valor da Mentoria** na Reunião 6, herdando automaticamente o histórico de dívidas acompanhadas (M3, M4, M5, M6) e listando dívidas restantes. Integrado ao dashboard exibido sob condicional de desbloqueio administrativo da Ata 6.
 - **Fix (Critical)**: Refatoração da arquitetura de estados do Dashboard via _Functional State Updaters_ para curar condições de corrida (Stale Closures) e evitar sobrescrita fantasma de dados.
-- **Feat**: Sincronização em cascata (M1 a M6) implementada 100% com dedicação à preservação do progresso local do usuário.
+- **Fix (Critical)**: Inclusão do RPC `upsert_mentorship_meeting_by_admin` no Supabase para garantir salvamento consistente de reuniões quando um Admin/Secretária insere dados a favor de um aluno sem esbarrar no bloqueio RLS.
+- **Feat**: Sincronização em cascata (M1 a M6) implementada 100% com dedicação à preservação do progresso local do usuário e _origin tags_ para Metas.
 - **Feat**: Lógica avançada no Módulo de Dívidas Prioritárias em M5 e M6, registrando amortizações histórico-mês com cálculos de datas estendidas.
-- **Fix**: Padronização da arquitetura de reuniões (M1-M4) para consistência de estado e persistência.
-- **UI**: Rastreamento visual de origem de dívidas com etiquetas coloridas (Mapeamento/M2/M3/M4/M5/M6).
+- **Fix**: Padronização da arquitetura de reuniões (M1-M4) para consistência de estado e persistência e reforço das travas de acesso automáticas.
+- **Fix (Critical)**: Correção do erro de salvamento `new_data` nulo do Módulo Administrativo na **Reunião 1**, aplicando suporte completo a *Functional State Updaters* para viabilizar navegação segura entre abas.
+- **UI**: Rastreamento visual de origem de dívidas e metas com etiquetas coloridas (Mapeamento/M2/M3/M4/M5/M6).

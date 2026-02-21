@@ -7,7 +7,7 @@ interface DreamGoal {
     targetValue: number;
     savedValue?: number; // New field for M5
     targetDate: string;
-    status: 'Não Iniciado' | 'Em Planejamento' | 'Em Andamento' | 'Concluído'; // Added 'Não Iniciado'
+    status: 'Não Iniciado' | 'Em Andamento' | 'Concluído';
     origin?: 'M4' | 'M5' | 'M6'; // Added Origin Tag
 }
 
@@ -32,7 +32,7 @@ export const DreamsGoalsStageM5: React.FC<DreamsGoalsStageM5Props> = ({
             const inheritedGoals = previousMeetingData.dreamsGoals.map((g: any) => ({
                 ...g,
                 savedValue: g.savedValue || 0,
-                status: g.status || 'Não Iniciado',
+                status: (g.status === 'Em Planejamento' ? 'Não Iniciado' : g.status) || 'Não Iniciado',
                 origin: g.origin || 'M4' // Inherit or default to M4
             }));
             setGoals(inheritedGoals);
@@ -57,19 +57,26 @@ export const DreamsGoalsStageM5: React.FC<DreamsGoalsStageM5Props> = ({
         previousGoals.forEach(prevGoal => {
             const existingGoalIndex = updatedGoals.findIndex(g => g.id === prevGoal.id);
             if (existingGoalIndex !== -1) {
-                // Update description, targetValue, targetDate from previous meeting
-                // Keep savedValue, status and origin from current meeting
+                // Update description, targetValue, targetDate, status, and savedValue from previous meeting
+                // Keep origin from current meeting
                 const existing = updatedGoals[existingGoalIndex];
+                const newStatus = ((prevGoal.status as string) === 'Em Planejamento' ? 'Não Iniciado' : prevGoal.status) || existing.status;
+                const newSavedValue = prevGoal.savedValue !== undefined ? prevGoal.savedValue : existing.savedValue;
+
                 if (
                     existing.description !== prevGoal.description ||
                     existing.targetValue !== prevGoal.targetValue ||
-                    existing.targetDate !== prevGoal.targetDate
+                    existing.targetDate !== prevGoal.targetDate ||
+                    existing.status !== newStatus ||
+                    existing.savedValue !== newSavedValue
                 ) {
                     updatedGoals[existingGoalIndex] = {
                         ...existing,
                         description: prevGoal.description,
                         targetValue: prevGoal.targetValue,
-                        targetDate: prevGoal.targetDate
+                        targetDate: prevGoal.targetDate,
+                        status: newStatus as any,
+                        savedValue: newSavedValue
                     };
                     hasChanges = true;
                 }
@@ -78,7 +85,7 @@ export const DreamsGoalsStageM5: React.FC<DreamsGoalsStageM5Props> = ({
                 updatedGoals.push({
                     ...prevGoal,
                     savedValue: prevGoal.savedValue || 0,
-                    status: prevGoal.status || 'Não Iniciado',
+                    status: ((prevGoal.status as string) === 'Em Planejamento' ? 'Não Iniciado' : prevGoal.status) || 'Não Iniciado',
                     origin: prevGoal.origin || 'M4'
                 });
                 hasChanges = true;
@@ -133,8 +140,17 @@ export const DreamsGoalsStageM5: React.FC<DreamsGoalsStageM5Props> = ({
 
     const handleUpdateGoal = (id: string, field: keyof DreamGoal, value: any) => {
         if (readOnly) return;
-        const newGoals = goals.map(g => g.id === id ? { ...g, [field]: value } : g);
-        setGoals(newGoals);
+        setGoals(prevGoals => prevGoals.map(g => {
+            if (g.id !== id) return g;
+
+            const updated = { ...g, [field]: value };
+
+            if (field === 'savedValue' && value > 0 && updated.status !== 'Concluído' && updated.status !== 'Em Andamento') {
+                updated.status = 'Em Andamento';
+            }
+
+            return updated;
+        }));
     };
 
     const handleRemoveGoal = (id: string) => {
@@ -445,7 +461,6 @@ export const DreamsGoalsStageM5: React.FC<DreamsGoalsStageM5Props> = ({
                                             className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3.5 text-xs font-bold text-slate-300 appearance-none focus:border-pink-500 outline-none transition-all cursor-pointer"
                                         >
                                             <option value="Não Iniciado">Não Iniciado</option>
-                                            <option value="Em Planejamento">Em Planejamento</option>
                                             <option value="Em Andamento">Em Andamento</option>
                                             <option value="Concluído">Concluído</option>
                                         </select>

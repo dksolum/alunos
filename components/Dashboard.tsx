@@ -21,7 +21,18 @@ import {
     RefreshCw,
     Shield,
     ChevronRight,
-    ListChecks
+    ListChecks,
+    ShieldAlert,
+    Plane,
+    CreditCard,
+    Building,
+    ShieldCheck,
+    HeartPulse,
+    Car,
+    PiggyBank,
+    Landmark,
+    Handshake,
+    Briefcase
 } from 'lucide-react';
 import { MentorshipCard } from './Mentorship/MentorshipCard';
 import { MeetingModal } from './Mentorship/MeetingModal';
@@ -31,6 +42,7 @@ import { Meeting3Content } from './Mentorship/Meeting3/Meeting3Content';
 import { Meeting4Content } from './Mentorship/Meeting4/Meeting4Content';
 import { Meeting5Content } from './Mentorship/Meeting5/Meeting5Content';
 import { Meeting6Content } from './Mentorship/Meeting6/Meeting6Content';
+import { ValueProposalM6 } from './Mentorship/Meeting6/ValueProposalM6';
 import { ConsultingValueCard } from './ConsultingValueCard';
 
 interface DashboardProps {
@@ -89,15 +101,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
     const getMeeting = (id: number) => {
         const meeting = mentorshipState.meetings.find(m => m.meetingId === id);
-        let status = meeting?.status || (id === 1 ? 'unlocked' : 'locked');
+        // All meetings default to locked now.
+        let status = meeting?.status || 'locked';
 
-        // Force unlock Meeting 1 if diagnostic is done and it's currently locked (and not completed)
-        if (id === 1 && hasDiagnosticData && status === 'locked') {
-            status = 'unlocked';
-        }
-
-        // Bloqueio condicional: Meeting 1 exige Diagnóstico finalizado (hasDiagnosticData)
-        if (id === 1 && !hasDiagnosticData && currentUser.role !== 'ADMIN') {
+        // Bloqueio condicional de segurança extra: se não tem diagnóstico finalizado, força bloqueio.
+        if (!hasDiagnosticData && currentUser.role !== 'ADMIN') {
             status = 'locked';
         }
 
@@ -133,8 +141,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
     // Helpers de Bloqueio por Nível
     const isConsultoriaUnlocked = accessLevel >= 1 || currentUser.role === 'ADMIN';
-    const isMentoriaUnlocked = accessLevel >= 2 || currentUser.role === 'ADMIN' || hasDiagnosticData;
-    const isAcompanhamentoUnlocked = accessLevel >= 3 || currentUser.role === 'ADMIN';
+    const isMentoriaUnlocked = accessLevel >= 2;
+    const isAcompanhamentoUnlocked = accessLevel >= 3;
 
     // Helper para renderizar status e botão de ação dos módulos
     const renderModuleStatus = (
@@ -520,6 +528,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 );
                             })}
                         </div>
+
+                        {/* Proposta de Valor da Mentoria (Reunião 6) */}
+                        {isMentoriaUnlocked && getMeeting(6).status === 'unlocked' && (
+                            <div className="mt-8">
+                                <ValueProposalM6
+                                    meetingData={getMeeting(6).data}
+                                    m3Data={getMeeting(3).data}
+                                    currentUser={currentUser as any}
+                                    readOnly={currentUser.role === 'USER'}
+                                    onUpdateMeetingData={async (data) => {
+                                        // Update local state optimistic
+                                        const updatedMeetings = mentorshipState.meetings.map(m =>
+                                            m.meetingId === 6 ? { ...m, data } : m
+                                        );
+                                        if (!mentorshipState.meetings.find(m => m.meetingId === 6)) {
+                                            updatedMeetings.push({ ...getMeeting(6), data });
+                                        }
+                                        setMentorshipState(prev => ({ ...prev, meetings: updatedMeetings }));
+
+                                        // Save to DB
+                                        await authService.saveMeetingData(user.id, 6, data);
+                                    }}
+                                />
+                            </div>
+                        )}
                     </section>
 
                     {/* Mentorship Modal */}
@@ -538,16 +571,26 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 meetingData={getMeeting(1).data}
                                 meetingStatus={getMeeting(1).status}
                                 onUpdateMeetingData={async (data) => {
-                                    // Update local state optimistic
-                                    const updatedMeetings = mentorshipState.meetings.map(m =>
-                                        m.meetingId === 1 ? { ...m, data } : m
-                                    );
-                                    if (!mentorshipState.meetings.find(m => m.meetingId === 1)) {
-                                        updatedMeetings.push({ ...getMeeting(1), data });
+                                    let finalData = data;
+                                    setMentorshipState(prev => {
+                                        const currentMeeting = prev.meetings.find(m => m.meetingId === 1);
+                                        if (typeof data === 'function') {
+                                            finalData = data(currentMeeting?.data || {});
+                                        }
+                                        const updatedMeetings = prev.meetings.map(m =>
+                                            m.meetingId === 1 ? { ...m, data: finalData } : m
+                                        );
+                                        if (!currentMeeting) {
+                                            updatedMeetings.push({ ...getMeeting(1), data: finalData });
+                                        }
+                                        return { ...prev, meetings: updatedMeetings };
+                                    });
+                                    if (typeof data === 'function') {
+                                        // fetch the resolved state directly to save to db
+                                        const currentMeeting = mentorshipState.meetings.find(m => m.meetingId === 1);
+                                        finalData = data(currentMeeting?.data || {});
                                     }
-                                    setMentorshipState(prev => ({ ...prev, meetings: updatedMeetings }));
-
-                                    await authService.saveMeetingData(user.id, 1, data);
+                                    await authService.saveMeetingData(user.id, 1, finalData);
                                 }}
                                 onUpdateFinancialData={async (data) => {
                                     // Call parent to update global state
@@ -811,22 +854,48 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </MeetingModal>
 
                     {/* Seção 3: Acompanhamento */}
-                    <section className={`space-y-6 transition-opacity duration-500 ${isAcompanhamentoUnlocked ? 'opacity-100' : 'opacity-50 grayscale'}`}>
+                    <section className={`space-y-6 transition-opacity duration-500`}>
                         <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-2 border-b border-slate-800 pb-4">
                             <span className="text-emerald-500">03.</span> Acompanhamento
                             {!isAcompanhamentoUnlocked && <Lock size={16} className="text-slate-500" />}
                         </h3>
 
-                        <div className="bg-slate-900/20 border border-slate-800 rounded-[2rem] p-8 text-center">
-                            <p className="text-slate-500 font-medium">Módulos de acompanhamento em desenvolvimento.</p>
-                            {!isAcompanhamentoUnlocked && (
-                                <div className="flex justify-center mt-4">
-                                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-800/50 rounded-lg text-slate-500 text-xs font-bold uppercase cursor-not-allowed border border-slate-700/50">
-                                        <Lock size={14} /> Aguardando Fase Acompanhamento
-                                    </div>
+                        {!isAcompanhamentoUnlocked ? (
+                            <div className="bg-slate-900/40 border border-slate-800 rounded-[2rem] p-12 text-center flex flex-col items-center justify-center gap-4 relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 opacity-90 z-0 pointer-events-none" />
+                                <div className="absolute inset-0 flex items-center justify-center z-10 opacity-10 pointer-events-none">
+                                    <ShieldAlert size={120} className="text-slate-500" />
                                 </div>
-                            )}
-                        </div>
+                                <div className="w-16 h-16 bg-slate-950 rounded-full flex items-center justify-center border border-slate-800 relative z-20">
+                                    <Lock className="text-slate-500" size={24} />
+                                </div>
+                                <h3 className="text-xl font-black text-white relative z-20 uppercase tracking-widest">Conteúdo Oculto, Exclusivo</h3>
+                                <p className="text-slate-400 max-w-md relative z-20">Este módulo é desbloqueado apenas na fase de Acompanhamento da Mentoria.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {[
+                                    { title: "Milhas", icon: <Plane size={24} />, color: "text-sky-400", bg: "bg-sky-500/10", border: "border-sky-500/20", hover: "hover:border-sky-500/50" },
+                                    { title: "Cartão de Crédito", icon: <CreditCard size={24} />, color: "text-indigo-400", bg: "bg-indigo-500/10", border: "border-indigo-500/20", hover: "hover:border-indigo-500/50" },
+                                    { title: "Separação PJ e PF", icon: <Building size={24} />, color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", hover: "hover:border-rose-500/50" },
+                                    { title: "Seguros", icon: <ShieldCheck size={24} />, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", hover: "hover:border-emerald-500/50" },
+                                    { title: "Plano de Saúde", icon: <HeartPulse size={24} />, color: "text-pink-400", bg: "bg-pink-500/10", border: "border-pink-500/20", hover: "hover:border-pink-500/50" },
+                                    { title: "Consórcio", icon: <Car size={24} />, color: "text-amber-400", bg: "bg-amber-500/10", border: "border-amber-500/20", hover: "hover:border-amber-500/50" },
+                                    { title: "Reserva de Emergência", icon: <PiggyBank size={24} />, color: "text-orange-400", bg: "bg-orange-500/10", border: "border-orange-500/20", hover: "hover:border-orange-500/50" },
+                                    { title: "Sucessão Patrimonial", icon: <Landmark size={24} />, color: "text-purple-400", bg: "bg-purple-500/10", border: "border-purple-500/20", hover: "hover:border-purple-500/50" },
+                                    { title: "Investimentos", icon: <TrendingUp size={24} />, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", hover: "hover:border-emerald-500/50" },
+                                    { title: "Negociação de Dívidas", icon: <Handshake size={24} />, color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", hover: "hover:border-rose-500/50" },
+                                    { title: "Transição de Carreira", icon: <Briefcase size={24} />, color: "text-teal-400", bg: "bg-teal-500/10", border: "border-teal-500/20", hover: "hover:border-teal-500/50" },
+                                ].map((card, idx) => (
+                                    <div key={idx} className={`bg-slate-900/60 border ${card.border} ${card.hover} rounded-2xl p-6 transition-all duration-300 flex flex-col items-center text-center gap-4 group cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/50`}>
+                                        <div className={`w-14 h-14 rounded-2xl ${card.bg} ${card.color} flex items-center justify-center border ${card.border} group-hover:scale-110 transition-transform duration-300`}>
+                                            {card.icon}
+                                        </div>
+                                        <h4 className="text-sm font-bold text-slate-200 uppercase tracking-tight group-hover:text-white transition-colors">{card.title}</h4>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </section>
                 </main >
             </div >

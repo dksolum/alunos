@@ -207,6 +207,7 @@ export const Meeting6Content: React.FC<Meeting6ContentProps> = ({
             {/* Content Area */}
             <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar print:hidden">
                 <div className="max-w-6xl mx-auto w-full">
+
                     {/* REVIEW STAGE */}
                     {activeStep === 0 && (
                         <ReviewStageM6
@@ -306,7 +307,7 @@ export const Meeting6Content: React.FC<Meeting6ContentProps> = ({
                                 { id: 'm6_task1', label: 'Continuar registrando entradas, saídas e transferências, sem negligenciar nenhum e obedecendo o orçamento definido' },
                                 { id: 'm6_task2', label: 'Manter foco na quitação de dívidas e na construção/manutenção da reserva quebra galho' },
                                 { id: 'm6_task3', label: 'Revisar mapeamento de patrimônio e entender quais podem ajudar na conquista de metas e sonhos' },
-                                { id: 'm6_task4', label: 'Definir valor mensal para a meta em 1ª prioridade' }
+                                { id: 'm6_task4', label: 'Continuar guardando o valor mensal para a meta em 1ª prioridade' }
                             ]}
                         />
                     )}

@@ -6,7 +6,7 @@ interface DreamGoal {
     description: string;
     targetValue: number;
     targetDate: string;
-    status: 'Em Planejamento' | 'Em Andamento' | 'Concluído';
+    status: 'Não Iniciado' | 'Em Andamento' | 'Concluído';
     origin?: 'M4' | 'M5' | 'M6'; // Changed: Added origin tracking
 }
 
@@ -40,7 +40,7 @@ export const DreamsGoalsStage: React.FC<DreamsGoalsStageProps> = ({
             description: '',
             targetValue: 0,
             targetDate: new Date().toISOString().split('T')[0],
-            status: 'Em Planejamento',
+            status: 'Não Iniciado',
             origin: 'M4' // Changed: Set origin M4 for new goals
         };
         // Add to END (Bottom) as requested
