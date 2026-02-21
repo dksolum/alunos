@@ -32,7 +32,8 @@ import {
     PiggyBank,
     Landmark,
     Handshake,
-    Briefcase
+    Briefcase,
+    Umbrella
 } from 'lucide-react';
 import { MentorshipCard } from './Mentorship/MentorshipCard';
 import { MeetingModal } from './Mentorship/MeetingModal';
@@ -436,7 +437,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                                 <p className="text-sm text-slate-400 font-medium leading-relaxed">
                                                     {user.checklistPhase === 'PHASE_2'
                                                         ? "Fase de Retorno: renegociação, cortes e ajustes finos."
-                                                        : "Guia de sobrevivência passo-a-passo para sair do caos financeiro."}
+                                                        : "Guia de sobrevivência passo-a-passo para não ficar no caos financeiro."}
                                                 </p>
                                             </div>
                                         </div>
@@ -886,6 +887,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                     { title: "Investimentos", icon: <TrendingUp size={24} />, color: "text-emerald-400", bg: "bg-emerald-500/10", border: "border-emerald-500/20", hover: "hover:border-emerald-500/50" },
                                     { title: "Negociação de Dívidas", icon: <Handshake size={24} />, color: "text-rose-400", bg: "bg-rose-500/10", border: "border-rose-500/20", hover: "hover:border-rose-500/50" },
                                     { title: "Transição de Carreira", icon: <Briefcase size={24} />, color: "text-teal-400", bg: "bg-teal-500/10", border: "border-teal-500/20", hover: "hover:border-teal-500/50" },
+                                    { title: "Aposentadoria", icon: <Umbrella size={24} />, color: "text-blue-400", bg: "bg-blue-500/10", border: "border-blue-500/20", hover: "hover:border-blue-500/50" },
                                 ].map((card, idx) => (
                                     <div key={idx} className={`bg-slate-900/60 border ${card.border} ${card.hover} rounded-2xl p-6 transition-all duration-300 flex flex-col items-center text-center gap-4 group cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/50`}>
                                         <div className={`w-14 h-14 rounded-2xl ${card.bg} ${card.color} flex items-center justify-center border ${card.border} group-hover:scale-110 transition-transform duration-300`}>

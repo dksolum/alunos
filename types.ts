@@ -168,6 +168,7 @@ export interface User {
 }
 
 export interface ChecklistData {
+  subscriptionPlanId?: string;
   [stepId: number]: {
     subItems?: {
       [subItemId: number]: {

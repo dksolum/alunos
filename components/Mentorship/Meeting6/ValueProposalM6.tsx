@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, Activity, Target, CheckCircle2, Lock, Unlock, ShieldAlert, History, MessageSquare, AlertCircle } from 'lucide-react';
+import { TrendingUp, Activity, Target, CheckCircle2, Lock, Unlock, ShieldAlert, History, MessageSquare, AlertCircle, ExternalLink, CreditCard } from 'lucide-react';
 
 interface DreamGoal {
     id: string;
@@ -46,6 +46,10 @@ export const ValueProposalM6: React.FC<ValueProposalM6Props> = ({ meetingData, m
     // Remaining debts (not tracked)
     const remainingDebts = allDebts.filter((d: any) => d.id !== priorityDebtId && Number(d.outstandingBalance) > 0);
 
+    const totalDebtsCount = allDebts.length;
+    const plannedDebtsCount = priorityDebtId ? 1 : 0;
+    const debtsCoverageProgress = totalDebtsCount > 0 ? (plannedDebtsCount / totalDebtsCount) * 100 : 0;
+
     const debtTrackingData = meetingData.debtStatusTracking || [];
     const totalOriginalDebt = debtTrackingData.reduce((acc: number, curr: any) => acc + (Number(curr.installmentValue) || 0), 0);
     const totalPaidDebt = debtTrackingData.filter((d: any) => d.status === 'Feito').reduce((acc: number, curr: any) => acc + (Number(curr.installmentValue) || 0), 0);
@@ -71,7 +75,8 @@ export const ValueProposalM6: React.FC<ValueProposalM6Props> = ({ meetingData, m
         "SUCESSÃO PATRIMONIAL",
         "INVESTIMENTOS",
         "NEGOCIAÇÃO DE DÍVIDAS",
-        "TRANSIÇÃO DE CARREIRA"
+        "TRANSIÇÃO DE CARREIRA",
+        "APOSENTADORIA"
     ];
 
     const isVisibleToUser = !isLocked || canEditLock;
@@ -149,6 +154,26 @@ export const ValueProposalM6: React.FC<ValueProposalM6Props> = ({ meetingData, m
 
                     <div className="flex-1 flex flex-col gap-6">
 
+                        {/* Resumo de Cobertura do Plano */}
+                        {totalDebtsCount > 0 && (
+                            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                                <div className="flex justify-between items-end mb-2">
+                                    <span className="text-xs font-bold text-slate-400">Dívidas Mapeadas com Plano</span>
+                                    <span className="text-base font-black text-white">{plannedDebtsCount} de {totalDebtsCount}</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden mb-1.5">
+                                    <div
+                                        className="h-full bg-rose-500 rounded-full transition-all duration-1000"
+                                        style={{ width: `${Math.min(debtsCoverageProgress, 100)}%` }}
+                                    />
+                                </div>
+                                <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
+                                    <span>Cobertura do Plano Geral</span>
+                                    <span className="text-rose-400">{debtsCoverageProgress.toFixed(1)}%</span>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Tracked Debt Section */}
                         {trackedDebtStatus ? (
                             <div className="bg-slate-950/50 p-5 rounded-2xl border border-indigo-500/20 shadow-inner">
@@ -159,8 +184,8 @@ export const ValueProposalM6: React.FC<ValueProposalM6Props> = ({ meetingData, m
                                         <p className="text-xs text-slate-500">{trackedDebtStatus.creditor}</p>
                                     </div>
                                     <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-lg border ${trackedDebtStatus.status === 'Finalizado' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
-                                            trackedDebtStatus.status === 'Em Andamento' ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' :
-                                                'bg-slate-800 text-slate-400 border-slate-700'
+                                        trackedDebtStatus.status === 'Em Andamento' ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' :
+                                            'bg-slate-800 text-slate-400 border-slate-700'
                                         }`}>
                                         {trackedDebtStatus.status}
                                     </span>
@@ -289,6 +314,44 @@ export const ValueProposalM6: React.FC<ValueProposalM6Props> = ({ meetingData, m
                                 <span className="text-emerald-400">{goalsProgress.toFixed(1)}%</span>
                             </div>
                         </div>
+
+                        {/* Top 3 Goals List */}
+                        {dreamsGoals.length > 0 && (
+                            <div className="mt-2">
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3 ml-1">Foco e Continuidade</h4>
+                                <div className="flex flex-col gap-2">
+                                    {dreamsGoals.slice(0, 3).map((goal) => (
+                                        <div key={goal.id} className="bg-slate-900 border border-slate-800/50 rounded-xl p-3 flex justify-between items-center">
+                                            <div className="flex-1 min-w-0 pr-3">
+                                                <div className="flex items-center gap-2 mb-0.5">
+                                                    <p className="text-xs font-bold text-slate-300 truncate">{goal.description || 'Meta Sem Título'}</p>
+                                                    {goal.status === 'Concluído' ? (
+                                                        <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[8px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">Concluído</span>
+                                                    ) : (
+                                                        <span className="bg-sky-500/10 text-sky-400 border border-sky-500/20 text-[8px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">Alvo</span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[10px] text-slate-500">Meta: {goal.targetDate ? new Date(goal.targetDate + 'T12:00:00').toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) : 'Indefinido'}</p>
+                                            </div>
+                                            <div className="text-right flex-shrink-0">
+                                                <p className="text-xs font-black text-emerald-400">R$ {Number(goal.targetValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                                <p className="text-[10px] font-bold text-slate-500">
+                                                    {Number(goal.savedValue || 0) > 0 ? `Salvo: R$ ${Number(goal.savedValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Não iniciado'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {dreamsGoals.length > 3 && (
+                                        <div className="text-center mt-2 p-3 border border-dashed border-slate-700/50 rounded-xl bg-slate-900/30">
+                                            <p className="text-[11px] font-bold text-slate-400 tracking-tight">
+                                                e mais <span className="text-white">{dreamsGoals.length - 3}</span> metas ativas aguardando acompanhamento...
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                     </div>
                 </div>

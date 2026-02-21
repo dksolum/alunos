@@ -125,7 +125,7 @@ const PHASE1_STEPS: StepConfig[] = [
     {
         id: 8,
         title: "Suprimentos",
-        description: "Construção das reservas para eventualidades.",
+        description: "Essas reservas serão o seu bote salva vidas, foque em cuidar seus gastos para liberar espaço para elas nas próximas reuniões",
         subItems: [
             {
                 id: 1,
@@ -327,79 +327,85 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
 
     const renderPrintView = () => (
         <div className="printable-checklist bg-white text-black">
-            <h2 className="text-xl font-bold border-b-2 border-black pb-2 mb-6 uppercase">Pilar 1: Diagnóstico e Sangria (Fase 1)</h2>
-            <div className="space-y-8">
-                {PHASE1_STEPS.map(step => (
-                    <div key={step.id} className="avoid-break">
-                        <div className="flex items-start gap-3 mb-2">
-                            <div className={`mt-1 w-5 h-5 border-2 border-black flex items-center justify-center shrink-0 ${completedSteps.includes(step.id) ? 'bg-black' : ''}`}>
-                                {completedSteps.includes(step.id) && <CheckCircle2 size={14} className="text-white" />}
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-lg leading-tight uppercase">{step.id}. {step.title}</h3>
-                                <p className="text-sm text-gray-700">{step.description}</p>
-                            </div>
-                        </div>
+            {activeTab === 'phase1' && (
+                <>
+                    <h2 className="text-xl font-bold border-b-2 border-black pb-2 mb-6 uppercase">Pilar 1: Diagnóstico e Sangria (Fase 1)</h2>
+                    <div className="space-y-8">
+                        {PHASE1_STEPS.map(step => (
+                            <div key={step.id} className="avoid-break">
+                                <div className="flex items-start gap-3 mb-2">
+                                    <div className={`mt-1 w-5 h-5 border-2 border-black flex items-center justify-center shrink-0 ${completedSteps.includes(step.id) ? 'bg-black' : ''}`}>
+                                        {completedSteps.includes(step.id) && <CheckCircle2 size={14} className="text-white" />}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-lg leading-tight uppercase">{step.id}. {step.title}</h3>
+                                        <p className="text-sm text-gray-700">{step.description}</p>
+                                    </div>
+                                </div>
 
-                        {step.subItems && (
-                            <div className="ml-8 space-y-4 pt-2">
-                                {step.subItems.map(subItem => {
-                                    const data = checklistData[step.id]?.subItems?.[subItem.id];
-                                    return (
-                                        <div key={subItem.id} className="border-l-2 border-gray-200 pl-4 py-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <div className={`w-4 h-4 border-2 border-black flex items-center justify-center shrink-0 ${data?.checked ? 'bg-black' : ''}`}>
-                                                    {data?.checked && <CheckCircle2 size={12} className="text-white" />}
+                                {step.subItems && (
+                                    <div className="ml-8 space-y-4 pt-2">
+                                        {step.subItems.map(subItem => {
+                                            const data = checklistData[step.id]?.subItems?.[subItem.id];
+                                            return (
+                                                <div key={subItem.id} className="border-l-2 border-gray-200 pl-4 py-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <div className={`w-4 h-4 border-2 border-black flex items-center justify-center shrink-0 ${data?.checked ? 'bg-black' : ''}`}>
+                                                            {data?.checked && <CheckCircle2 size={12} className="text-white" />}
+                                                        </div>
+                                                        <span className="text-sm font-semibold">{subItem.text}</span>
+                                                    </div>
+                                                    {data?.value && renderSubItemValuePrint(step.id, subItem.id, data.value)}
                                                 </div>
-                                                <span className="text-sm font-semibold">{subItem.text}</span>
-                                            </div>
-                                            {data?.value && renderSubItemValuePrint(step.id, subItem.id, data.value)}
-                                        </div>
-                                    );
-                                })}
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        ))}
                     </div>
-                ))}
-            </div>
+                </>
+            )}
 
-            <div className="my-12 border-t-4 border-gray-100" />
+            {activeTab === 'phase2' && (
+                <>
+                    <h2 className="text-xl font-bold border-b-2 border-black pb-2 mb-6 uppercase">Pilar 2: Retorno e Blindagem (Fase 2)</h2>
+                    <div className="space-y-8">
+                        {PHASE2_STEPS.map(step => (
+                            <div key={step.id} className="avoid-break">
+                                <div className="flex items-start gap-3 mb-2">
+                                    <div className={`mt-1 w-5 h-5 border-2 border-black flex items-center justify-center shrink-0 ${completedSteps.includes(step.id) ? 'bg-black' : ''}`}>
+                                        {completedSteps.includes(step.id) && <CheckCircle2 size={14} className="text-white" />}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-lg leading-tight uppercase">{step.id}. {step.title}</h3>
+                                        <p className="text-sm text-gray-700">{step.description}</p>
+                                    </div>
+                                </div>
 
-            <h2 className="text-xl font-bold border-b-2 border-black pb-2 mb-6 uppercase">Pilar 2: Retorno e Blindagem (Fase 2)</h2>
-            <div className="space-y-8">
-                {PHASE2_STEPS.map(step => (
-                    <div key={step.id} className="avoid-break">
-                        <div className="flex items-start gap-3 mb-2">
-                            <div className={`mt-1 w-5 h-5 border-2 border-black flex items-center justify-center shrink-0 ${completedSteps.includes(step.id) ? 'bg-black' : ''}`}>
-                                {completedSteps.includes(step.id) && <CheckCircle2 size={14} className="text-white" />}
-                            </div>
-                            <div>
-                                <h3 className="font-bold text-lg leading-tight uppercase">{step.id}. {step.title}</h3>
-                                <p className="text-sm text-gray-700">{step.description}</p>
-                            </div>
-                        </div>
-
-                        {step.subItems && (
-                            <div className="ml-8 space-y-4 pt-2">
-                                {step.subItems.map(subItem => {
-                                    const data = checklistData[step.id]?.subItems?.[subItem.id];
-                                    return (
-                                        <div key={subItem.id} className="border-l-2 border-gray-200 pl-4 py-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <div className={`w-4 h-4 border-2 border-black flex items-center justify-center shrink-0 ${data?.checked ? 'bg-black' : ''}`}>
-                                                    {data?.checked && <CheckCircle2 size={12} className="text-white" />}
+                                {step.subItems && (
+                                    <div className="ml-8 space-y-4 pt-2">
+                                        {step.subItems.map(subItem => {
+                                            const data = checklistData[step.id]?.subItems?.[subItem.id];
+                                            return (
+                                                <div key={subItem.id} className="border-l-2 border-gray-200 pl-4 py-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <div className={`w-4 h-4 border-2 border-black flex items-center justify-center shrink-0 ${data?.checked ? 'bg-black' : ''}`}>
+                                                            {data?.checked && <CheckCircle2 size={12} className="text-white" />}
+                                                        </div>
+                                                        <span className="text-sm font-semibold">{subItem.text}</span>
+                                                    </div>
+                                                    {data?.value && renderSubItemValuePrint(step.id, subItem.id, data.value)}
                                                 </div>
-                                                <span className="text-sm font-semibold">{subItem.text}</span>
-                                            </div>
-                                            {data?.value && renderSubItemValuePrint(step.id, subItem.id, data.value)}
-                                        </div>
-                                    );
-                                })}
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
-                        )}
+                        ))}
                     </div>
-                ))}
-            </div>
+                </>
+            )}
         </div>
     );
 
@@ -587,7 +593,7 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
                                 {readOnly && <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700 ml-2">Modo Leitura</span>}
                             </h2>
                             <p className="text-xs text-rose-300/80 font-medium">
-                                Seu guia de sobrevivência para sair do caos financeiro.
+                                Seu guia de sobrevivência para não ficar no caos financeiro.
                             </p>
                         </div>
                         <div className="flex items-center gap-2">

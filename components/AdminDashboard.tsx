@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { User, UserRole, UserStatus, ChecklistData, FinancialData } from '../types';
 import { authService } from '../services/authService';
 import { UserIntakeModal } from './UserIntakeModal';
-import { X, Search, Trash2, Eye, Shield, User as UserIcon, Lock, Briefcase, Plus, Check, Clock, AlertCircle, MessageCircle, Edit2, LogOut, CheckCircle2, FileText, ShieldCheck, ListChecks, Target } from 'lucide-react';
+import { X, Search, Trash2, Eye, Shield, User as UserIcon, Lock, Briefcase, Plus, Check, Clock, AlertCircle, MessageCircle, Edit2, LogOut, CheckCircle2, FileText, ShieldCheck, ListChecks, Target, CreditCard } from 'lucide-react';
 import { ChecklistModal } from './ChecklistModal';
 
 interface AdminDashboardProps {
@@ -36,6 +36,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
     const [showPhaseModal, setShowPhaseModal] = useState(false);
     const [selectedPhaseUser, setSelectedPhaseUser] = useState<User | null>(null);
     const [selectedUserFinancialData, setSelectedUserFinancialData] = useState<FinancialData | undefined>(undefined);
+
+    // Mentorship Subscription Modal
+    const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+    const [subscriptionUser, setSubscriptionUser] = useState<User | null>(null);
+
+    const SUBSCRIPTION_PLANS = [
+        { id: 'plan_200', value: 200, label: 'Plano R$ 200' },
+        { id: 'plan_250', value: 250, label: 'Plano R$ 250' },
+        { id: 'plan_325', value: 325, label: 'Plano R$ 325' },
+    ];
 
     const handleOpenChecklist = async (user: User) => {
         setSelectedUser(user);
@@ -323,6 +333,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                                                 <td className="p-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
                                                         <button onClick={() => { setIntakeUser(user); setShowIntakeModal(true); }} className="p-2 hover:bg-sky-500/20 rounded-lg text-slate-500 hover:text-sky-400 transition-colors" title="Ficha Individual"><FileText size={16} /></button>
+                                                        {user.role === 'USER' && (
+                                                            <button
+                                                                onClick={() => { setSubscriptionUser(user); setShowSubscriptionModal(true); }}
+                                                                className={`p-2 rounded-lg transition-colors ${user.checklistData?.subscriptionPlanId ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30' : 'text-slate-500 hover:bg-emerald-500/10 hover:text-emerald-400'}`}
+                                                                title="Plano de Mentoria"
+                                                            >
+                                                                <CreditCard size={16} />
+                                                            </button>
+                                                        )}
                                                         <button onClick={() => openEditModal(user)} className="p-2 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-white transition-colors"><Edit2 size={16} /></button>
                                                         {user.role === 'USER' && (
                                                             <button onClick={() => onSelectUser(user.id)} className="p-2 hover:bg-sky-500/20 rounded-lg text-slate-500 hover:text-sky-400 transition-colors"><Eye size={16} /></button>
@@ -529,6 +548,83 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                                     </div>
                                 </div>
                                 {selectedPhaseUser.checklistPhase === 'PHASE_2' && <CheckCircle2 size={18} className="text-amber-500" />}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* SUBSCRIPTION PLAN MODAL */}
+            {showSubscriptionModal && subscriptionUser && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 print:hidden animate-in fade-in duration-200">
+                    <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 className="text-lg font-black text-white flex items-center gap-2 uppercase tracking-tight">
+                                    <CreditCard size={20} className="text-emerald-500" />
+                                    Plano de Mentoria
+                                </h3>
+                                <p className="text-xs text-slate-400 mt-1 font-medium">
+                                    Defina o plano visível para <strong className="text-slate-300">{subscriptionUser.name}</strong>.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowSubscriptionModal(false);
+                                    setSubscriptionUser(null);
+                                }}
+                                className="text-slate-500 hover:text-white transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-3">
+                            {SUBSCRIPTION_PLANS.map(plan => {
+                                const currentPlanId = subscriptionUser.checklistData?.subscriptionPlanId;
+                                const isSelected = currentPlanId === plan.id;
+
+                                return (
+                                    <button
+                                        key={plan.id}
+                                        onClick={async () => {
+                                            const newChecklistData = { ...subscriptionUser.checklistData, subscriptionPlanId: plan.id };
+                                            await authService.updateChecklistData(subscriptionUser.id, newChecklistData);
+
+                                            // Update local state
+                                            setUsers(users.map(u => u.id === subscriptionUser.id ? { ...u, checklistData: newChecklistData } : u));
+                                            setShowSubscriptionModal(false);
+                                            setSubscriptionUser(null);
+                                        }}
+                                        className={`w-full p-4 rounded-xl border flex items-center justify-between group transition-all ${isSelected
+                                                ? 'bg-emerald-500/10 border-emerald-500/50 text-emerald-400 shadow-lg shadow-emerald-900/10'
+                                                : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white hover:border-slate-600'
+                                            }`}
+                                    >
+                                        <div className="flex justify-between items-center w-full pr-2">
+                                            <span className="text-sm font-bold uppercase">{plan.label}</span>
+                                        </div>
+                                        {isSelected && <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />}
+                                    </button>
+                                );
+                            })}
+
+                            <button
+                                onClick={async () => {
+                                    const newChecklistData = { ...subscriptionUser.checklistData };
+                                    delete newChecklistData.subscriptionPlanId;
+                                    await authService.updateChecklistData(subscriptionUser.id, newChecklistData);
+
+                                    // Update local state
+                                    setUsers(users.map(u => u.id === subscriptionUser.id ? { ...u, checklistData: newChecklistData } : u));
+                                    setShowSubscriptionModal(false);
+                                    setSubscriptionUser(null);
+                                }}
+                                className={`w-full p-4 pt-10 text-center flex items-center justify-center`}
+                            >
+                                <span className="text-xs font-bold text-rose-500 hover:text-rose-400 underline decoration-rose-500/30 underline-offset-4">
+                                    Remover Oferta (Ocultar)
+                                </span>
                             </button>
                         </div>
                     </div>

@@ -1,8 +1,14 @@
 import React from 'react';
-import { TrendingUp, Activity, Target, Scissors, AlertCircle, ChevronDown, ChevronUp, CheckCircle2, Printer } from 'lucide-react';
+import { TrendingUp, Activity, Target, Scissors, AlertCircle, ChevronDown, ChevronUp, CheckCircle2, Printer, Lock, ExternalLink, CreditCard } from 'lucide-react';
 import { FinancialData, ChecklistData, DebtMapItem, User } from '../types';
 import { PrintHeader } from './Mentorship/Meeting1/PrintHeader';
 import { PrintPortal } from './PrintPortal';
+
+const SUBSCRIPTION_PLANS = [
+    { id: 'plan_200', value: 200, url: 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=a0b4a4098e3441efae226a7c7b335585' },
+    { id: 'plan_250', value: 250, url: 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=2fbe5f85929446beaa3adabbcc03e2fb' },
+    { id: 'plan_325', value: 325, url: 'https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=87fa6db3b1d045a8907418b55134761a' },
+];
 
 interface ConsultingValueCardProps {
     financialData: FinancialData;
@@ -275,6 +281,38 @@ export const ConsultingValueCard: React.FC<ConsultingValueCardProps> = ({ financ
                                 </p>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* SUBSCRIPTION PLAN CTA */}
+            {!isPrint && user.checklistData?.subscriptionPlanId && user.role === 'USER' && (
+                <div className="p-8 lg:p-12 border-t border-slate-800 bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden rounded-b-[2rem]">
+                    {/* Background Accents */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/3 pointer-events-none" />
+
+                    <div className="relative z-10 w-full flex flex-col items-center animate-fade-in-up">
+                        <h3 className="text-2xl md:text-3xl font-black text-white mb-3 text-center tracking-tight">
+                            Pronto para o <span className="text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.3)]">Próximo Nível?</span>
+                        </h3>
+                        <p className="text-sm font-medium text-slate-400 mb-8 text-center max-w-xl leading-relaxed">
+                            Continue sua jornada corporativa e blinde seu crescimento com o plano de acompanhamento estratégico que preparamos especialmente para você.
+                        </p>
+
+                        <a
+                            href={SUBSCRIPTION_PLANS.find(p => p.id === user.checklistData?.subscriptionPlanId)?.url || '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group relative inline-flex items-center justify-center gap-3 px-8 mx-auto lg:px-10 py-4 lg:py-5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-2xl font-black text-lg lg:text-xl transition-all shadow-[0_0_40px_rgba(16,185,129,0.3)] hover:shadow-[0_0_60px_rgba(16,185,129,0.5)] hover:-translate-y-1 w-[90%] sm:w-auto"
+                        >
+                            <CreditCard size={28} className="group-hover:scale-110 transition-transform duration-300" />
+                            <span>CONTINUAR COM A MENTORIA</span>
+                            <ExternalLink size={24} className="opacity-70 group-hover:opacity-100 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300 relative top-[-2px]" />
+                        </a>
+                        <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 mt-6 flex items-center gap-1.5 opacity-80">
+                            <Lock size={10} /> Pagamento 100% Seguro Mercado Pago
+                        </p>
                     </div>
                 </div>
             )}
