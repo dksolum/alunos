@@ -185,7 +185,7 @@ export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
                             meetingData={meetingData}
                             previousMeetingData={previousMeetingData}
                             onUpdateMeetingData={onUpdateMeetingData}
-                            readOnly={isUser}
+                            readOnly={false}
                         />
                     )}
 
@@ -194,7 +194,7 @@ export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
                         <DebtRepaymentPlanStage
                             meetingData={meetingData}
                             onUpdateMeetingData={onUpdateMeetingData}
-                            readOnly={isUser}
+                            readOnly={false}
                         />
                     )}
 

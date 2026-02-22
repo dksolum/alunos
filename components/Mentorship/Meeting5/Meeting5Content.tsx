@@ -238,7 +238,7 @@ export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
                             meetingData={meetingData}
                             previousMeetingData={m4Data}
                             onUpdateMeetingData={handleUpdateMeetingData}
-                            readOnly={isUser}
+                            readOnly={false}
                         />
                     )}
 
@@ -249,7 +249,7 @@ export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
                             m4Data={m4Data}
                             m3Data={m3Data}
                             onUpdateMeetingData={handleUpdateMeetingData}
-                            readOnly={isUser}
+                            readOnly={false}
                         />
                     )}
 

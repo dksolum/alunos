@@ -243,7 +243,7 @@ export const Meeting6Content: React.FC<Meeting6ContentProps> = ({
                             meetingData={meetingData}
                             previousMeetingData={m5Data}
                             onUpdateMeetingData={handleUpdateMeetingData}
-                            readOnly={isUser}
+                            readOnly={false}
                         />
                     )}
 
@@ -255,7 +255,7 @@ export const Meeting6Content: React.FC<Meeting6ContentProps> = ({
                             m4Data={m4Data}
                             m3Data={m3Data}
                             onUpdateMeetingData={handleUpdateMeetingData}
-                            readOnly={isUser}
+                            readOnly={false}
                         />
                     )}
 

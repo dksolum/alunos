@@ -431,20 +431,20 @@ export const DebtUpdateStageM5: React.FC<DebtUpdateStageM5Props> = ({
                                                     value={debt.name}
                                                     placeholder="Nome da Dívida"
                                                     onChange={(e) => handleUpdateDebt(debt.id, 'name', e.target.value)}
-                                                    className="w-full bg-slate-800/80 border border-slate-700 rounded px-2 py-1 text-xs font-bold text-white outline-none focus:border-sky-500"
+                                                    className="w-full bg-slate-800/80 border border-slate-700 rounded px-2 py-1 text-xs font-bold text-white outline-none focus:border-sky-500 print:bg-transparent print:border-none print:text-slate-900 print:p-0"
                                                 />
                                                 <input
                                                     type="text"
                                                     value={debt.creditor}
                                                     placeholder="Nome do Credor"
                                                     onChange={(e) => handleUpdateDebt(debt.id, 'creditor', e.target.value)}
-                                                    className="w-full bg-transparent border-none px-2 text-[9px] text-slate-500 uppercase font-black tracking-wider outline-none"
+                                                    className="w-full bg-transparent border-none px-2 text-[9px] text-slate-500 uppercase font-black tracking-wider outline-none print:text-slate-600 print:p-0"
                                                 />
                                             </div>
                                         ) : (
                                             <>
-                                                <h4 className="font-bold text-white text-lg">{debt.name}</h4>
-                                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider">{debt.creditor}</p>
+                                                <h4 className="font-bold text-white text-lg print:text-slate-900">{debt.name}</h4>
+                                                <p className="text-[10px] text-slate-500 uppercase font-black tracking-wider print:text-slate-600">{debt.creditor}</p>
                                             </>
                                         )}
                                         <div className="flex flex-col text-[8px] text-slate-500 uppercase font-black gap-0.5 mt-2 print:text-gray-400">
@@ -469,14 +469,14 @@ export const DebtUpdateStageM5: React.FC<DebtUpdateStageM5Props> = ({
                                         <span className="text-[10px] uppercase font-black tracking-widest">Parcela Mensal</span>
                                     </div>
                                     <div className="grid grid-cols-2 gap-2">
-                                        <div className="p-2 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Anterior (M4)</p>
-                                            <p className="text-xs font-bold text-slate-400">R$ {debt.originalInstallment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                        <div className="p-2 bg-slate-800/50 rounded-lg border border-slate-700/50 print:bg-slate-100 print:border-slate-300">
+                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1 print:text-slate-600">Anterior (M4)</p>
+                                            <p className="text-xs font-bold text-slate-400 print:text-slate-700">R$ {debt.originalInstallment.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                                         </div>
-                                        <div className={`p-2 rounded-lg border transition-all ${hasReduction ? 'bg-emerald-500/5 border-emerald-500/20 print:bg-emerald-50 print:border-emerald-200' : 'bg-slate-800 border-slate-700 print:bg-white print:border-gray-200'}`}>
-                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Atual</p>
+                                        <div className={`p-2 rounded-lg border transition-all ${hasReduction ? 'bg-emerald-500/5 border-emerald-500/20 print:bg-emerald-50 print:border-emerald-200' : 'bg-slate-800 border-slate-700 print:bg-white print:border-slate-300'}`}>
+                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1 print:text-slate-600">Atual</p>
                                             <div className="relative">
-                                                <span className={`absolute left-0 top-1/2 -translate-y-1/2 text-[10px] font-black ${hasReduction ? 'text-emerald-400' : 'text-slate-500'}`}>R$</span>
+                                                <span className={`absolute left-0 top-1/2 -translate-y-1/2 text-[10px] font-black ${hasReduction ? 'text-emerald-400 print:text-emerald-700' : 'text-slate-500 print:text-slate-800'}`}>R$</span>
                                                 <input
                                                     type="text"
                                                     disabled={readOnly}
@@ -485,7 +485,7 @@ export const DebtUpdateStageM5: React.FC<DebtUpdateStageM5Props> = ({
                                                         const val = parseFloat(e.target.value.replace(/[^\d]/g, '')) / 100;
                                                         handleUpdateDebt(debt.id, 'newInstallment', val || 0);
                                                     }}
-                                                    className={`w-full bg-transparent text-xs font-black outline-none pl-5 ${hasReduction ? 'text-emerald-400' : 'text-white'}`}
+                                                    className={`w-full bg-transparent text-xs font-black outline-none pl-5 ${hasReduction ? 'text-emerald-400 print:text-emerald-700' : 'text-white print:text-slate-900'}`}
                                                 />
                                             </div>
                                         </div>
@@ -499,20 +499,20 @@ export const DebtUpdateStageM5: React.FC<DebtUpdateStageM5Props> = ({
                                         <span className="text-[10px] uppercase font-black tracking-widest">Prazo (Meses)</span>
                                     </div>
                                     <div className="grid grid-cols-2 gap-2">
-                                        <div className="p-2 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Anterior (M4)</p>
-                                            <p className="text-xs font-bold text-slate-400">{debt.originalQuantity}x</p>
+                                        <div className="p-2 bg-slate-800/50 rounded-lg border border-slate-700/50 print:bg-slate-100 print:border-slate-300">
+                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1 print:text-slate-600">Anterior (M4)</p>
+                                            <p className="text-xs font-bold text-slate-400 print:text-slate-700">{debt.originalQuantity}x</p>
                                         </div>
-                                        <div className={`p-2 rounded-lg border transition-all ${debt.amortizationConfirmed ? 'bg-sky-500/5 border-sky-500/20' : 'bg-slate-800 border-slate-700'}`}>
-                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Atual</p>
+                                        <div className={`p-2 rounded-lg border transition-all ${debt.amortizationConfirmed ? 'bg-sky-500/5 border-sky-500/20 print:bg-sky-50 print:border-sky-300' : 'bg-slate-800 border-slate-700 print:bg-white print:border-slate-300'}`}>
+                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1 print:text-slate-600">Atual</p>
                                             <input
                                                 type="number"
                                                 disabled={readOnly}
                                                 value={debt.newQuantity}
                                                 onChange={(e) => handleUpdateDebt(debt.id, 'newQuantity', parseInt(e.target.value) || 0)}
-                                                className={`w-full bg-transparent text-xs font-black outline-none ${debt.amortizationConfirmed ? 'text-sky-400' : 'text-white'}`}
+                                                className={`w-full bg-transparent text-xs font-black outline-none ${debt.amortizationConfirmed ? 'text-sky-400 print:text-sky-700' : 'text-white print:text-slate-900'}`}
                                             />
-                                            <p className="text-[9px] font-black text-slate-500 uppercase mt-1">Término: <span className="text-sky-400">{debt.endDate}</span></p>
+                                            <p className="text-[9px] font-black text-slate-500 uppercase mt-1 print:text-slate-600">Término: <span className="text-sky-400 print:text-sky-700">{debt.endDate}</span></p>
                                         </div>
                                     </div>
                                 </div>
@@ -524,12 +524,12 @@ export const DebtUpdateStageM5: React.FC<DebtUpdateStageM5Props> = ({
                                         <span className="text-[10px] uppercase font-black tracking-widest">Taxa / Juros</span>
                                     </div>
                                     <div className="grid grid-cols-2 gap-2">
-                                        <div className="p-2 bg-slate-800/50 rounded-lg border border-slate-700/50">
-                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Anterior (M4)</p>
-                                            <p className="text-xs font-bold text-slate-400">{debt.originalInterest}</p>
+                                        <div className="p-2 bg-slate-800/50 rounded-lg border border-slate-700/50 print:bg-slate-100 print:border-slate-300">
+                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1 print:text-slate-600">Anterior (M4)</p>
+                                            <p className="text-xs font-bold text-slate-400 print:text-slate-700">{debt.originalInterest}</p>
                                         </div>
-                                        <div className="p-2 bg-slate-800 border border-slate-700 rounded-lg">
-                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1">Atual</p>
+                                        <div className="p-2 bg-slate-800 border border-slate-700 rounded-lg print:bg-white print:border-slate-300">
+                                            <p className="text-[8px] text-slate-500 uppercase font-bold mb-1 print:text-slate-600">Atual</p>
                                             <div className="relative">
                                                 <input
                                                     type="text"
@@ -540,7 +540,7 @@ export const DebtUpdateStageM5: React.FC<DebtUpdateStageM5Props> = ({
                                                         if (val && !val.includes('%')) val = `${val}%`;
                                                         handleUpdateDebt(debt.id, 'newInterest', val);
                                                     }}
-                                                    className="w-full bg-transparent text-xs font-black text-white outline-none"
+                                                    className="w-full bg-transparent text-xs font-black text-white outline-none print:text-slate-900"
                                                 />
                                             </div>
                                         </div>
