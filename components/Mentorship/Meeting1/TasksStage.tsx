@@ -92,7 +92,7 @@ export const TasksStage: React.FC<TasksStageProps> = ({
                             : 'bg-slate-800 text-slate-500 cursor-not-allowed'}
             `}
                 >
-                    Concluir Mentoria
+                    Concluir Reunião
                 </button>
             </div>
         </div>

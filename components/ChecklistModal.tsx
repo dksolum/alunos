@@ -3,6 +3,8 @@ import { X, CheckCircle2, Circle, ChevronDown, ChevronUp, AlertCircle, Clock, Ta
 import { ChecklistData, FinancialData, DebtMapItem, User } from '../types';
 import { PrintHeader } from './Mentorship/Meeting1/PrintHeader';
 import { PrintPortal } from './PrintPortal';
+import { CostOfLiving } from './CostOfLiving';
+import { authService } from '../services/authService';
 
 interface ChecklistModalProps {
     isOpen: boolean;
@@ -15,6 +17,7 @@ interface ChecklistModalProps {
     debtMapItems?: DebtMapItem[];
     phase?: 'LOCKED' | 'PHASE_1' | 'PHASE_2';
     user: User;
+    onCostOfLivingUpdate?: () => void;
 }
 
 interface SubItemConfig {
@@ -218,7 +221,8 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
     financialData,
     debtMapItems = [],
     phase = 'PHASE_1',
-    user
+    user,
+    onCostOfLivingUpdate
 }) => {
     // Tab state for Phase 2 users
     const [activeTab, setActiveTab] = useState<'phase1' | 'phase2'>('phase1');
@@ -231,6 +235,7 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
     const [expandedSteps, setExpandedSteps] = useState<number[]>([]);
     const [isSaving, setIsSaving] = useState(false);
     const [isPrinting, setIsPrinting] = useState(false);
+    const [showCostOfLivingSummary, setShowCostOfLivingSummary] = useState(false);
 
     const handlePrint = () => {
         setIsPrinting(true);
@@ -736,7 +741,6 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
                                                                 {sub.text}
                                                             </span>
                                                         </div>
-
                                                         {showInfo && (
                                                             <div className="ml-7 text-[10px] text-amber-400 bg-amber-500/10 p-2 rounded border border-amber-500/20 flex gap-2">
                                                                 <AlertCircle size={12} className="shrink-0 mt-0.5" />
@@ -1042,6 +1046,30 @@ export const ChecklistModal: React.FC<ChecklistModalProps> = ({
                         {renderPrintView()}
                     </div>
                 </PrintPortal>
+            )}
+
+            {/* Cost of Living Modal */}
+            {showCostOfLivingSummary && (
+                <div className="animate-in fade-in zoom-in-95 duration-200 fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4">
+                    <CostOfLiving
+                        userId={user.id}
+                        user={user}
+                        initialView="summary"
+                        onClose={() => setShowCostOfLivingSummary(false)}
+                        onComplete={() => setShowCostOfLivingSummary(false)}
+                        onFetch={async (uid) => {
+                            return await authService.getCostOfLivingByAdmin(uid);
+                        }}
+                        onSave={async (uid, item) => {
+                            await authService.saveCostOfLivingByAdmin(uid, item);
+                            if (onCostOfLivingUpdate) onCostOfLivingUpdate();
+                        }}
+                        onDelete={async (iid) => {
+                            await authService.deleteCostOfLivingItem(iid, user.id);
+                            if (onCostOfLivingUpdate) onCostOfLivingUpdate();
+                        }}
+                    />
+                </div>
             )}
         </div>
     );

@@ -17,7 +17,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
     const [users, setUsers] = useState<User[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
-    const [activeTab, setActiveTab] = useState<'users' | 'faturamento'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'faturamento' | 'visao-geral'>('users');
     const [billingSubTab, setBillingSubTab] = useState<'consultoria' | 'mentoria' | 'acompanhamento'>('consultoria');
 
     const [consultoriaDrafts, setConsultoriaDrafts] = useState<Record<string, ConsultoriaBilling>>({});
@@ -550,8 +550,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
     };
 
     const handleStatusChange = async (userId: string, newStatus: UserStatus) => {
-        await authService.updateUserStatus(userId, newStatus, currentUser.name);
-        loadUsers();
+        try {
+            await authService.updateUserStatus(userId, newStatus, currentUser.name);
+
+            // Se mudou para Mentoria ou Acompanhamento, oculta automaticamente a Oferta de Mentoria
+            if (newStatus === 'CONVERTED' || newStatus === 'CONTACTED') {
+                const user = users.find(u => u.id === userId);
+                if (user) {
+                    const currentData = user.checklistData || {};
+                    if (!currentData.hideNextLevelProposal) {
+                        const updatedData = { ...currentData, hideNextLevelProposal: true };
+                        await authService.updateChecklistData(userId, updatedData);
+                        setUsers(prevUsers => prevUsers.map(u =>
+                            u.id === userId
+                                ? { ...u, status: newStatus, lastContactedBy: currentUser.name, checklistData: updatedData }
+                                : u
+                        ));
+                        return;
+                    }
+                }
+            }
+
+            loadUsers();
+        } catch (error: any) {
+            alert('Erro ao atualizar status: ' + (error.message || 'Erro desconhecido'));
+        }
     };
 
     const canCreateUser = currentUser.role === 'ADMIN' || currentUser.role === 'SECRETARY';
@@ -622,6 +645,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                                 }`}
                         >
                             Faturamento
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('visao-geral')}
+                            className={`px-6 py-3 rounded-xl font-black text-sm uppercase tracking-widest transition-all ${activeTab === 'visao-geral'
+                                ? 'bg-indigo-500 text-slate-900 shadow-lg shadow-indigo-500/20'
+                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white'
+                                }`}
+                        >
+                            Visão Geral
                         </button>
                     </div>
 
@@ -1433,6 +1465,112 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                             )}
                         </div>
                     )}
+
+                    {activeTab === 'visao-geral' && (() => {
+                        const validUsers = users.filter(u => u.role === 'USER' && (u.status === 'ACTIVE' || u.status === 'CONVERTED' || u.status === 'CONTACTED'));
+                        const totalValid = validUsers.length;
+
+                        const consultoriaCount = validUsers.filter(u => u.status === 'ACTIVE').length;
+                        const mentoriaCount = validUsers.filter(u => u.status === 'CONVERTED').length;
+                        const acompanhamentoCount = validUsers.filter(u => u.status === 'CONTACTED').length;
+
+                        const consultoriaPct = totalValid > 0 ? (consultoriaCount / totalValid) * 100 : 0;
+                        const mentoriaPct = totalValid > 0 ? (mentoriaCount / totalValid) * 100 : 0;
+                        const acompanhamentoPct = totalValid > 0 ? (acompanhamentoCount / totalValid) * 100 : 0;
+
+                        return (
+                            <div className="animate-in fade-in duration-300">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                    {/* Consultoria Metric */}
+                                    <div className="bg-slate-900/50 border border-emerald-500/20 rounded-2xl p-6 relative overflow-hidden group">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent"></div>
+                                        <div className="relative z-10 flex flex-col h-full justify-between">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                                                        <CheckCircle2 size={20} />
+                                                    </div>
+                                                    <h3 className="text-slate-400 font-bold uppercase text-xs tracking-wider">Consultoria</h3>
+                                                </div>
+                                                <div className="text-3xl font-black text-emerald-400">{consultoriaCount}</div>
+                                            </div>
+                                            <div>
+                                                <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-2">
+                                                    <span>Porcentagem do Total</span>
+                                                    <span className="text-emerald-500">{consultoriaPct.toFixed(1)}%</span>
+                                                </div>
+                                                <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                                                    <div className="bg-emerald-500 h-2 rounded-full transition-all duration-1000" style={{ width: `${consultoriaPct}%` }}></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Mentoria Metric */}
+                                    <div className="bg-slate-900/50 border border-sky-500/20 rounded-2xl p-6 relative overflow-hidden group">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-sky-500/5 to-transparent"></div>
+                                        <div className="relative z-10 flex flex-col h-full justify-between">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-400">
+                                                        <Check size={20} />
+                                                    </div>
+                                                    <h3 className="text-slate-400 font-bold uppercase text-xs tracking-wider">Mentoria</h3>
+                                                </div>
+                                                <div className="text-3xl font-black text-sky-400">{mentoriaCount}</div>
+                                            </div>
+                                            <div>
+                                                <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-2">
+                                                    <span>Porcentagem do Total</span>
+                                                    <span className="text-sky-400">{mentoriaPct.toFixed(1)}%</span>
+                                                </div>
+                                                <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                                                    <div className="bg-sky-500 h-2 rounded-full transition-all duration-1000" style={{ width: `${mentoriaPct}%` }}></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Acompanhamento Metric */}
+                                    <div className="bg-slate-900/50 border border-amber-500/20 rounded-2xl p-6 relative overflow-hidden group">
+                                        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent"></div>
+                                        <div className="relative z-10 flex flex-col h-full justify-between">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                                                        <Clock size={20} />
+                                                    </div>
+                                                    <h3 className="text-slate-400 font-bold uppercase text-xs tracking-wider">Acompanhamento</h3>
+                                                </div>
+                                                <div className="text-3xl font-black text-amber-500">{acompanhamentoCount}</div>
+                                            </div>
+                                            <div>
+                                                <div className="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-2">
+                                                    <span>Porcentagem do Total</span>
+                                                    <span className="text-amber-500">{acompanhamentoPct.toFixed(1)}%</span>
+                                                </div>
+                                                <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                                                    <div className="bg-amber-500 h-2 rounded-full transition-all duration-1000" style={{ width: `${acompanhamentoPct}%` }}></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Info Box */}
+                                <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
+                                    <div className="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3">
+                                        <UserIcon size={24} />
+                                    </div>
+                                    <h4 className="text-sm font-bold text-slate-200 uppercase tracking-widest mb-1">Total de Clientes Ativos</h4>
+                                    <div className="text-4xl font-black text-white mb-2">{totalValid}</div>
+                                    <p className="text-xs text-slate-400 max-w-lg">
+                                        Esta visão geral considera apenas os clientes que estão atualmente nas fases de <strong>Consultoria</strong>, <strong>Mentoria</strong> e <strong>Acompanhamento</strong>. Usuários novos ou perdidos não entram neste cálculo de proporção.
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })()}
                 </div>
 
                 {showCreate && (
@@ -1694,17 +1832,34 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                                         delete newChecklistData.subscriptionPlanId;
                                         await authService.updateChecklistData(subscriptionUser.id, newChecklistData);
 
-                                        // Update local state
                                         setUsers(users.map(u => u.id === subscriptionUser.id ? { ...u, checklistData: newChecklistData } : u));
                                         setShowSubscriptionModal(false);
                                         setSubscriptionUser(null);
                                     }}
-                                    className={`w-full p-4 pt-10 text-center flex items-center justify-center`}
+                                    className="w-full p-4 rounded-xl border border-rose-500/20 text-rose-400 bg-rose-500/5 hover:bg-rose-500/10 transition-colors"
                                 >
-                                    <span className="text-xs font-bold text-rose-500 hover:text-rose-400 underline decoration-rose-500/30 underline-offset-4">
-                                        Remover Oferta (Ocultar)
-                                    </span>
+                                    Remover Plano
                                 </button>
+
+                                <div className="mt-4 pt-4 border-t border-slate-800">
+                                    <label className="flex items-center gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={!!subscriptionUser.checklistData?.hideNextLevelProposal}
+                                            onChange={async (e) => {
+                                                const newChecklistData = { ...subscriptionUser.checklistData, hideNextLevelProposal: e.target.checked };
+                                                await authService.updateChecklistData(subscriptionUser.id, newChecklistData);
+                                                // Update local state and current subscription user to reflect changes interactively
+                                                setUsers(users.map(u => u.id === subscriptionUser.id ? { ...u, checklistData: newChecklistData } : u));
+                                                setSubscriptionUser({ ...subscriptionUser, checklistData: newChecklistData });
+                                            }}
+                                            className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
+                                        />
+                                        <span className="text-sm font-medium text-slate-300">
+                                            Ocultar "Pronto para o Próximo Nível" no painel do usuário
+                                        </span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>

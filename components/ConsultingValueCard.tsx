@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { TrendingUp, Activity, Target, Scissors, AlertCircle, ChevronDown, ChevronUp, CheckCircle2, Printer, Lock, ExternalLink, CreditCard } from 'lucide-react';
-import { FinancialData, ChecklistData, DebtMapItem, User } from '../types';
+import { FinancialData, ChecklistData, DebtMapItem, User, CostOfLivingItem } from '../types';
+import { authService } from '../services/authService';
 import { PrintHeader } from './Mentorship/Meeting1/PrintHeader';
 import { PrintPortal } from './PrintPortal';
 
@@ -15,11 +16,32 @@ interface ConsultingValueCardProps {
     checklistData: ChecklistData;
     debtMapItems?: DebtMapItem[];
     user: User;
+    costUpdateTrigger?: number;
 }
 
-export const ConsultingValueCard: React.FC<ConsultingValueCardProps> = ({ financialData, checklistData, debtMapItems = [], user }) => {
+export const ConsultingValueCard: React.FC<ConsultingValueCardProps> = ({ financialData, checklistData, debtMapItems = [], user, costUpdateTrigger = 0 }) => {
     const [isExpanded, setIsExpanded] = React.useState(false);
     const [isPrinting, setIsPrinting] = React.useState(false);
+    const [costOfLivingData, setCostOfLivingData] = useState<CostOfLivingItem[]>([]);
+    const [isLoadingCostOfLiving, setIsLoadingCostOfLiving] = useState(true);
+
+    useEffect(() => {
+        const fetchCostOfLiving = async () => {
+            if (!user?.id) return;
+            try {
+                // use getCostOfLivingByAdmin since admin is viewing user data
+                const data = await authService.getCostOfLivingByAdmin(user.id);
+                setCostOfLivingData(data);
+            } catch (error) {
+                console.error("Error fetching cost of living:", error);
+            } finally {
+                setIsLoadingCostOfLiving(false);
+            }
+        };
+
+        fetchCostOfLiving();
+    }, [user?.id, costUpdateTrigger]);
+
 
     const handlePrint = () => {
         setIsPrinting(true);
@@ -32,6 +54,13 @@ export const ConsultingValueCard: React.FC<ConsultingValueCardProps> = ({ financ
     // 1. Cost of Living Comparison
     // ... (logic remains same)
     const calculateTotalExpenses = (): number => {
+        if (isLoadingCostOfLiving) return 0; // Or keep previous logic as fallback
+
+        if (costOfLivingData.length > 0) {
+            return costOfLivingData.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0);
+        }
+
+        // Fallback to financial data if no cost of living items exist yet
         const estimated = financialData.estimatedExpenses.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0);
         const fixed = financialData.fixedExpenses.reduce((acc, curr) => acc + (Number(curr.value) || 0), 0);
         const creditCards = financialData.creditCard.cards.reduce((acc, curr) => acc + (Number(curr.oneTime) || 0), 0);
@@ -286,7 +315,7 @@ export const ConsultingValueCard: React.FC<ConsultingValueCardProps> = ({ financ
             )}
 
             {/* SUBSCRIPTION PLAN CTA */}
-            {!isPrint && user.checklistData?.subscriptionPlanId && user.role === 'USER' && (
+            {!isPrint && user.checklistData?.subscriptionPlanId && user.role === 'USER' && !user.checklistData?.hideNextLevelProposal && (
                 <div className="p-8 lg:p-12 border-t border-slate-800 bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden rounded-b-[2rem]">
                     {/* Background Accents */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none" />

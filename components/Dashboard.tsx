@@ -88,6 +88,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const [showIntakeModal, setShowIntakeModal] = React.useState(false);
     const [showChecklistModal, setShowChecklistModal] = React.useState(false);
 
+    const [costUpdateTrigger, setCostUpdateTrigger] = React.useState(0);
     // Mentorship State
     const [mentorshipState, setMentorshipState] = React.useState<MentorshipState>({ meetings: [], nonRecurringExpenses: [] });
     const [selectedMeeting, setSelectedMeeting] = React.useState<number | null>(null);
@@ -462,6 +463,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                         checklistData={user.checklistData || {}}
                                         debtMapItems={debtMapItems}
                                         user={user}
+                                        costUpdateTrigger={costUpdateTrigger}
                                     />
                                 )}
                             </div>
@@ -478,6 +480,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         debtMapItems={debtMapItems}
                         phase={user.checklistPhase || 'LOCKED'}
                         user={user}
+                        onCostOfLivingUpdate={() => setCostUpdateTrigger(prev => prev + 1)}
                         onSave={async (newProgress, newData) => {
                             if (currentUser.role === 'USER') return; // Double check security
                             await authService.updateChecklistProgress(user.id, newProgress);

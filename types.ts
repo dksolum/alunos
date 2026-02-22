@@ -197,6 +197,7 @@ export interface ConsultoriaBilling {
 
 export interface ChecklistData {
   subscriptionPlanId?: string;
+  hideNextLevelProposal?: boolean;
   billing?: {
     consultoria?: ConsultoriaBilling;
     mentoria?: MentoriaBilling;
