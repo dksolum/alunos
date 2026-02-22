@@ -26,7 +26,8 @@ export const TasksStage: React.FC<TasksStageProps> = ({
 }) => {
     const defaultTasks = [
         { id: 'task1', label: 'Continuar registrando entradas, saídas e transferências, tentando não ultrapassar os valores definidos por categoria' },
-        { id: 'task2', label: 'Preencher lista de gastos não recorrentes' }
+        { id: 'task2', label: 'Preencher lista de gastos não recorrentes' },
+        { id: 'task3', label: 'Definir novo limite de gastos ou manter para o próximo mês - Enviar no grupo do WhatsApp' }
     ];
 
     const tasksToUse = customTasks || defaultTasks;

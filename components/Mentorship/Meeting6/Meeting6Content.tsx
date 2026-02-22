@@ -307,7 +307,9 @@ export const Meeting6Content: React.FC<Meeting6ContentProps> = ({
                                 { id: 'm6_task1', label: 'Continuar registrando entradas, saídas e transferências, sem negligenciar nenhum e obedecendo o orçamento definido' },
                                 { id: 'm6_task2', label: 'Manter foco na quitação de dívidas e na construção/manutenção da reserva quebra galho' },
                                 { id: 'm6_task3', label: 'Revisar mapeamento de patrimônio e entender quais podem ajudar na conquista de metas e sonhos' },
-                                { id: 'm6_task4', label: 'Continuar guardando o valor mensal para a meta em 1ª prioridade' }
+                                { id: 'm6_task4', label: 'Continuar guardando o valor mensal para a meta em 1ª prioridade' },
+                                { id: 'm6_task5', label: 'Definir novo limite de gastos ou manter para o próximo mês - Enviar no grupo do WhatsApp' },
+                                { id: 'm6_task6', label: 'Guardar o valor mensal previsto para os Gastos Não Recorrentes dentro da carteira definida' }
                             ]}
                         />
                     )}

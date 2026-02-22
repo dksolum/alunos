@@ -114,7 +114,8 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
         { id: 'm2_task1', label: 'Continuar registrando entradas, saídas e transferências, sem negligenciar nenhum e obedecendo o orçamento definido' },
         { id: 'm2_task2', label: 'Criar uma carteira com o nome Quebra Galho em alguma instituição bancária' },
         { id: 'm2_task4', label: 'Criar uma carteira com o nome Gastos Não Recorrentes em alguma instituição bancária' },
-        { id: 'm2_task3', label: 'Atualizar o mapeamento de dívidas (acrescentou algo ou finalizou alguma?)' }
+        { id: 'm2_task3', label: 'Atualizar o mapeamento de dívidas (acrescentou algo ou finalizou alguma?)' },
+        { id: 'm2_task5', label: 'Definir novo limite de gastos ou manter para o próximo mês - Enviar no grupo do WhatsApp' }
     ];
 
     return (

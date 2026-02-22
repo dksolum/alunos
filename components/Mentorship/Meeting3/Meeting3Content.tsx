@@ -113,7 +113,9 @@ export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
     const meeting3Tasks = [
         { id: 'm3_task1', label: 'Continuar registrando entradas, saídas e transferências, sem negligenciar nenhum e obedecendo o orçamento definido' },
         { id: 'm3_task2', label: 'Iniciar o plano de quitação de dívida definido hoje' },
-        { id: 'm3_task3', label: 'Manter foco na reserva quebra galho para evitar novos imprevistos' }
+        { id: 'm3_task3', label: 'Manter foco na reserva quebra galho para evitar novos imprevistos' },
+        { id: 'm3_task4', label: 'Definir novo limite de gastos ou manter para o próximo mês - Enviar no grupo do WhatsApp' },
+        { id: 'm3_task5', label: 'Guardar o valor mensal previsto para os Gastos Não Recorrentes dentro da carteira definida' }
     ];
 
     return (
