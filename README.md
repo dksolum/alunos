@@ -112,6 +112,8 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 
 ## 📝 Histórico de Atualizações Recentes
 
+- **Fix (Critical)**: Solução do "Phantom Blank Data" nos módulos de `Revisão M5` e `M6`. Prop manquante nas árvores de view principal adicionada, além da implementação de Listeners Dinâmicos (UseEffect Props Sync) nos componentes folha para desenhar dados carregados assincronamente da rede sem travar campos no UI-Side.
+- **Fix (Critical - Dashboard Core)**: Refatoração absoluta da esteira de gravação via integração de `useRef (latestMeetingsRef)` no *Dashboard Mutator*. Condições de corrida extrema (Stale Closures via multiple clicks) bloqueadas. O front agora espelha o banco de maneira assíncrona blindada, impossibilitando salvar "State shells" arcaicos de volta ao Supabase.
 - **Feat**: Liberação estrutural do bloqueio `readOnly` sob o módulo de **Sonhos e Metas** nas Reuniões 4, 5 e 6, permitindo que usuários com a flag de visualização de aluno interajam, criem e gerenciem metas proativamente no Pós-Mentoria sem intervenção do Administrador.
 - **UI/Print**: Refinamento extremo da fidelidade de Impressão via utilitários `print:*` do Tailwind. Cobertura estendida aos painéis detalhados de Reunião 5 e 6 (Mapeamento de Patrimônio e Acompanhamento de Dívidas), injetando contrastes lógicos em fundos brancos sem comprometer a temática em modo noturno da tela interativa.
 - **Feat**: Injeção da funcionalidade visual de **Sincronizar (origin tags)** a metadados de longo prazo (Metas e Evolução do Mapeamento) garantindo que reuniões maduras consumam de sub-buckets passados via click em Meetings tardias (M5→M6).

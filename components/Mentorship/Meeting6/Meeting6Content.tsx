@@ -215,6 +215,7 @@ export const Meeting6Content: React.FC<Meeting6ContentProps> = ({
                         <ReviewStageM6
                             financialData={financialData}
                             checklistData={checklistData}
+                            meetingData={meetingData}
                             previousMeetingData={m5Data}
                             onUpdateMeetingData={handleUpdateMeetingData}
                             onUpdateFinancialData={handleUpdateFinancialData}

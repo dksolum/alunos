@@ -55,6 +55,21 @@ export const ReviewStageM6: React.FC<ReviewStageM6Props> = ({
         onUpdateMeetingData((prev: any) => ({ ...prev, feedback: val }));
     };
 
+    // Sync external changes to local state (e.g., initial data load arriving after mount)
+    useEffect(() => {
+        if (meetingData) {
+            if (meetingData.bankChecked !== undefined) setBankChecked(meetingData.bankChecked);
+            if (meetingData.quebraGalhoChecked !== undefined) setQuebraGalhoChecked(meetingData.quebraGalhoChecked);
+            if (meetingData.quebraGalhoValue !== undefined) setQuebraGalhoValue(meetingData.quebraGalhoValue);
+            if (meetingData.quebraGalhoObservation !== undefined) setQuebraGalhoObservation(meetingData.quebraGalhoObservation);
+            if (meetingData.gastosNaoRecorrentesChecked !== undefined) setGastosNaoRecorrentesChecked(meetingData.gastosNaoRecorrentesChecked);
+            if (meetingData.gastosNaoRecorrentesValue !== undefined) setGastosNaoRecorrentesValue(meetingData.gastosNaoRecorrentesValue);
+            if (meetingData.gastosNaoRecorrentesObservation !== undefined) setGastosNaoRecorrentesObservation(meetingData.gastosNaoRecorrentesObservation);
+            if (meetingData.feedback !== undefined) setFeedbackValue(meetingData.feedback);
+            if (meetingData.reviewItems !== undefined && meetingData.reviewItems.length > 0) setItems(meetingData.reviewItems);
+        }
+    }, [meetingData]);
+
     // Initialization Logic
     useEffect(() => {
         if (!meetingData?.reviewItems || meetingData.reviewItems.length === 0) {
@@ -90,7 +105,7 @@ export const ReviewStageM6: React.FC<ReviewStageM6Props> = ({
         } else {
             setItems(meetingData.reviewItems);
         }
-    }, [previousMeetingData]);
+    }, [meetingData?.reviewItems]); // Removed previousMeetingData as it shouldn't reset initialized arrays
 
     // Sync logic for Reference values from previous meeting
     useEffect(() => {

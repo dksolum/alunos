@@ -71,10 +71,12 @@ Para garantir a continuidade do planejamento financeiro, implementamos um padrã
 2.  Valorizações e planejamentos são importados do mês anterior.
 3.  **Sincronização em Cascata (v2.6)**: Gastos não recorrentes, Dívidas e Objetivos de Torneio (Sonhos) seguem a cronologia estrita (M1 → M6).
 
-### Padronização de Arquitetura (Functional State Updaters)
-A fim de prevenir sobrescritas de estado por Condições de Corrida ("Stale Closures") durante carregamentos paralelos de dados no `Dashboard`, alteramos a via de callback do component state.
+### Padronização de Arquitetura (Functional State Updaters & Ref Sync)
+A fim de prevenir sobrescritas de estado por Condições de Corrida ("Stale Closures") durante carregamentos paralelos de dados e cliques rápidos no `Dashboard`, alteramos a via de callback e o rastreamento do component state.
 *   A gestão de estado local (useState) foi isolada no contêiner-pai (`Dashboard.tsx`).
+*   **Referências Síncronas (useRef)**: O `Dashboard.tsx` utiliza uma ref local (`latestMeetingsRef`) para rastrear mutações instantaneamente sem aguardar ciclos de re-render do React. Todas as requisições de save (banco de dados) buscam dados da `ref`, garantindo que uploads em sucessão muito rápida (ex: checkbox + botão de save seguidos) jamais capturem uma "state shell" velha ("Stale Closure").
 *   Componentes complexos de reunião (`DebtUpdateStage`, `MeetingContent`) utilizam _State Updater Functions_: `onUpdateMeetingData((prev) => ({ ...prev, newState }))` no lugar de injetar props defasadas.
+*   **Sincronização Ativa de Props em Componentes Aninhados**: Componentes "folha" (ex: `ReviewStageM5.tsx`) escutam ativamente a prop raiz (`meetingData`) através de `useEffects` contínuos, garantindo que mesmo que o dado carregue minutos depois de montado (ou mude externamente), o Client-Side form update preencha instantaneamente a UI, banindo campos brancos persistentes.
 *   **Fix Crítico (Reunião 1)**: Componentes com abas de navegação (como `Meeting1Content.tsx`) podiam enviar funções de callback defasadas via RPC do Admin, resultando em salvamento nulo (`new_data: undefined`). A interceptação funcional foi embutida no `Dashboard.tsx` garantindo extração de JSON válido antes da mutação na base de dados.
 *   Configuramos proteções para **locks padrão** em Atas: a Reunião 1 nasce rígida com `locked` em vez de presumir o `unlocked` em escalada base.
 

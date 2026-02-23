@@ -91,12 +91,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const [costUpdateTrigger, setCostUpdateTrigger] = React.useState(0);
     // Mentorship State
     const [mentorshipState, setMentorshipState] = React.useState<MentorshipState>({ meetings: [], nonRecurringExpenses: [] });
+    const latestMeetingsRef = React.useRef<MentorshipMeeting[]>([]);
     const [selectedMeeting, setSelectedMeeting] = React.useState<number | null>(null);
 
     React.useEffect(() => {
         if (user.id) {
             authService.getMentorshipState(user.id).then(state => {
                 setMentorshipState(state);
+                latestMeetingsRef.current = state.meetings;
             });
         }
     }, [user.id, selectedMeeting]); // Refresh when modal closes/changes
@@ -542,17 +544,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                     currentUser={currentUser as any}
                                     readOnly={currentUser.role === 'USER'}
                                     onUpdateMeetingData={async (data) => {
-                                        // Update local state optimistic
-                                        const updatedMeetings = mentorshipState.meetings.map(m =>
-                                            m.meetingId === 6 ? { ...m, data } : m
-                                        );
-                                        if (!mentorshipState.meetings.find(m => m.meetingId === 6)) {
-                                            updatedMeetings.push({ ...getMeeting(6), data });
+                                        let finalData = data;
+                                        if (typeof data === 'function') {
+                                            const currentMeeting = latestMeetingsRef.current.find(m => m.meetingId === 6);
+                                            finalData = data(currentMeeting?.data || {});
                                         }
+
+                                        let updatedMeetings = latestMeetingsRef.current.map(m =>
+                                            m.meetingId === 6 ? { ...m, data: finalData } : m
+                                        );
+                                        if (!latestMeetingsRef.current.find(m => m.meetingId === 6)) {
+                                            updatedMeetings.push({ ...getMeeting(6), data: finalData });
+                                        }
+                                        latestMeetingsRef.current = updatedMeetings;
                                         setMentorshipState(prev => ({ ...prev, meetings: updatedMeetings }));
 
-                                        // Save to DB
-                                        await authService.saveMeetingData(user.id, 6, data);
+                                        await authService.saveMeetingData(user.id, 6, finalData);
                                     }}
                                 />
                             </div>
@@ -577,24 +584,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 meetingStatus={getMeeting(1).status}
                                 onUpdateMeetingData={async (data) => {
                                     let finalData = data;
-                                    setMentorshipState(prev => {
-                                        const currentMeeting = prev.meetings.find(m => m.meetingId === 1);
-                                        if (typeof data === 'function') {
-                                            finalData = data(currentMeeting?.data || {});
-                                        }
-                                        const updatedMeetings = prev.meetings.map(m =>
-                                            m.meetingId === 1 ? { ...m, data: finalData } : m
-                                        );
-                                        if (!currentMeeting) {
-                                            updatedMeetings.push({ ...getMeeting(1), data: finalData });
-                                        }
-                                        return { ...prev, meetings: updatedMeetings };
-                                    });
                                     if (typeof data === 'function') {
-                                        // fetch the resolved state directly to save to db
-                                        const currentMeeting = mentorshipState.meetings.find(m => m.meetingId === 1);
+                                        const currentMeeting = latestMeetingsRef.current.find(m => m.meetingId === 1);
                                         finalData = data(currentMeeting?.data || {});
                                     }
+
+                                    let updatedMeetings = latestMeetingsRef.current.map(m =>
+                                        m.meetingId === 1 ? { ...m, data: finalData } : m
+                                    );
+                                    if (!latestMeetingsRef.current.find(m => m.meetingId === 1)) {
+                                        updatedMeetings.push({ ...getMeeting(1), data: finalData });
+                                    }
+                                    latestMeetingsRef.current = updatedMeetings;
+                                    setMentorshipState(prev => ({ ...prev, meetings: updatedMeetings }));
+
                                     await authService.saveMeetingData(user.id, 1, finalData);
                                 }}
                                 onUpdateFinancialData={async (data) => {
@@ -630,24 +633,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 meetingStatus={getMeeting(2).status}
                                 onUpdateMeetingData={async (data) => {
                                     let finalData = data;
-                                    setMentorshipState(prev => {
-                                        const currentMeeting = prev.meetings.find(m => m.meetingId === 2);
-                                        if (typeof data === 'function') {
-                                            finalData = data(currentMeeting?.data || {});
-                                        }
-                                        const updatedMeetings = prev.meetings.map(m =>
-                                            m.meetingId === 2 ? { ...m, data: finalData } : m
-                                        );
-                                        if (!currentMeeting) {
-                                            updatedMeetings.push({ ...getMeeting(2), data: finalData });
-                                        }
-                                        return { ...prev, meetings: updatedMeetings };
-                                    });
                                     if (typeof data === 'function') {
-                                        // fetch the resolved state directly to save to db
-                                        const currentMeeting = mentorshipState.meetings.find(m => m.meetingId === 2);
+                                        const currentMeeting = latestMeetingsRef.current.find(m => m.meetingId === 2);
                                         finalData = data(currentMeeting?.data || {});
                                     }
+
+                                    let updatedMeetings = latestMeetingsRef.current.map(m =>
+                                        m.meetingId === 2 ? { ...m, data: finalData } : m
+                                    );
+                                    if (!latestMeetingsRef.current.find(m => m.meetingId === 2)) {
+                                        updatedMeetings.push({ ...getMeeting(2), data: finalData });
+                                    }
+                                    latestMeetingsRef.current = updatedMeetings;
+                                    setMentorshipState(prev => ({ ...prev, meetings: updatedMeetings }));
+
                                     await authService.saveMeetingData(user.id, 2, finalData);
                                 }}
                                 onUpdateFinancialData={async (data) => {
@@ -678,23 +677,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 meetingStatus={getMeeting(3).status}
                                 onUpdateMeetingData={async (data) => {
                                     let finalData = data;
-                                    setMentorshipState(prev => {
-                                        const currentMeeting = prev.meetings.find(m => m.meetingId === 3);
-                                        if (typeof data === 'function') {
-                                            finalData = data(currentMeeting?.data || {});
-                                        }
-                                        const updatedMeetings = prev.meetings.map(m =>
-                                            m.meetingId === 3 ? { ...m, data: finalData } : m
-                                        );
-                                        if (!currentMeeting) {
-                                            updatedMeetings.push({ ...getMeeting(3), data: finalData });
-                                        }
-                                        return { ...prev, meetings: updatedMeetings };
-                                    });
                                     if (typeof data === 'function') {
-                                        const currentMeeting = mentorshipState.meetings.find(m => m.meetingId === 3);
+                                        const currentMeeting = latestMeetingsRef.current.find(m => m.meetingId === 3);
                                         finalData = data(currentMeeting?.data || {});
                                     }
+
+                                    let updatedMeetings = latestMeetingsRef.current.map(m =>
+                                        m.meetingId === 3 ? { ...m, data: finalData } : m
+                                    );
+                                    if (!latestMeetingsRef.current.find(m => m.meetingId === 3)) {
+                                        updatedMeetings.push({ ...getMeeting(3), data: finalData });
+                                    }
+                                    latestMeetingsRef.current = updatedMeetings;
+                                    setMentorshipState(prev => ({ ...prev, meetings: updatedMeetings }));
+
                                     await authService.saveMeetingData(user.id, 3, finalData);
                                 }}
                                 onUpdateFinancialData={async (data) => {
@@ -724,23 +720,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 meetingStatus={getMeeting(4).status}
                                 onUpdateMeetingData={async (data) => {
                                     let finalData = data;
-                                    setMentorshipState(prev => {
-                                        const currentMeeting = prev.meetings.find(m => m.meetingId === 4);
-                                        if (typeof data === 'function') {
-                                            finalData = data(currentMeeting?.data || {});
-                                        }
-                                        const updatedMeetings = prev.meetings.map(m =>
-                                            m.meetingId === 4 ? { ...m, data: finalData } : m
-                                        );
-                                        if (!currentMeeting) {
-                                            updatedMeetings.push({ ...getMeeting(4), data: finalData });
-                                        }
-                                        return { ...prev, meetings: updatedMeetings };
-                                    });
                                     if (typeof data === 'function') {
-                                        const currentMeeting = mentorshipState.meetings.find(m => m.meetingId === 4);
+                                        const currentMeeting = latestMeetingsRef.current.find(m => m.meetingId === 4);
                                         finalData = data(currentMeeting?.data || {});
                                     }
+
+                                    let updatedMeetings = latestMeetingsRef.current.map(m =>
+                                        m.meetingId === 4 ? { ...m, data: finalData } : m
+                                    );
+                                    if (!latestMeetingsRef.current.find(m => m.meetingId === 4)) {
+                                        updatedMeetings.push({ ...getMeeting(4), data: finalData });
+                                    }
+                                    latestMeetingsRef.current = updatedMeetings;
+                                    setMentorshipState(prev => ({ ...prev, meetings: updatedMeetings }));
+
                                     await authService.saveMeetingData(user.id, 4, finalData);
                                 }}
                                 onUpdateFinancialData={async (data) => {
@@ -771,23 +764,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 meetingStatus={getMeeting(5).status}
                                 onUpdateMeetingData={async (data) => {
                                     let finalData = data;
-                                    setMentorshipState(prev => {
-                                        const currentMeeting = prev.meetings.find(m => m.meetingId === 5);
-                                        if (typeof data === 'function') {
-                                            finalData = data(currentMeeting?.data || {});
-                                        }
-                                        const updatedMeetings = prev.meetings.map(m =>
-                                            m.meetingId === 5 ? { ...m, data: finalData } : m
-                                        );
-                                        if (!currentMeeting) {
-                                            updatedMeetings.push({ ...getMeeting(5), data: finalData });
-                                        }
-                                        return { ...prev, meetings: updatedMeetings };
-                                    });
                                     if (typeof data === 'function') {
-                                        const currentMeeting = mentorshipState.meetings.find(m => m.meetingId === 5);
+                                        const currentMeeting = latestMeetingsRef.current.find(m => m.meetingId === 5);
                                         finalData = data(currentMeeting?.data || {});
                                     }
+
+                                    let updatedMeetings = latestMeetingsRef.current.map(m =>
+                                        m.meetingId === 5 ? { ...m, data: finalData } : m
+                                    );
+                                    if (!latestMeetingsRef.current.find(m => m.meetingId === 5)) {
+                                        updatedMeetings.push({ ...getMeeting(5), data: finalData });
+                                    }
+                                    latestMeetingsRef.current = updatedMeetings;
+                                    setMentorshipState(prev => ({ ...prev, meetings: updatedMeetings }));
+
                                     await authService.saveMeetingData(user.id, 5, finalData);
                                 }}
                                 onUpdateFinancialData={async (data) => {
@@ -820,23 +810,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
                                 meetingStatus={getMeeting(6).status}
                                 onUpdateMeetingData={async (data) => {
                                     let finalData = data;
-                                    setMentorshipState(prev => {
-                                        const currentMeeting = prev.meetings.find(m => m.meetingId === 6);
-                                        if (typeof data === 'function') {
-                                            finalData = data(currentMeeting?.data || {});
-                                        }
-                                        const updatedMeetings = prev.meetings.map(m =>
-                                            m.meetingId === 6 ? { ...m, data: finalData } : m
-                                        );
-                                        if (!currentMeeting) {
-                                            updatedMeetings.push({ ...getMeeting(6), data: finalData });
-                                        }
-                                        return { ...prev, meetings: updatedMeetings };
-                                    });
                                     if (typeof data === 'function') {
-                                        const currentMeeting = mentorshipState.meetings.find(m => m.meetingId === 6);
+                                        const currentMeeting = latestMeetingsRef.current.find(m => m.meetingId === 6);
                                         finalData = data(currentMeeting?.data || {});
                                     }
+
+                                    let updatedMeetings = latestMeetingsRef.current.map(m =>
+                                        m.meetingId === 6 ? { ...m, data: finalData } : m
+                                    );
+                                    if (!latestMeetingsRef.current.find(m => m.meetingId === 6)) {
+                                        updatedMeetings.push({ ...getMeeting(6), data: finalData });
+                                    }
+                                    latestMeetingsRef.current = updatedMeetings;
+                                    setMentorshipState(prev => ({ ...prev, meetings: updatedMeetings }));
+
                                     await authService.saveMeetingData(user.id, 6, finalData);
                                 }}
                                 onUpdateFinancialData={async (data) => {
