@@ -568,6 +568,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     >
                         {selectedMeeting === 1 ? (
                             <Meeting1Content
+                                user={user}
                                 userId={user.id}
                                 currentUser={currentUser}
                                 financialData={financialData}
@@ -619,6 +620,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             />
                         ) : selectedMeeting === 2 ? (
                             <Meeting2Content
+                                user={user}
                                 userId={user.id}
                                 currentUser={currentUser}
                                 financialData={financialData}
@@ -666,6 +668,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             />
                         ) : selectedMeeting === 3 ? (
                             <Meeting3Content
+                                user={user}
                                 userId={user.id}
                                 currentUser={currentUser}
                                 financialData={financialData}
@@ -712,6 +715,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             />
                         ) : selectedMeeting === 4 ? (
                             <Meeting4Content
+                                user={user}
                                 userId={user.id}
                                 currentUser={currentUser}
                                 financialData={financialData}
@@ -757,6 +761,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             />
                         ) : selectedMeeting === 5 ? (
                             <Meeting5Content
+                                user={user}
                                 userId={user.id}
                                 currentUser={currentUser}
                                 financialData={financialData}
@@ -803,6 +808,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                             />
                         ) : selectedMeeting === 6 ? (
                             <Meeting6Content
+                                user={user}
                                 userId={user.id}
                                 currentUser={currentUser}
                                 financialData={financialData}

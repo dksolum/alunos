@@ -15,6 +15,7 @@ import { PrintPortal } from '../../PrintPortal';
 import { PrintHeader } from '../Meeting1/PrintHeader';
 
 interface Meeting5ContentProps {
+    user?: any;
     userId: string;
     currentUser: { id: string; role: 'ADMIN' | 'USER' };
     financialData: FinancialData;
@@ -39,6 +40,7 @@ const STEPS = [
 ];
 
 export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
+    user,
     userId,
     currentUser,
     financialData,
@@ -315,7 +317,7 @@ export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
                     <div className="print-report">
                         <PrintHeader
                             title="Consolidação Financeira - Mentoria M5"
-                            userName={currentUser.id}
+                            user={user}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
                         <ReviewStageM5
@@ -334,7 +336,7 @@ export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
                     <div className="print-report">
                         <PrintHeader
                             title="Gastos Não Recorrentes - Mentoria M5"
-                            userName={currentUser.id}
+                            user={user}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
                         <NonRecurringExpensesStage
@@ -352,7 +354,7 @@ export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
                     <div className="print-report">
                         <PrintHeader
                             title="Status do Plano - Mentoria M5"
-                            userName={currentUser.id}
+                            user={user}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
                         <DebtStatusTrackingStageM5
@@ -368,7 +370,7 @@ export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
                     <div className="print-report">
                         <PrintHeader
                             title="Atualização de Dívidas - Mentoria M5"
-                            userName={currentUser.id}
+                            user={user}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
                         <DebtUpdateStageM5
@@ -385,7 +387,7 @@ export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
                     <div className="print-report">
                         <PrintHeader
                             title="Sonhos e Objetivos - Mentoria M5"
-                            userName={currentUser.id}
+                            user={user}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
                         <DreamsGoalsStageM5
@@ -400,7 +402,7 @@ export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
                     <div className="print-report">
                         <PrintHeader
                             title="Mapeamento de Patrimônio - Mentoria M5"
-                            userName={currentUser.id}
+                            user={user}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
                         <AssetMappingStageM5

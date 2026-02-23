@@ -11,6 +11,7 @@ import { ChevronRight, Check } from 'lucide-react';
 import { User } from '../../../types';
 
 interface Meeting1ContentProps {
+    user?: any;
     userId: string;
     currentUser: User;
     financialData: FinancialData;
@@ -24,6 +25,7 @@ interface Meeting1ContentProps {
 }
 
 export const Meeting1Content: React.FC<Meeting1ContentProps> = ({
+    user,
     userId,
     currentUser,
     financialData,
@@ -158,7 +160,7 @@ export const Meeting1Content: React.FC<Meeting1ContentProps> = ({
             <PrintPortal>
                 {printSection === 'review' && (
                     <div className="p-8">
-                        <PrintHeader user={currentUser} title="Revisão de Orçamento" />
+                        <PrintHeader user={user} title="Revisão de Orçamento" />
                         <div className="mt-8">
                             <ReviewStage
                                 financialData={financialData}
@@ -174,7 +176,7 @@ export const Meeting1Content: React.FC<Meeting1ContentProps> = ({
 
                 {printSection === 'expenses' && (
                     <div className="p-8">
-                        <PrintHeader user={currentUser} title="Gastos Não Recorrentes" />
+                        <PrintHeader user={user} title="Gastos Não Recorrentes" />
                         <div className="mt-8">
                             <NonRecurringExpensesStage
                                 userId={userId}

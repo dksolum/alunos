@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { authService } from '../../../services/authService';
 
 interface Meeting2ContentProps {
+    user?: any;
     userId: string;
     currentUser: User;
     financialData: FinancialData;
@@ -25,6 +26,7 @@ interface Meeting2ContentProps {
 }
 
 export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
+    user,
     userId,
     currentUser,
     financialData,
@@ -221,7 +223,7 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
             <PrintPortal>
                 {printSection === 'review' && (
                     <div className="p-8">
-                        <PrintHeader user={currentUser} title="Revisão de Orçamento - Reunião 2" />
+                        <PrintHeader user={user} title="Revisão de Orçamento - Reunião 2" />
                         <div className="mt-8">
                             <ReviewStage
                                 financialData={financialData}
@@ -239,7 +241,7 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
 
                 {printSection === 'expenses' && (
                     <div className="p-8">
-                        <PrintHeader user={currentUser} title="Gastos Não Recorrentes" />
+                        <PrintHeader user={user} title="Gastos Não Recorrentes" />
                         <div className="mt-8">
                             <NonRecurringExpensesStage
                                 userId={userId}
@@ -252,7 +254,7 @@ export const Meeting2Content: React.FC<Meeting2ContentProps> = ({
                 )}
                 {printSection === 'debts' && (
                     <div className="p-8">
-                        <PrintHeader user={currentUser} title="Atualização de Dívidas - Reunião 2" />
+                        <PrintHeader user={user} title="Atualização de Dívidas - Reunião 2" />
                         <div className="mt-8">
                             <DebtUpdateStage
                                 userId={userId}

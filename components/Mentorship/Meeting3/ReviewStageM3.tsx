@@ -39,6 +39,9 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
     const [quebraGalhoChecked, setQuebraGalhoChecked] = useState(meetingData?.quebraGalhoChecked || false);
     const [quebraGalhoValue, setQuebraGalhoValue] = useState(meetingData?.quebraGalhoValue || '');
     const [quebraGalhoObservation, setQuebraGalhoObservation] = useState(meetingData?.quebraGalhoObservation || '');
+    const [gastosNaoRecorrentesChecked, setGastosNaoRecorrentesChecked] = useState(meetingData?.gastosNaoRecorrentesChecked || false);
+    const [gastosNaoRecorrentesValue, setGastosNaoRecorrentesValue] = useState(meetingData?.gastosNaoRecorrentesValue || '');
+    const [gastosNaoRecorrentesObservation, setGastosNaoRecorrentesObservation] = useState(meetingData?.gastosNaoRecorrentesObservation || '');
     const [feedbackValue, setFeedbackValue] = useState(meetingData?.feedback || '');
     const [items, setItems] = useState<ReviewItem[]>(meetingData?.reviewItems || []);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -135,6 +138,25 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
         onUpdateMeetingData((prev: any) => ({ ...prev, quebraGalhoObservation: val }));
     };
 
+    const handleToggleGastosNaoRecorrentes = () => {
+        if (readOnly) return;
+        const newState = !gastosNaoRecorrentesChecked;
+        setGastosNaoRecorrentesChecked(newState);
+        onUpdateMeetingData((prev: any) => ({ ...prev, gastosNaoRecorrentesChecked: newState }));
+    };
+
+    const handleGastosNaoRecorrentesValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        setGastosNaoRecorrentesValue(val);
+        onUpdateMeetingData((prev: any) => ({ ...prev, gastosNaoRecorrentesValue: val }));
+    };
+
+    const handleGastosNaoRecorrentesObservationChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const val = e.target.value;
+        setGastosNaoRecorrentesObservation(val);
+        onUpdateMeetingData((prev: any) => ({ ...prev, gastosNaoRecorrentesObservation: val }));
+    };
+
     const startEdit = (id: string, field: 'defined' | 'realized', currentValue: number) => {
         if (readOnly) return;
         setEditingId(id);
@@ -160,12 +182,17 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
     };
 
     const handleManualSave = () => {
-        onUpdateMeetingData((prev: any) => ({ ...prev, reviewItems: items,
+        onUpdateMeetingData((prev: any) => ({
+            ...prev, reviewItems: items,
             bankChecked,
             quebraGalhoChecked,
             quebraGalhoValue,
             quebraGalhoObservation,
-            feedback: feedbackValue }));
+            gastosNaoRecorrentesChecked,
+            gastosNaoRecorrentesValue,
+            gastosNaoRecorrentesObservation,
+            feedback: feedbackValue
+        }));
         setShowSuccess(true);
         setTimeout(() => setShowSuccess(false), 2000);
     };
@@ -190,12 +217,17 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
         });
 
         setItems(refreshedItems);
-        onUpdateMeetingData((prev: any) => ({ ...prev, reviewItems: refreshedItems,
+        onUpdateMeetingData((prev: any) => ({
+            ...prev, reviewItems: refreshedItems,
             bankChecked,
             quebraGalhoChecked,
             quebraGalhoValue,
             quebraGalhoObservation,
-            feedback: feedbackValue }));
+            gastosNaoRecorrentesChecked,
+            gastosNaoRecorrentesValue,
+            gastosNaoRecorrentesObservation,
+            feedback: feedbackValue
+        }));
     };
 
     return (
@@ -301,11 +333,59 @@ export const ReviewStageM3: React.FC<ReviewStageM3Props> = ({
                 </div>
             </div>
 
-            {/* 4. Orçamento vs Realizado */}
+            {/* 4. Carteira de Gastos Não Recorrentes */}
+            <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 print:bg-white print:border-gray-200 print:text-black">
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2 print:text-black">
+                    4. Carteira de Gastos Não Recorrentes
+                </h3>
+                <div className="space-y-6">
+                    <label className={`flex items-start gap-3 group ${readOnly ? 'cursor-default opacity-80' : 'cursor-pointer'}`}>
+                        <div className={`w-6 h-6 rounded border flex items-center justify-center transition-colors mt-1 ${gastosNaoRecorrentesChecked ? 'bg-indigo-500 border-indigo-500' : 'border-slate-600 group-hover:border-indigo-500'}`}>
+                            {gastosNaoRecorrentesChecked && <CheckCircle2 className="w-4 h-4 text-white" />}
+                        </div>
+                        <div className="flex-1">
+                            <span className="text-slate-300 font-medium">Conseguiu guardar algum valor na carteira de Gastos Não Recorrentes?</span>
+                            <input type="checkbox" className="hidden" checked={gastosNaoRecorrentesChecked} onChange={handleToggleGastosNaoRecorrentes} disabled={readOnly} />
+                        </div>
+                    </label>
+
+                    {gastosNaoRecorrentesChecked ? (
+                        <div className="pl-9 space-y-2 animate-in fade-in slide-in-from-left-2 duration-300">
+                            <label className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Valor Economizado (R$)</label>
+                            <div className="flex items-center gap-3">
+                                <div className="flex-1 bg-slate-950/50 border border-slate-800 rounded-xl p-3 flex items-center gap-3 print:bg-gray-50 print:border-gray-300">
+                                    <Wallet className="w-5 h-5 text-indigo-500" />
+                                    <input
+                                        type="text"
+                                        placeholder="0,00"
+                                        value={gastosNaoRecorrentesValue}
+                                        onChange={handleGastosNaoRecorrentesValueChange}
+                                        readOnly={readOnly}
+                                        className="bg-transparent border-none outline-none text-white font-black text-xl w-full placeholder:text-slate-700 print:text-black"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="pl-9 space-y-2 animate-in fade-in slide-in-from-left-2 duration-300">
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Por que não foi possível guardar?</label>
+                            <textarea
+                                placeholder="Descreva o motivo ou observação..."
+                                value={gastosNaoRecorrentesObservation}
+                                onChange={handleGastosNaoRecorrentesObservationChange}
+                                readOnly={readOnly}
+                                className="w-full min-h-[80px] p-3 rounded-xl bg-slate-950/50 border border-slate-800 text-slate-300 outline-none focus:border-slate-600 print:bg-white print:border-gray-300 print:text-black"
+                            />
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* 5. Orçamento vs Realizado */}
             <div className="space-y-4">
                 <div className="flex items-center justify-between gap-4 mb-4">
                     <h3 className="text-lg font-bold text-white flex items-center gap-2 print:text-black">
-                        4. Orçamento vs Realizado
+                        5. Orçamento vs Realizado
                     </h3>
 
                     {!readOnly && (

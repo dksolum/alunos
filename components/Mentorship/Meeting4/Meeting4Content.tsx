@@ -13,6 +13,7 @@ import { PrintPortal } from '../../PrintPortal';
 import { PrintHeader } from '../Meeting1/PrintHeader';
 
 interface Meeting4ContentProps {
+    user?: any;
     userId: string;
     currentUser: { id: string; role: 'ADMIN' | 'USER' };
     financialData: FinancialData;
@@ -36,6 +37,7 @@ const STEPS = [
 ];
 
 export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
+    user,
     userId,
     currentUser,
     financialData,
@@ -287,7 +289,7 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                     <div className="print-report">
                         <PrintHeader
                             title="Consolidação Financeira - Mentoria M4"
-                            userName={currentUser.id} // Idealmente pegar nome real
+                            user={user}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
                         <ReviewStageM4
@@ -306,7 +308,7 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                     <div className="print-report">
                         <PrintHeader
                             title="Gastos Não Recorrentes - Mentoria M4"
-                            userName={currentUser.id}
+                            user={user}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
                         <NonRecurringExpensesStage
@@ -324,7 +326,7 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                     <div className="print-report">
                         <PrintHeader
                             title="Status do Plano - Mentoria M4"
-                            userName={currentUser.id}
+                            user={user}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
                         <DebtStatusTrackingStage
@@ -339,7 +341,7 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                     <div className="print-report">
                         <PrintHeader
                             title="Atualização de Dívidas - Mentoria M4"
-                            userName={currentUser.id}
+                            user={user}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
                         <DebtUpdateStageM4
@@ -356,7 +358,7 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                     <div className="print-report">
                         <PrintHeader
                             title="Sonhos e Objetivos - Mentoria M4"
-                            userName={currentUser.id}
+                            user={user}
                             date={new Date().toLocaleDateString('pt-BR')}
                         />
                         <DreamsGoalsStage

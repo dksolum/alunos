@@ -11,6 +11,7 @@ import { FinancialData, ChecklistData, User, NonRecurringExpenseItem } from '../
 import { authService } from '../../../services/authService';
 
 interface Meeting3ContentProps {
+    user?: any;
     userId: string;
     currentUser: User;
     financialData: FinancialData;
@@ -25,6 +26,7 @@ interface Meeting3ContentProps {
 }
 
 export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
+    user,
     userId,
     currentUser,
     financialData,
@@ -241,7 +243,7 @@ export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
             <PrintPortal>
                 {printSection === 'review' && (
                     <div className="p-8">
-                        <PrintHeader user={currentUser} title="Revisão de Orçamento - Reunião 3" />
+                        <PrintHeader user={user} title="Revisão de Orçamento - Reunião 3" />
                         <div className="mt-8">
                             <ReviewStageM3
                                 financialData={financialData}
@@ -259,7 +261,7 @@ export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
 
                 {printSection === 'expenses' && (
                     <div className="p-8">
-                        <PrintHeader user={currentUser} title="Gastos Não Recorrentes" />
+                        <PrintHeader user={user} title="Gastos Não Recorrentes" />
                         <div className="mt-8">
                             <NonRecurringExpensesStage
                                 userId={userId}
@@ -273,7 +275,7 @@ export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
 
                 {printSection === 'debts' && (
                     <div className="p-8">
-                        <PrintHeader user={currentUser} title="Atualização de Dívidas - Reunião 3" />
+                        <PrintHeader user={user} title="Atualização de Dívidas - Reunião 3" />
                         <div className="mt-8">
                             <DebtUpdateStageM3
                                 userId={userId}
@@ -289,7 +291,7 @@ export const Meeting3Content: React.FC<Meeting3ContentProps> = ({
 
                 {printSection === 'plan' && (
                     <div className="p-8">
-                        <PrintHeader user={currentUser} title="Plano de Quitação de Dívida - Reunião 3" />
+                        <PrintHeader user={user} title="Plano de Quitação de Dívida - Reunião 3" />
                         <div className="mt-8">
                             <DebtRepaymentPlanStage
                                 meetingData={meetingData}
