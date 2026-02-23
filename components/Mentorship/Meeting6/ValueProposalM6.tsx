@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, Activity, Target, CheckCircle2, Lock, Unlock, ShieldAlert, History, MessageSquare, AlertCircle, ExternalLink, CreditCard } from 'lucide-react';
+import { TrendingUp, Activity, Target, CheckCircle2, Lock, Unlock, ShieldAlert, History, MessageSquare, AlertCircle, ExternalLink, CreditCard, Link as LinkIcon, Eye, EyeOff } from 'lucide-react';
 
 interface DreamGoal {
     id: string;
@@ -28,6 +28,17 @@ export const ValueProposalM6: React.FC<ValueProposalM6Props> = ({ meetingData, m
         const newState = !isLocked;
         setIsLocked(newState);
         onUpdateMeetingData({ ...meetingData, valueProposalLocked: newState });
+    };
+
+    // Continuation Link State
+    const [continuationLink, setContinuationLink] = useState(meetingData.continuationLink || '');
+    const [isContLinkVisible, setIsContLinkVisible] = useState(meetingData.isContinuationLinkVisible || false);
+
+    const handleUpdateContinuationSettings = (field: 'continuationLink' | 'isContinuationLinkVisible', value: any) => {
+        if (currentUser.role === 'USER') return;
+        if (field === 'continuationLink') setContinuationLink(value);
+        if (field === 'isContinuationLinkVisible') setIsContLinkVisible(value);
+        onUpdateMeetingData({ ...meetingData, [field]: value });
     };
 
     const canEditLock = currentUser.role === 'ADMIN' || currentUser.role === 'SECRETARY';
@@ -373,6 +384,105 @@ export const ValueProposalM6: React.FC<ValueProposalM6Props> = ({ meetingData, m
                     ))}
                 </div>
             </div>
+
+            {/* ADMIN CONTROLS: Continuation Link */}
+            {canEditLock && !readOnly && (
+                <div className="p-8 border-t border-slate-800 bg-slate-950/80">
+                    <div className="flex items-center gap-2 mb-6">
+                        <LinkIcon size={16} className="text-purple-400" />
+                        <h3 className="text-xs font-black uppercase tracking-widest text-slate-300">Configuração do Checkout (Admin)</h3>
+                    </div>
+
+                    <div className="flex flex-col md:flex-row items-end gap-4">
+                        <div className="flex-1 w-full">
+                            <label className="text-[10px] uppercase font-bold text-slate-500 mb-1.5 block">Link de Pagamento / Continuação</label>
+                            <input
+                                type="url"
+                                placeholder="Ex: https://sun.eduzz.com/..."
+                                value={continuationLink}
+                                onChange={(e) => handleUpdateContinuationSettings('continuationLink', e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm font-medium text-slate-300 placeholder:text-slate-600 focus:border-purple-500 outline-none transition-all"
+                            />
+                        </div>
+                        <button
+                            onClick={() => handleUpdateContinuationSettings('isContinuationLinkVisible', !isContLinkVisible)}
+                            className={`px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all w-full md:w-auto h-[46px] border ${isContLinkVisible
+                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+                                    : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
+                                }`}
+                        >
+                            {isContLinkVisible ? <><Eye size={18} /> Visível para Usuário</> : <><EyeOff size={18} /> Oculto</>}
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium mt-3">
+                        Quando visível e com um link preenchido, os usuários verão um grande botão de fechamento abaixo.
+                    </p>
+                </div>
+            )}
+
+            {/* CONTINUATION BUTTON (Visible based on config) */}
+            {isContLinkVisible && continuationLink && (
+                <div className={`p-8 border-t flex flex-col items-center justify-center ${canEditLock ? 'border-dashed border-purple-500/30 bg-purple-500/5' : 'border-slate-800 bg-slate-950'} relative overflow-hidden`}>
+                    {/* Background effects for standard view */}
+                    {!canEditLock && (
+                        <>
+                            <div className="absolute top-[-50%] left-[-10%] w-[120%] h-[200%] bg-emerald-500/5 blur-[100px] pointer-events-none" />
+                            <div className="absolute bottom-[-50%] right-[-10%] w-[120%] h-[200%] bg-sky-500/5 blur-[100px] pointer-events-none" />
+                        </>
+                    )}
+
+                    {canEditLock && (
+                        <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-1 bg-purple-500/20 rounded-md border border-purple-500/30 text-purple-400">
+                            <Eye size={12} />
+                            <span className="text-[9px] font-black uppercase tracking-widest">Prévia Admin</span>
+                        </div>
+                    )}
+
+                    <div className="text-center max-w-xl mx-auto mb-6 relative z-10">
+                        <h4 className="text-xl font-black text-white mb-2">Pronto para o Próximo Nível?</h4>
+                        <p className="text-sm font-medium text-slate-400">
+                            Você já organizou suas finanças e definiu seus objetivos. Agora é a hora de acelerar a realização dos seus sonhos com o acompanhamento contínuo da Mentoria.
+                        </p>
+                    </div>
+
+                    <a
+                        href={continuationLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative group w-full max-w-md"
+                    >
+                        {/* Glow effect */}
+                        <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500 via-sky-500 to-indigo-500 rounded-2xl blur opacity-30 group-hover:opacity-60 transition duration-500 group-hover:duration-200" />
+
+                        <div className="relative w-full bg-slate-900 border border-slate-700/50 hover:border-slate-600 px-8 py-5 rounded-2xl flex items-center justify-between transition-all duration-300 overflow-hidden">
+                            {/* Inner moving gradient */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                            <div className="flex items-center gap-4 relative z-10">
+                                <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400 border border-emerald-500/30 group-hover:scale-110 transition-transform duration-300">
+                                    <TrendingUp size={24} />
+                                </div>
+                                <div className="text-left">
+                                    <span className="block text-[10px] uppercase font-black tracking-widest text-emerald-400 mb-0.5">Acelere seus Resultados</span>
+                                    <span className="block text-lg font-black text-white group-hover:text-emerald-300 transition-colors">Continuar Mentoria</span>
+                                </div>
+                            </div>
+
+                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300 transform group-hover:-translate-y-1 group-hover:translate-x-1 relative z-10">
+                                <ExternalLink size={18} />
+                            </div>
+                        </div>
+                    </a>
+
+                    <div className="flex items-center justify-center gap-4 mt-6 text-[10px] font-bold uppercase tracking-widest text-slate-500 relative z-10">
+                        <span className="flex items-center gap-1.5"><CheckCircle2 size={12} className="text-emerald-500/70" /> Suporte VIP</span>
+                        <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+                        <span className="flex items-center gap-1.5"><ShieldAlert size={12} className="text-sky-500/70" /> Acompanhamento</span>
+                        <span className="w-1 h-1 rounded-full bg-slate-700"></span>
+                        <span className="flex items-center gap-1.5"><Target size={12} className="text-indigo-500/70" /> Foco</span>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

@@ -58,15 +58,14 @@ export const DebtStatusTrackingStageM6: React.FC<DebtStatusTrackingStageM6Props>
                     const m4Status = m4Data?.debtPriorityStatus?.find((ps: any) => ps.id === d.id);
                     const prevStatus = m5Status || m4Status;
 
-                    // Combina histórico da M4 e M5 para M6
-                    const m4Previous = m4Status?.observation ? `R4: ${m4Status.observation}` : '';
-                    const m5Previous = m5Status?.observation ? `R5: ${m5Status.observation}` : '';
-                    let combinedHistory = [m4Previous, m5Previous].filter(Boolean).join('\n\n');
+                    // O que foi escrito na R4 foi herdado como previousObservation na R5
+                    const m4Obs = m5Status?.previousObservation || m4Status?.observation || '';
+                    const m4Previous = m4Obs ? `R4: ${m4Obs}` : '';
 
-                    // Fallback
-                    if (!combinedHistory && (m5Status?.previousObservation || m4Status?.previousObservation)) {
-                        combinedHistory = m5Status?.previousObservation || m4Status?.previousObservation || '';
-                    }
+                    // O que foi escrito na R5 fica no observation da R5
+                    const m5Previous = m5Status?.observation ? `R5: ${m5Status.observation}` : '';
+
+                    const combinedHistory = [m4Previous, m5Previous].filter(Boolean).join('\n\n');
 
                     return {
                         id: d.id,
@@ -102,17 +101,22 @@ export const DebtStatusTrackingStageM6: React.FC<DebtStatusTrackingStageM6Props>
         const m4Status = m4Data?.debtPriorityStatus?.find((ps: any) => ps.id === sourceDebt.id);
         const prevStatus = m5Status || m4Status;
 
+        const m4Obs = m5Status?.previousObservation || m4Status?.observation || '';
+        const m4Previous = m4Obs ? `R4: ${m4Obs}` : '';
+        const m5Previous = m5Status?.observation ? `R5: ${m5Status.observation}` : '';
+        const combinedHistory = [m4Previous, m5Previous].filter(Boolean).join('\n\n');
+
         const currentItem = statusItems.find(i => i.id === sourceDebt.id);
 
         if (currentItem) {
-            // Update reference values and inherit from M4 if M6 is still empty
+            // Update reference values and inherit from M4/M5 if M6 is still empty
             const updatedItems = statusItems.map(i =>
                 i.id === sourceDebt.id
                     ? {
                         ...i,
                         name: sourceDebt.name,
                         creditor: sourceDebt.creditor,
-                        previousObservation: prevStatus?.observation || i.previousObservation // could ideally use the combined here too
+                        previousObservation: combinedHistory || i.previousObservation
                     }
                     : i
             );
@@ -127,7 +131,7 @@ export const DebtStatusTrackingStageM6: React.FC<DebtStatusTrackingStageM6Props>
                     creditor: sourceDebt.creditor,
                     status: prevStatus?.status || 'Não Iniciado',
                     observation: '',
-                    previousObservation: prevStatus?.observation || '',
+                    previousObservation: combinedHistory || '',
                     date: new Date().toISOString().split('T')[0]
                 };
                 setStatusItems([newItem]);
