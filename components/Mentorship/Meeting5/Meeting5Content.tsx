@@ -261,7 +261,7 @@ export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
                         <AssetMappingStageM5
                             meetingData={meetingData}
                             onUpdateMeetingData={handleUpdateMeetingData}
-                            readOnly={isUser}
+                            readOnly={false}
                             onPrint={() => handlePrint('assets')}
                         />
                     )}

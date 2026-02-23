@@ -268,7 +268,7 @@ export const Meeting6Content: React.FC<Meeting6ContentProps> = ({
                             meetingData={meetingData}
                             m5Data={m5Data}
                             onUpdateMeetingData={handleUpdateMeetingData}
-                            readOnly={isUser}
+                            readOnly={false}
                             onPrint={() => handlePrint('assets')}
                         />
                     )}
