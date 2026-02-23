@@ -92,4 +92,5 @@ Para evitar inconsistências e redundâncias, implementamos:
 
 ### Regras de Negócio e Segurança
 *   **Acesso Administrativo**: Apenas Admins podem alterar a Fase do Checklist de um aluno através do Dashboard ou forçar o Status final.
-*   **Somente Leitura**: Quando o progresso é visualizado pelo próprio `USER`, o checklist e as etapas de mentoria entram em modo `readOnly`. A "Value Proposal M6" carrega o mesmo princípio.
+*   **Somente Leitura Padrão**: Quando o progresso da mentoria é visualizado pelo próprio `USER`, o checklist e as funcionalidades técnicas (Dívidas, Orçamento) entram no modo `readOnly` por segurança. A "Value Proposal M6" segue as mesmas travas.
+*   **Permissão Dinâmica de Engajamento**: Como exceção arquitetural, a etapa **Sonhos e Metas** (`DreamsGoalsStage`) anula o bloqueio `readOnly` isoladamente. Isso permite que usuários logados com perfil `USER` continuem refinando e editando seus sonhos (em M4, M5 e M6) sem depender de intervenção administrativa, promovendo engajamento no Pós-Mentoria.

@@ -271,7 +271,7 @@ export const Meeting5Content: React.FC<Meeting5ContentProps> = ({
                             meetingData={meetingData}
                             previousMeetingData={m4Data}
                             onUpdateMeetingData={handleUpdateMeetingData}
-                            readOnly={isUser}
+                            readOnly={false}
                         />
                     )}
 

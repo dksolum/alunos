@@ -244,7 +244,7 @@ export const Meeting4Content: React.FC<Meeting4ContentProps> = ({
                         <DreamsGoalsStage
                             meetingData={meetingData}
                             onUpdateMeetingData={handleUpdateMeetingData}
-                            readOnly={isUser}
+                            readOnly={false}
                         />
                     )}
 

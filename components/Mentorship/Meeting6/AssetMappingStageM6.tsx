@@ -189,7 +189,7 @@ export const AssetMappingStageM6: React.FC<AssetMappingStageM6Props> = ({
                                 </div>
                             ) : (
                                 assets.filter(a => a.category === category).map(asset => (
-                                    <div key={asset.id} className={`rounded-[1.5rem] border p-6 transition-all group ${getCategoryColor(category)} relative`}>
+                                    <div key={asset.id} className={`rounded-[1.5rem] border p-6 transition-all group ${getCategoryColor(category)} relative print:bg-white print:border-slate-300 print:shadow-none`}>
                                         {!readOnly && (
                                             <button
                                                 onClick={() => handleRemoveAsset(asset.id)}
@@ -206,8 +206,8 @@ export const AssetMappingStageM6: React.FC<AssetMappingStageM6Props> = ({
                                                     <label className="text-[10px] text-slate-500 uppercase font-black">Descrição do Bem / Ativo</label>
                                                     {asset.origin && (
                                                         <span className={`px-2 py-0.5 rounded-md border text-[8px] font-black uppercase tracking-widest ${asset.origin === 'M5'
-                                                                ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
-                                                                : 'text-teal-400 bg-teal-500/10 border-teal-500/20'
+                                                            ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                                                            : 'text-teal-400 bg-teal-500/10 border-teal-500/20'
                                                             }`}>
                                                             Origem: R{asset.origin.replace('M', '')}
                                                         </span>
@@ -219,7 +219,7 @@ export const AssetMappingStageM6: React.FC<AssetMappingStageM6Props> = ({
                                                     disabled={readOnly}
                                                     placeholder="Ex: Apartamento em SP, Ações Petrobras, Carro..."
                                                     onChange={(e) => handleUpdateAsset(asset.id, 'description', e.target.value)}
-                                                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-sky-500 transition-all shadow-inner"
+                                                    className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 text-sm font-bold text-white outline-none focus:border-sky-500 transition-all shadow-inner print:bg-white print:border-slate-300 print:text-slate-900 print:shadow-none"
                                                 />
                                             </div>
 
@@ -236,7 +236,7 @@ export const AssetMappingStageM6: React.FC<AssetMappingStageM6Props> = ({
                                                             const val = parseFloat(e.target.value.replace(/[^\d]/g, '')) / 100;
                                                             handleUpdateAsset(asset.id, 'currentValue', val || 0);
                                                         }}
-                                                        className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 pl-10 text-sm font-bold text-white outline-none focus:border-sky-500 transition-all shadow-inner"
+                                                        className="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-3 pl-10 text-sm font-bold text-white outline-none focus:border-sky-500 transition-all shadow-inner print:bg-white print:border-slate-300 print:text-slate-900 print:shadow-none"
                                                     />
                                                 </div>
                                             </div>
@@ -248,7 +248,7 @@ export const AssetMappingStageM6: React.FC<AssetMappingStageM6Props> = ({
                                                     <button
                                                         onClick={() => handleUpdateAsset(asset.id, 'generatesIncome', !asset.generatesIncome)}
                                                         disabled={readOnly}
-                                                        className={`flex items-center gap-2 transition-all ${asset.generatesIncome ? 'text-emerald-400' : 'text-slate-600'}`}
+                                                        className={`flex items-center gap-2 transition-all ${asset.generatesIncome ? 'text-emerald-400 print:text-emerald-600' : 'text-slate-600 print:text-slate-400'}`}
                                                     >
                                                         {asset.generatesIncome ? <ToggleRight size={28} /> : <ToggleLeft size={28} />}
                                                         <span className="text-[10px] font-black uppercase tracking-widest">{asset.generatesIncome ? 'Sim' : 'Não'}</span>
@@ -267,7 +267,7 @@ export const AssetMappingStageM6: React.FC<AssetMappingStageM6Props> = ({
                                                                         const val = parseFloat(e.target.value.replace(/[^\d]/g, '')) / 100;
                                                                         handleUpdateAsset(asset.id, 'incomeValue', val || 0);
                                                                     }}
-                                                                    className="w-full bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2 pl-10 text-sm font-black text-emerald-400 outline-none focus:border-emerald-500 transition-all"
+                                                                    className="w-full bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2 pl-10 text-sm font-black text-emerald-400 outline-none focus:border-emerald-500 transition-all print:bg-white print:border-emerald-300 print:text-emerald-700"
                                                                 />
                                                             </div>
                                                         </div>
@@ -278,14 +278,14 @@ export const AssetMappingStageM6: React.FC<AssetMappingStageM6Props> = ({
                                             {/* Observation */}
                                             <div className="md:col-span-12 space-y-1.5">
                                                 <label className="text-[10px] text-slate-500 uppercase font-black px-1">Observações</label>
-                                                <div className="flex items-start gap-3 bg-slate-950/30 border border-slate-800/50 rounded-xl px-4 py-3">
-                                                    <MessageSquare size={16} className="text-slate-700 mt-1" />
+                                                <div className="flex items-start gap-3 bg-slate-950/30 border border-slate-800/50 rounded-xl px-4 py-3 print:bg-white print:border-slate-300">
+                                                    <MessageSquare size={16} className="text-slate-700 mt-1 print:text-slate-400" />
                                                     <textarea
                                                         value={asset.observation}
                                                         disabled={readOnly}
                                                         placeholder="Detalhes sobre liquidez, taxas, localização..."
                                                         onChange={(e) => handleUpdateAsset(asset.id, 'observation', e.target.value)}
-                                                        className="w-full bg-transparent text-xs text-slate-400 outline-none resize-none pt-0.5"
+                                                        className="w-full bg-transparent text-xs text-slate-400 outline-none resize-none pt-0.5 print:text-slate-900"
                                                         rows={2}
                                                     />
                                                 </div>

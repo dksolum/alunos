@@ -211,13 +211,13 @@ export const DebtStatusTrackingStageM5: React.FC<DebtStatusTrackingStageM5Props>
                                                 value={item.status}
                                                 disabled={readOnly}
                                                 onChange={(e) => handleUpdateStatus(item.id, 'status', e.target.value)}
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-300 appearance-none focus:border-purple-500 outline-none transition-all cursor-pointer"
+                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-bold text-slate-300 appearance-none focus:border-purple-500 outline-none transition-all cursor-pointer print:bg-white print:border-slate-300 print:text-slate-900"
                                             >
                                                 <option value="Não Iniciado">Não Iniciado</option>
                                                 <option value="Em Andamento">Em Andamento</option>
                                                 <option value="Finalizado">Finalizado</option>
                                             </select>
-                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" size={14} />
+                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none print:text-slate-400" size={14} />
                                         </div>
                                     </div>
 
@@ -231,7 +231,7 @@ export const DebtStatusTrackingStageM5: React.FC<DebtStatusTrackingStageM5Props>
                                                 value={item.date}
                                                 disabled={readOnly}
                                                 onChange={(e) => handleUpdateStatus(item.id, 'date', e.target.value)}
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 pl-10 text-xs font-bold text-slate-300 focus:border-purple-500 outline-none transition-all"
+                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 pl-10 text-xs font-bold text-slate-300 focus:border-purple-500 outline-none transition-all print:bg-white print:border-slate-300 print:text-slate-900"
                                             />
                                         </div>
                                     </div>
@@ -240,21 +240,21 @@ export const DebtStatusTrackingStageM5: React.FC<DebtStatusTrackingStageM5Props>
 
                             {/* Previous Observation from M4 */}
                             {item.previousObservation && (
-                                <div className="mt-6 p-4 rounded-xl bg-slate-950/50 border border-slate-800/50 animate-in fade-in slide-in-from-top-2 duration-500">
+                                <div className="mt-6 p-4 rounded-xl bg-slate-950/50 border border-slate-800/50 animate-in fade-in slide-in-from-top-2 duration-500 print:bg-slate-50 print:border-slate-300">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <History size={12} className="text-slate-500" />
-                                        <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Observação da Reunião 4</span>
+                                        <History size={12} className="text-slate-500 print:text-slate-400" />
+                                        <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest print:text-slate-500">Observação da Reunião 4</span>
                                     </div>
-                                    <p className="text-xs text-slate-400 italic leading-relaxed">
+                                    <p className="text-xs text-slate-400 italic leading-relaxed print:text-slate-700">
                                         "{item.previousObservation}"
                                     </p>
                                 </div>
                             )}
 
                             {/* Current Observation for M5 */}
-                            <div className="mt-6 pt-6 border-t border-slate-800/50">
+                            <div className="mt-6 pt-6 border-t border-slate-800/50 print:border-slate-200">
                                 <div className="flex items-start gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center flex-shrink-0 text-slate-600">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center flex-shrink-0 text-slate-600 print:bg-white print:border-slate-300 print:text-slate-400">
                                         <MessageSquare size={16} />
                                     </div>
                                     <textarea
@@ -262,7 +262,7 @@ export const DebtStatusTrackingStageM5: React.FC<DebtStatusTrackingStageM5Props>
                                         value={item.observation}
                                         disabled={readOnly}
                                         onChange={(e) => handleUpdateStatus(item.id, 'observation', e.target.value)}
-                                        className="w-full bg-transparent text-sm text-slate-400 placeholder:text-slate-700 outline-none resize-none pt-1"
+                                        className="w-full bg-transparent text-sm text-slate-400 placeholder:text-slate-700 outline-none resize-none pt-1 print:text-slate-900"
                                         rows={2}
                                     />
                                 </div>
