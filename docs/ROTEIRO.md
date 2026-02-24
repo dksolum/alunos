@@ -55,6 +55,11 @@ A migração para um backend real foi realizada para permitir sincronização e 
     - [x] **Estabilidade**: Sincronização profunda (M3) e deduplicação resiliente.
 - [x] **Otimização de Impressão**: Relatórios de Revisão, Gastos, Dívidas, Plano e Sonhos (Alto contraste e PDF).
 - [x] **Fix: Persistência de Ficha Individual**: Salvamento e carregamento de `personal_info` 100% verificado.
+- [x] **Refinamento de UX/UI em Checklists**: Sub-passos interativos, edição de títulos, estados mutuamente exclusivos e link de checkout de continuidade.
+- **Herança e Rastreabilidade**:
+    - [x] Correção de acompanhamento de longo prazo de dívidas (M4 para M5).
+    - [x] **Origin Tags** e Sincronização retroativa de Sonhos/Metas (M5/M6 puxando de M4).
+- [x] **Gestão e Segurança**: Ocultação inteligente de colunas administrativas baseada em papéis (Admin/Secretary) no painel.
 
 ## 🚀 Fase 6: Próximos Passos (Em Planejamento)
 - [ ] **Integrações Futuras**:

@@ -735,26 +735,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                                                         </span>
                                                     </td>
                                                     <td className="p-4 text-center">
-                                                        <button
-                                                            onClick={() => {
-                                                                setSelectedPhaseUser(user);
-                                                                setShowPhaseModal(true);
-                                                            }}
-                                                            className={`p-2 rounded-lg transition-colors ${user.checklistPhase && user.checklistPhase !== 'LOCKED'
-                                                                ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
-                                                                : 'bg-slate-800 text-slate-600 hover:bg-slate-700 hover:text-slate-400'
-                                                                }`}
-                                                            title={`Fase Atual: ${user.checklistPhase === 'PHASE_1' ? 'Fase 1' : (user.checklistPhase === 'PHASE_2' ? 'Fase 2' : 'Bloqueado')}`}
-                                                        >
-                                                            <ShieldCheck size={16} />
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleOpenChecklist(user)} // Use new handler
-                                                            className="p-2 rounded-lg bg-slate-800 text-slate-600 hover:bg-slate-700 hover:text-white transition-colors ml-2"
-                                                            title="Editar Checklist"
-                                                        >
-                                                            <ListChecks size={16} />
-                                                        </button>
+                                                        {user.role === 'USER' && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setSelectedPhaseUser(user);
+                                                                        setShowPhaseModal(true);
+                                                                    }}
+                                                                    className={`p-2 rounded-lg transition-colors ${user.checklistPhase && user.checklistPhase !== 'LOCKED'
+                                                                        ? 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                                                                        : 'bg-slate-800 text-slate-600 hover:bg-slate-700 hover:text-slate-400'
+                                                                        }`}
+                                                                    title={`Fase Atual: ${user.checklistPhase === 'PHASE_1' ? 'Fase 1' : (user.checklistPhase === 'PHASE_2' ? 'Fase 2' : 'Bloqueado')}`}
+                                                                >
+                                                                    <ShieldCheck size={16} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleOpenChecklist(user)} // Use new handler
+                                                                    className="p-2 rounded-lg bg-slate-800 text-slate-600 hover:bg-slate-700 hover:text-white transition-colors ml-2"
+                                                                    title="Editar Checklist"
+                                                                >
+                                                                    <ListChecks size={16} />
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </td>
                                                     <td className="p-4 text-right">
                                                         <div className="flex items-center justify-end gap-2">

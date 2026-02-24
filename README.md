@@ -117,13 +117,12 @@ Para instruções de como subir este projeto para produção na Vercel, consulte
 - **Feat**: Liberação estrutural do bloqueio `readOnly` sob o módulo de **Sonhos e Metas** nas Reuniões 4, 5 e 6, permitindo que usuários com a flag de visualização de aluno interajam, criem e gerenciem metas proativamente no Pós-Mentoria sem intervenção do Administrador.
 - **UI/Print**: Refinamento extremo da fidelidade de Impressão via utilitários `print:*` do Tailwind. Cobertura estendida aos painéis detalhados de Reunião 5 e 6 (Mapeamento de Patrimônio e Acompanhamento de Dívidas), injetando contrastes lógicos em fundos brancos sem comprometer a temática em modo noturno da tela interativa.
 - **Feat**: Injeção da funcionalidade visual de **Sincronizar (origin tags)** a metadados de longo prazo (Metas e Evolução do Mapeamento) garantindo que reuniões maduras consumam de sub-buckets passados via click em Meetings tardias (M5→M6).
+- **Feat**: Funcionalidade de **Link de Continuidade (Checkout)** configurável via painel administrativo, com exibição de botão de destaque para usuários darem o próximo passo na mentoria.
+- **UI/UX**: Refinamento de interação nos **Sub-passos do Checklist**, permitindo edição direta de títulos, clique no texto para marcar o checkbox e seleção exclusiva entre "Feito" / "Não se aplica".
+- **Feat**: Implementação de **Origin Tags (Etiquetas de Origem)** para Sonhos e Metas nas reuniões 4, 5 e 6, indicando em qual reunião foram criados, com funcionalidade de sincronização filtrada.
+- **Fix**: Correção da lógica de rastreamento de dívidas para garantir herança contínua de observações da Reunião 4 para a Reunião 5.
+- **Feat**: Adição de **Tarefa de Limite de Gastos** automática nas abas de tarefas das reuniões 1 a 6.
+- **Fix**: Ocultação da coluna de Checklist no painel administrativo para usuários do nível Administrador e Secretário, focando a exibição apenas em perfis de Cliente (USER).
 - **Feat**: Implementação completa das **Reuniões 5 e 6** com Mapeamento Patrimonial e relatórios refinados (Ativos, Sonhos, e Rastreador de Dívidas).
-- **Feat**: Módulo Dinâmico de **Acompanhamento (Pós-Mentoria)**: Criação do grid com 11 cards exclusivos (Milhas, Separação PJ e PF, Seguros, Planejamento de Carreira, etc.), desbloqueados estritamente na fase final (CONTACTED).
-- **Feat**: Componente **Proposta de Valor da Mentoria** na Reunião 6, herdando automaticamente o histórico de dívidas acompanhadas (M3, M4, M5, M6) e listando dívidas restantes. Integrado ao dashboard exibido sob condicional de desbloqueio administrativo da Ata 6.
-- **Fix (Critical)**: Refatoração da arquitetura de estados do Dashboard via _Functional State Updaters_ para curar condições de corrida (Stale Closures) e evitar sobrescrita fantasma de dados.
-- **Fix (Critical)**: Inclusão do RPC `upsert_mentorship_meeting_by_admin` no Supabase para garantir salvamento consistente de reuniões quando um Admin/Secretária insere dados a favor de um aluno sem esbarrar no bloqueio RLS.
-- **Feat**: Sincronização em cascata (M1 a M6) implementada 100% com dedicação à preservação do progresso local do usuário e _origin tags_ para Metas.
-- **Feat**: Lógica avançada no Módulo de Dívidas Prioritárias em M5 e M6, registrando amortizações histórico-mês com cálculos de datas estendidas.
-- **Fix**: Padronização da arquitetura de reuniões (M1-M4) para consistência de estado e persistência e reforço das travas de acesso automáticas.
-- **Fix (Critical)**: Correção do erro de salvamento `new_data` nulo do Módulo Administrativo na **Reunião 1**, aplicando suporte completo a *Functional State Updaters* para viabilizar navegação segura entre abas.
-- **UI**: Rastreamento visual de origem de dívidas e metas com etiquetas coloridas (Mapeamento/M2/M3/M4/M5/M6).
+- **Feat**: Módulo Dinâmico de **Acompanhamento (Pós-Mentoria)**: Criação do grid com 11 cards exclusivos.
+- **Feat**: Sincronização em cascata (M1 a M6) implementada 100% com origin tags para metas.

@@ -56,7 +56,8 @@ Devido à necessidade de o Admin ler e escrever dados *em nome do usuário*, uti
     7.  `AssetMappingStage` (Reuniões 5 e 6): Onde o usuário categoriza seu patrimônio.
     8.  `ValueProposalM6` (Exclusivo Reunião 6): Componente sintético, acessível direto do Dashboard (condicionado ao desbloqueio administrativo). Traz histórico concatenado de evolução financeira e metas de dívida da M3 a M6.
     9.  `ReportsStage`: Central de Impressão exclusiva por reunião.
-    10. `TasksStage`: Checklist de finalização com suporte a tarefas customizadas.
+    10. `TasksStage`: Checklist de finalização com suporte a tarefas customizadas (agora com interações aprimoradas em sub-passos, edição de títulos e sincronização entre status e checkboxes).
+    11. `Continuation Checkout`: Funcionalidade administrativa dinâmica para inserir links de renovação e upsell em etapas estratégicas.
 
 ### Novo Módulo: Acompanhamento (Pós-Mentoria)
 Acoplado ao **Dashboard**, o painel de Acompanhamento expande o funil do usuário ao "Nível 3" (Status: `CONTACTED`).
