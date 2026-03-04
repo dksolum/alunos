@@ -892,7 +892,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ currentUser, onC
                                             <h3 className="text-slate-400 font-bold uppercase text-xs tracking-wider">Faturamento (Total)</h3>
                                         </div>
                                         <div className="text-3xl font-black text-white">
-                                            R$ {[...consultoriaUsers, ...mentoriaUsers, ...acompanhamentoUsers].reduce((globalSum, user) => {
+                                            R$ {Array.from(new Set([...consultoriaUsers, ...mentoriaUsers, ...acompanhamentoUsers])).reduce((globalSum, user) => {
                                                 let consultoriaSum = 0;
                                                 { // Scope consultoria logic
                                                     const cData = user.checklistData?.billing?.consultoria;
